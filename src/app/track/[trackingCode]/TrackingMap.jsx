@@ -59,19 +59,27 @@ function ensureMapsBootstrap() {
 
 export function TrackingMap({ driverLocation }) {
   const mapRef = useRef(null)
+  const mapInstanceRef = useRef(null)
+  const markerRef = useRef(null)
   const [status, setStatus] = useState('loading') // 'loading' | 'ready' | 'error'
 
   const latitude = Number(driverLocation?.latitude)
   const longitude = Number(driverLocation?.longitude)
+  const hasValidCoords = !Number.isNaN(latitude) && !Number.isNaN(longitude)
 
+  // Initialise the map + marker exactly once. The bootstrap loader / Map ID
+  // logic is reused untouched; later coordinate changes only pan the map.
   useEffect(() => {
-    if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
+    if (!hasValidCoords) {
       setStatus('error')
       return undefined
     }
 
+    if (mapInstanceRef.current) {
+      return undefined
+    }
+
     let cancelled = false
-    setStatus('loading')
 
     async function initMap() {
       try {
@@ -82,7 +90,7 @@ export function TrackingMap({ driverLocation }) {
           window.google.maps.importLibrary('marker'),
         ])
 
-        if (cancelled || !mapRef.current) {
+        if (cancelled || !mapRef.current || mapInstanceRef.current) {
           return
         }
 
@@ -97,7 +105,8 @@ export function TrackingMap({ driverLocation }) {
           fullscreenControl: false,
         })
 
-        new AdvancedMarkerElement({ map, position })
+        markerRef.current = new AdvancedMarkerElement({ map, position })
+        mapInstanceRef.current = map
 
         setStatus('ready')
       } catch (error) {
@@ -112,7 +121,20 @@ export function TrackingMap({ driverLocation }) {
     return () => {
       cancelled = true
     }
-  }, [latitude, longitude])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasValidCoords])
+
+  // Smoothly pan the existing map to the driver's new position on each
+  // update, rather than tearing down and rebuilding the map instance.
+  useEffect(() => {
+    if (!hasValidCoords || !mapInstanceRef.current || !markerRef.current) {
+      return
+    }
+
+    const position = { lat: latitude, lng: longitude }
+    mapInstanceRef.current.panTo(position)
+    markerRef.current.position = position
+  }, [latitude, longitude, hasValidCoords])
 
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">

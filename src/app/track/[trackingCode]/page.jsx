@@ -1,6 +1,6 @@
 import Image from 'next/image'
 
-import { TrackingMap } from './TrackingMap'
+import { LiveTracking } from './LiveTracking'
 
 const API_BASE_URL =
   'https://seal-app-9hhnm.ondigitalocean.app/api/public/track'
@@ -34,18 +34,6 @@ function titleCase(value) {
     .split('_')
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ')
-}
-
-function statusBadgeClass(status) {
-  if (status === 'delivered') {
-    return 'bg-emerald-50 text-emerald-700 ring-emerald-200'
-  }
-
-  if (['cancelled', 'failed', 'refunded'].includes(status)) {
-    return 'bg-rose-50 text-rose-700 ring-rose-200'
-  }
-
-  return 'bg-amber-50 text-amber-700 ring-amber-200'
 }
 
 function InfoList({ title, items }) {
@@ -151,11 +139,8 @@ export default async function TrackOrderPage({ params }) {
     vehicle,
     driver,
     driverLocation,
+    eta,
   } = tracking
-
-  const header = message?.header ?? 'Order status'
-  const description =
-    message?.description ?? 'We’ll keep this page updated as your order progresses.'
 
   const driverInitial = driver?.firstName?.charAt(0)?.toUpperCase() ?? 'D'
 
@@ -197,83 +182,61 @@ export default async function TrackOrderPage({ params }) {
           </div>
         </header>
 
-        <section className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <span
-            className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset ${statusBadgeClass(
-              status,
-            )}`}
-          >
-            {titleCase(status)}
-          </span>
-          <h2 className="mt-4 text-2xl font-semibold text-slate-900">{header}</h2>
-          <p className="mt-2 text-sm text-slate-500">{description}</p>
-        </section>
+        <LiveTracking
+          trackingCode={code ?? trackingCode}
+          initialStatus={status}
+          initialMessage={message}
+          initialDriverLocation={driverLocation}
+          initialEta={eta}
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <InfoList title="Order Details" items={orderItems} />
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <InfoList title="Order Details" items={orderItems} />
-
-          {driver ? (
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="text-sm font-semibold text-slate-500">Your Driver</h3>
-              <div className="mt-4 flex items-center gap-4">
-                <div className="relative h-14 w-14 overflow-hidden rounded-full border border-slate-200 bg-white">
-                  {driver.photoUrl ? (
-                    <Image
-                      src={driver.photoUrl}
-                      alt={`${driver.firstName ?? 'Driver'} photo`}
-                      fill
-                      className="object-cover"
-                      sizes="56px"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-purple-700 text-lg font-semibold text-white">
-                      {driverInitial}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className="text-base font-semibold text-slate-900">
-                    {driver.firstName || 'Your driver'}
-                    <span className="font-normal text-slate-500">
-                      {' '}
-                      is your driver
-                    </span>
-                  </p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {titleCase(driver.vehicleType)}
-                  </p>
-                  <p className="mt-1 text-sm font-medium text-amber-600">
-                    <span role="img" aria-hidden>
-                      ★
-                    </span>{' '}
-                    {Number(driver.overAllRating ?? 0).toFixed(1)}
-                  </p>
+            {driver ? (
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h3 className="text-sm font-semibold text-slate-500">
+                  Your Driver
+                </h3>
+                <div className="mt-4 flex items-center gap-4">
+                  <div className="relative h-14 w-14 overflow-hidden rounded-full border border-slate-200 bg-white">
+                    {driver.photoUrl ? (
+                      <Image
+                        src={driver.photoUrl}
+                        alt={`${driver.firstName ?? 'Driver'} photo`}
+                        fill
+                        className="object-cover"
+                        sizes="56px"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-purple-700 text-lg font-semibold text-white">
+                        {driverInitial}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-base font-semibold text-slate-900">
+                      {driver.firstName || 'Your driver'}
+                      <span className="font-normal text-slate-500">
+                        {' '}
+                        is your driver
+                      </span>
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {titleCase(driver.vehicleType)}
+                    </p>
+                    <p className="mt-1 text-sm font-medium text-amber-600">
+                      <span role="img" aria-hidden>
+                        ★
+                      </span>{' '}
+                      {Number(driver.overAllRating ?? 0).toFixed(1)}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : null}
-        </div>
-
-        {driverLocation ? (
-          <TrackingMap driverLocation={driverLocation} />
-        ) : (
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-              Driver Location
-            </p>
-            <p className="mt-4 text-2xl" role="img" aria-hidden>
-              📍
-            </p>
-            <p className="mt-2 text-sm text-slate-500">
-              We&rsquo;ll show your driver&rsquo;s location here once they&rsquo;re on the way.
-            </p>
-          </section>
-        )}
-
-        <footer className="pt-4 text-center text-xs text-slate-500">
-          Refresh this page for the latest status.
-        </footer>
+            ) : null}
+          </div>
+        </LiveTracking>
       </div>
     </main>
   )
