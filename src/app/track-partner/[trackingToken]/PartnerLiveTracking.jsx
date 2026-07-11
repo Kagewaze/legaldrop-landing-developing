@@ -9,8 +9,17 @@ const API_BASE_URL =
 
 // Poll cadence for live driver location + ETA updates.
 const POLL_INTERVAL_MS = 6000
-// Only an in-progress order is worth polling; terminal states are final.
-const ACTIVE_STATUS = 'ongoing'
+
+// Terminal order statuses — confirmed against the backend's authoritative
+// TaskStatusType (legal_drop_be, src/modules/order/entities/delivery_point.entity.ts),
+// the 9-value type order.status is declared as. These 4 are the complete
+// terminal set; the other 5 (pending, assigned, ongoing,
+// awaiting_seller_confirmation, awaiting_handoff) are all non-terminal.
+// Deliberately an allowlist (not "anything that isn't 'ongoing'") — the old
+// ACTIVE_STATUS === 'ongoing' check would have frozen polling on 'assigned',
+// 'awaiting_seller_confirmation', and 'awaiting_handoff', which are real
+// states orders pass through.
+const TERMINAL_STATUSES = ['delivered', 'cancelled', 'failed', 'refunded']
 
 // Small formatting helpers, mirrored from the private view so the live status
 // card renders identically. Kept local to avoid a shared-module refactor
@@ -76,9 +85,10 @@ export function PartnerLiveTracking({
   const [route, setRoute] = useState(initialRoute)
 
   useEffect(() => {
-    // Never start (or immediately stop) polling once the order is no longer
-    // in progress — a delivered/cancelled/failed order will not change again.
-    if (status !== ACTIVE_STATUS) {
+    // Keep polling for any non-terminal status (pending, ongoing, and any
+    // future in-between status this frontend doesn't explicitly know about)
+    // — only stop once the order has actually reached a terminal state.
+    if (TERMINAL_STATUSES.includes(status)) {
       return undefined
     }
 
@@ -145,48 +155,33 @@ export function PartnerLiveTracking({
       {children}
 
       {driverLocation ? (
-        <>
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-              Estimated Arrival
-            </p>
-            {etaText ? (
-              <p className="mt-3 text-3xl font-semibold text-slate-900">
-                {etaText}
-              </p>
-            ) : (
-              <p className="mt-3 text-lg font-medium text-slate-400">
-                Calculating…
-              </p>
-            )}
-          </section>
-
-          <PartnerTrackingMap
-            driverLocation={driverLocation}
-            senderLocation={senderLocation}
-            receivers={receivers}
-            route={route}
-          />
-        </>
-      ) : (
         <section className="rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-            Driver Location
+            Estimated Arrival
           </p>
-          <p className="mt-4 text-2xl" role="img" aria-hidden>
-            📍
-          </p>
-          <p className="mt-2 text-sm text-slate-500">
-            We&rsquo;ll show your driver&rsquo;s location here once they&rsquo;re
-            on the way.
-          </p>
+          {etaText ? (
+            <p className="mt-3 text-3xl font-semibold text-slate-900">
+              {etaText}
+            </p>
+          ) : (
+            <p className="mt-3 text-lg font-medium text-slate-400">
+              Calculating…
+            </p>
+          )}
         </section>
-      )}
+      ) : null}
+
+      <PartnerTrackingMap
+        driverLocation={driverLocation}
+        senderLocation={senderLocation}
+        receivers={receivers}
+        route={route}
+      />
 
       <footer className="pt-4 text-center text-xs text-slate-500">
-        {status === ACTIVE_STATUS
-          ? 'This page updates automatically as your driver moves.'
-          : 'This order is complete — no further updates.'}
+        {TERMINAL_STATUSES.includes(status)
+          ? 'This order is complete — no further updates.'
+          : 'This page updates automatically as your driver moves.'}
       </footer>
     </>
   )

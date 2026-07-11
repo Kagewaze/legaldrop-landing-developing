@@ -143,6 +143,7 @@ export function PartnerTrackingMap({
 }) {
   const mapRef = useRef(null)
   const mapInstanceRef = useRef(null)
+  const advancedMarkerCtorRef = useRef(null)
   const carMarkerRef = useRef(null)
   const carInnerRef = useRef(null)
   const prevDriverRef = useRef(null)
@@ -151,14 +152,13 @@ export function PartnerTrackingMap({
   const driver = toLatLng(driverLocation)
   const hasValidDriver = driver != null
 
-  // Initialise the map, route line, pins and car marker exactly once. Later
-  // driver updates only move + rotate the car and pan the map.
+  // Initialise the map, route line and pickup/destination pins exactly once,
+  // from whatever geography is available — pickup, destinations and route
+  // are known up front regardless of whether a driver has been assigned yet.
+  // The car marker is added here too if a driver is already present, but
+  // its absence must never block the rest of the map from rendering: a
+  // pending order (no driver) still has pickup/destination/route to show.
   useEffect(() => {
-    if (!hasValidDriver) {
-      setStatus('error')
-      return undefined
-    }
-
     if (mapInstanceRef.current) {
       return undefined
     }
@@ -180,17 +180,7 @@ export function PartnerTrackingMap({
           return
         }
 
-        const map = new Map(mapRef.current, {
-          center: driver,
-          zoom: DEFAULT_ZOOM,
-          mapId: MAP_ID,
-          mapTypeControl: false,
-          streetViewControl: false,
-          fullscreenControl: false,
-        })
-
-        const bounds = new LatLngBounds()
-        bounds.extend(driver)
+        advancedMarkerCtorRef.current = AdvancedMarkerElement
 
         // Route polyline. NOTE: route.coordinates is intentionally only the
         // sender → first-stop leg (matches the backend's current
@@ -205,6 +195,44 @@ export function PartnerTrackingMap({
           .map(toLatLng)
           .filter(Boolean)
 
+        const sender = toLatLng(senderLocation)
+        const receiverList = Array.isArray(receivers) ? receivers : []
+        const receiverPositions = receiverList.map((receiver) =>
+          toLatLng(receiver?.receiverLocation ?? receiver),
+        )
+
+        // Nothing at all to plot yet (no sender, no driver, no receivers, no
+        // route) — genuinely nothing to render, unlike the old "no driver"
+        // gate which blocked rendering even when pickup/destination existed.
+        if (
+          !sender &&
+          !driver &&
+          routePath.length === 0 &&
+          !receiverPositions.some(Boolean)
+        ) {
+          setStatus('error')
+          return
+        }
+
+        const initialCenter =
+          sender ?? driver ?? receiverPositions.find(Boolean) ?? routePath[0]
+
+        const map = new Map(mapRef.current, {
+          center: initialCenter,
+          zoom: DEFAULT_ZOOM,
+          mapId: MAP_ID,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
+        })
+
+        const bounds = new LatLngBounds()
+        let pointCount = 0
+        const extend = (point) => {
+          bounds.extend(point)
+          pointCount += 1
+        }
+
         if (routePath.length >= 2) {
           const polyline = new window.google.maps.Polyline({
             path: routePath,
@@ -214,11 +242,10 @@ export function PartnerTrackingMap({
             strokeWeight: 4,
           })
           polyline.setMap(map)
-          routePath.forEach((point) => bounds.extend(point))
+          routePath.forEach(extend)
         }
 
         // Pickup pin (sender).
-        const sender = toLatLng(senderLocation)
         if (sender) {
           const pickupPin = new PinElement({
             background: '#10b981',
@@ -232,13 +259,12 @@ export function PartnerTrackingMap({
             content: pickupPin.element,
             title: 'Pickup',
           })
-          bounds.extend(sender)
+          extend(sender)
         }
 
         // Destination pin for every receiver, numbered in order.
-        const receiverList = Array.isArray(receivers) ? receivers : []
         receiverList.forEach((receiver, index) => {
-          const position = toLatLng(receiver?.receiverLocation ?? receiver)
+          const position = receiverPositions[index]
           if (!position) {
             return
           }
@@ -255,31 +281,35 @@ export function PartnerTrackingMap({
             content: pin.element,
             title: receiver?.receiverName || `Stop ${index + 1}`,
           })
-          bounds.extend(position)
+          extend(position)
         })
 
-        // Car marker for the live driver position.
-        const { wrapper, inner } = createCarElement()
-        const initialHeading = Number(driverLocation?.heading)
-        if (!Number.isNaN(initialHeading)) {
-          inner.style.transform = `rotate(${initialHeading}deg)`
+        // Car marker for the live driver position, if already assigned. If
+        // the driver is assigned later, the update effect below creates it.
+        if (driver) {
+          const { wrapper, inner } = createCarElement()
+          const initialHeading = Number(driverLocation?.heading)
+          if (!Number.isNaN(initialHeading)) {
+            inner.style.transform = `rotate(${initialHeading}deg)`
+          }
+          carMarkerRef.current = new AdvancedMarkerElement({
+            map,
+            position: driver,
+            content: wrapper,
+            title: 'Driver',
+          })
+          carInnerRef.current = inner
+          prevDriverRef.current = driver
+          extend(driver)
         }
-        carMarkerRef.current = new AdvancedMarkerElement({
-          map,
-          position: driver,
-          content: wrapper,
-          title: 'Driver',
-        })
-        carInnerRef.current = inner
-        prevDriverRef.current = driver
 
         mapInstanceRef.current = map
 
-        // Frame everything on first paint; if we somehow only have the driver,
-        // fall back to a sensible zoom rather than a world view.
+        // Frame everything on first paint; a single-point bounds makes
+        // fitBounds over-zoom, so fall back to a sensible default instead.
         if (!bounds.isEmpty()) {
           map.fitBounds(bounds, 64)
-          if (routePath.length < 2 && receiverList.length === 0 && !sender) {
+          if (pointCount <= 1) {
             map.setZoom(DEFAULT_ZOOM)
           }
         }
@@ -298,12 +328,37 @@ export function PartnerTrackingMap({
       cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasValidDriver])
+  }, [])
 
   // Move + rotate the car on each driver update, panning to keep it in view.
   // Prefer a backend heading; otherwise derive it from the movement delta.
+  // Also handles the driver appearing for the first time after initial map
+  // load (order went from pending → ongoing mid-poll): the car marker is
+  // created here rather than at init in that case.
   useEffect(() => {
-    if (!hasValidDriver || !mapInstanceRef.current || !carMarkerRef.current) {
+    if (!hasValidDriver || status !== 'ready' || !mapInstanceRef.current) {
+      return
+    }
+
+    if (!carMarkerRef.current) {
+      if (!advancedMarkerCtorRef.current) {
+        return
+      }
+
+      const { wrapper, inner } = createCarElement()
+      const initialHeading = Number(driverLocation?.heading)
+      if (!Number.isNaN(initialHeading)) {
+        inner.style.transform = `rotate(${initialHeading}deg)`
+      }
+      carMarkerRef.current = new advancedMarkerCtorRef.current({
+        map: mapInstanceRef.current,
+        position: driver,
+        content: wrapper,
+        title: 'Driver',
+      })
+      carInnerRef.current = inner
+      prevDriverRef.current = driver
+      mapInstanceRef.current.panTo(driver)
       return
     }
 
@@ -326,7 +381,7 @@ export function PartnerTrackingMap({
 
     prevDriverRef.current = driver
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [driver?.lat, driver?.lng, hasValidDriver])
+  }, [driver?.lat, driver?.lng, hasValidDriver, status])
 
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
