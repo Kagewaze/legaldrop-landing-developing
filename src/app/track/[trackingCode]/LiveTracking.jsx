@@ -9,8 +9,17 @@ const API_BASE_URL =
 
 // Poll cadence for live driver location + ETA updates.
 const POLL_INTERVAL_MS = 6000
-// Only an in-progress order is worth polling; terminal states are final.
-const ACTIVE_STATUS = 'ongoing'
+
+// Terminal order statuses — confirmed against the backend's authoritative
+// TaskStatusType (legal_drop_be, src/modules/order/entities/delivery_point.entity.ts),
+// the 9-value type order.status is declared as. These 4 are the complete
+// terminal set; the other 5 (pending, assigned, ongoing,
+// awaiting_seller_confirmation, awaiting_handoff) are all non-terminal.
+// Deliberately an allowlist (not "anything that isn't 'ongoing'") — an
+// ACTIVE_STATUS === 'ongoing' check would freeze polling on 'assigned',
+// 'awaiting_seller_confirmation', and 'awaiting_handoff', which are real
+// states orders pass through.
+const TERMINAL_STATUSES = ['delivered', 'cancelled', 'failed', 'refunded']
 
 // Small formatting helpers, mirrored from page.jsx so the live status card
 // renders identically. Kept local to avoid a shared-module refactor.
@@ -65,9 +74,11 @@ export function LiveTracking({
   const [eta, setEta] = useState(initialEta)
 
   useEffect(() => {
-    // Never start (or immediately stop) polling once the order is no longer
-    // in progress — a delivered/cancelled/failed order will not change again.
-    if (status !== ACTIVE_STATUS) {
+    // Keep polling for any non-terminal status (pending, assigned, ongoing,
+    // and any future in-between status this frontend doesn't explicitly
+    // know about) — only stop once the order has actually reached a
+    // terminal state.
+    if (TERMINAL_STATUSES.includes(status)) {
       return undefined
     }
 
@@ -165,9 +176,9 @@ export function LiveTracking({
       )}
 
       <footer className="pt-4 text-center text-xs text-slate-500">
-        {status === ACTIVE_STATUS
-          ? 'This page updates automatically as your driver moves.'
-          : 'This order is complete — no further updates.'}
+        {TERMINAL_STATUSES.includes(status)
+          ? 'This order is complete — no further updates.'
+          : 'This page updates automatically as your driver moves.'}
       </footer>
     </>
   )
