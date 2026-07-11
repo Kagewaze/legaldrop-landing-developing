@@ -6,10 +6,9 @@ import { useEffect, useRef, useState } from 'react'
 // Hardcoded to match this repo's convention (see API_BASE_URL in page.jsx).
 const GOOGLE_MAPS_API_KEY = 'AIzaSyA5Hf0alZULns0oB_VjhwOEQJog4LvYF1w'
 
-// AdvancedMarkerElement requires a Map ID. 'DEMO_MAP_ID' works out of the
-// box for development; swap in a production Map ID created in Cloud Console
-// (Google Maps Platform > Map Management) before launch.
-const MAP_ID = 'DEMO_MAP_ID'
+// Production Cloud Console Map ID for the legal-drop project. Vector map —
+// required by AdvancedMarkerElement.
+const MAP_ID = 'ea0f34dfd1b56b44758f5576'
 const DEFAULT_ZOOM = 14
 
 // Duplicated bootstrap loader — intentionally NOT shared with the private
