@@ -1,0 +1,186 @@
+'use client'
+
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+
+import {
+  PACKAGE_COUNT_MAX,
+  PACKAGE_COUNT_MIN,
+  WEIGHT_OPTIONS,
+  hasBothAddresses,
+  useSendFlow,
+} from '@/lib/send-flow'
+import { PriceBreakdown } from '@/components/send/PriceBreakdown'
+import { VehiclePicker } from '@/components/send/VehiclePicker'
+import { useVehicleQuotes } from '@/components/send/useVehicleQuotes'
+import { vehicleById } from '@/components/send/vehicles'
+
+// Step 2 — packages, vehicle and live price.
+
+function Stepper({ value, onChange }) {
+  return (
+    <div className="flex items-center gap-3.5">
+      <button
+        type="button"
+        onClick={() => onChange(value - 1)}
+        disabled={value <= PACKAGE_COUNT_MIN}
+        aria-label="One fewer package"
+        className="h-12 w-12 rounded-full border-[1.5px] border-[#e3dfe8] bg-white text-[22px] font-bold leading-none text-brand-600 transition-colors hover:bg-[#faf7fd] disabled:cursor-not-allowed disabled:text-[#c9c3d0] disabled:hover:bg-white"
+      >
+        −
+      </button>
+      <div
+        className="min-w-[32px] text-center text-[20px] font-extrabold text-[#17131c]"
+        aria-live="polite"
+      >
+        {value}
+      </div>
+      <button
+        type="button"
+        onClick={() => onChange(value + 1)}
+        disabled={value >= PACKAGE_COUNT_MAX}
+        aria-label="One more package"
+        className="h-12 w-12 rounded-full border-[1.5px] border-[#e3dfe8] bg-white text-[22px] font-bold leading-none text-brand-600 transition-colors hover:bg-[#faf7fd] disabled:cursor-not-allowed disabled:text-[#c9c3d0] disabled:hover:bg-white"
+      >
+        +
+      </button>
+    </div>
+  )
+}
+
+export default function SendDetailsPage() {
+  const router = useRouter()
+  const flow = useSendFlow()
+
+  const complete = hasBothAddresses(flow)
+
+  // Precondition guard.
+  //
+  // Waits for `hydrated` — sessionStorage cannot be read during render, so on
+  // the first frame the addresses are always absent and redirecting there would
+  // bounce every refresh straight back to step 1.
+  //
+  // `replace`, not `push`: a guard redirect must not add a history entry, or
+  // the back button lands the customer on a page that immediately forwards them
+  // again, trapping them.
+  useEffect(() => {
+    if (flow.hydrated && !complete) {
+      router.replace('/send')
+    }
+  }, [flow.hydrated, complete, router])
+
+  const { quotes, status } = useVehicleQuotes({
+    pickup: flow.pickup,
+    dropoff: flow.dropoff,
+    packageCount: flow.packageCount,
+    weight: flow.weight,
+  })
+
+  if (!flow.hydrated || !complete) {
+    return (
+      <div className="px-6 py-16 text-center text-[15px] text-[#5f5868] sm:px-8">
+        Loading your details…
+      </div>
+    )
+  }
+
+  const vehicle = vehicleById(flow.vehicle)
+  const quote = quotes[flow.vehicle] ?? null
+  const weightLabel = WEIGHT_OPTIONS.find(
+    (option) => option.id === flow.weight,
+  )?.label
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px]">
+      <div className="px-6 py-8 sm:px-8">
+        <h1 className="text-[26px] font-extrabold tracking-[-0.02em] text-[#17131c]">
+          Details and vehicle
+        </h1>
+        {/* Addresses only — no distance here. Distance comes from the quote and
+            is shown with the fare, where it is a real number. */}
+        <p className="mt-2 text-[15px] text-[#5f5868]">
+          {flow.pickup.address} → {flow.dropoff.address}
+        </p>
+
+        <div className="mb-6 mt-6 flex flex-wrap items-center justify-between gap-5 rounded-2xl border-[1.5px] border-[#eeebf1] px-4 py-4 sm:px-5">
+          <div>
+            <div className="text-[15px] font-bold text-[#17131c]">
+              Number of packages
+            </div>
+            <div className="mt-0.5 text-[13px] text-[#5f5868]">
+              Same pickup and dropoff
+            </div>
+          </div>
+          <Stepper value={flow.packageCount} onChange={flow.setPackageCount} />
+        </div>
+
+        <div className="mb-3 text-[13px] font-extrabold tracking-[0.08em] text-[#8d8695]">
+          VEHICLE
+        </div>
+        <VehiclePicker
+          selected={flow.vehicle}
+          onSelect={flow.setVehicle}
+          quotes={quotes}
+          status={status}
+        />
+
+        <label className="mt-6 block max-w-[420px]">
+          <span className="mb-2.5 block text-[13px] font-extrabold tracking-[0.08em] text-[#8d8695]">
+            PACKAGE WEIGHT
+          </span>
+          <select
+            value={flow.weight}
+            onChange={(event) => flow.setWeight(event.target.value)}
+            className="w-full appearance-none rounded-xl border-[1.5px] border-[#e3dfe8] bg-white px-4 py-3.5 text-[16px] font-semibold text-[#17131c] focus:border-brand-600 focus:outline-none focus:ring-0"
+          >
+            {WEIGHT_OPTIONS.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <span className="mt-2 block text-[13px] text-[#5f5868]">
+            Heavier packages may add a handling charge.
+          </span>
+        </label>
+      </div>
+
+      <div className="flex flex-col border-t border-[#f0eef2] bg-[#faf7fd] px-6 py-8 sm:px-8 lg:border-l lg:border-t-0">
+        {quote ? (
+          <PriceBreakdown
+            quote={quote}
+            vehicleName={vehicle.name}
+            packageCount={flow.packageCount}
+            weightLabel={weightLabel}
+          />
+        ) : (
+          <div>
+            <div className="text-[12px] font-extrabold tracking-[0.1em] text-[#8d8695]">
+              FARE ESTIMATE
+            </div>
+            <p className="mt-3 text-[15px] text-[#5f5868]">
+              {status === 'loading' || status === 'idle'
+                ? 'Calculating your price…'
+                : 'We couldn’t price this route right now. Please try again shortly.'}
+            </p>
+          </div>
+        )}
+
+        <div className="mt-auto pt-6">
+          {/* Step 3 does not exist. The button is inert rather than pointing at
+              a route that would 404 mid-flow. */}
+          <button
+            type="button"
+            disabled
+            className="w-full cursor-not-allowed rounded-xl bg-[#e6e1ea] px-5 py-4 text-[16px] font-bold text-[#8d8695]"
+          >
+            Continue to payment
+          </button>
+          <div className="mt-3 text-center text-[12px] text-[#8d8695]">
+            Payment is not available yet.
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

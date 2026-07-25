@@ -23,7 +23,10 @@
 // grid links a row only when that row's route is live. Read it; do not mutate.
 export const ROUTES = {
   // Services
-  send: { href: '/send', live: false },
+  // Steps 1 and 2 of the send flow exist. Step 3 (payment) does not yet, so a
+  // customer can price a delivery but not book one — the flow ends on a
+  // disabled "Continue to payment".
+  send: { href: '/send', live: true },
   medical: { href: '/medical', live: false },
   legal: { href: '/legal', live: false },
   ride: { href: '/ride', live: false },

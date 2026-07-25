@@ -29,43 +29,51 @@ export function Hero() {
           </p>
 
           {sendIsLive ? (
-            /* PHASE 1 (send flow) — SCAFFOLDING, NOT YET WIRED.
+            /* The two "fields" below are STATIC — deliberately not inputs.
              *
-             * These inputs have no state, no validation, no geocoding and no
-             * submit handler. Flipping ROUTES.send.live to true is NOT on its
-             * own sufficient to ship this: a form that accepts an address and
-             * does nothing with it is worse than no form, because the customer
-             * believes they have started a booking. Wire it to the send flow —
-             * address autocomplete, quote request, and a real submit — in the
-             * same change that flips the flag. */
-            <div className="mt-[22px]">
-              <div className="flex flex-col gap-2.5">
-                <label className="flex items-center gap-3 rounded-xl border-[1.5px] border-[#e3dfe8] px-4 py-3.5 focus-within:border-brand-600">
+             * Real address entry lives on /send, where the Places autocomplete,
+             * the geocoded coordinates and the flow state all are. Putting a
+             * working form here would mean a second copy of that component and
+             * its state, plus carrying a half-entered address across a
+             * navigation — for a form the customer reaches in one click anyway.
+             *
+             * So this is a preview of that form, not the form. The whole card
+             * is a single link into /send. There is no <input> and nothing
+             * focusable or typeable: a field that accepts text and then throws
+             * it away is worse than no field, because the customer believes
+             * they have already started their booking.
+             *
+             * If this ever needs to accept a real address, move the autocomplete
+             * into a shared component — do not add an <input> back here. */
+            <Link
+              href={ROUTES.send.href}
+              aria-label="Send a package — enter your pickup and dropoff addresses"
+              className="group mt-[22px] block select-none"
+            >
+              <div className="flex flex-col gap-2.5" aria-hidden="true">
+                <div className="flex items-center gap-3 rounded-xl border-[1.5px] border-[#e3dfe8] px-4 py-3.5 transition-colors group-hover:border-[#d5cddd]">
                   <span className="h-[11px] w-[11px] flex-none rounded-full border-[2.5px] border-brand-600" />
-                  <input
-                    placeholder="Pickup address"
-                    className="w-full border-none bg-transparent p-0 text-[16px] text-[#17131c] placeholder:text-[#8d8695] focus:outline-none focus:ring-0"
-                  />
-                </label>
-                <label className="flex items-center gap-3 rounded-xl border-[1.5px] border-[#e3dfe8] px-4 py-3.5 focus-within:border-brand-600">
+                  <span className="text-[16px] text-[#8d8695]">
+                    Pickup address
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 rounded-xl border-[1.5px] border-[#e3dfe8] px-4 py-3.5 transition-colors group-hover:border-[#d5cddd]">
                   <span className="h-[11px] w-[11px] flex-none bg-brand-600" />
-                  <input
-                    placeholder="Dropoff address"
-                    className="w-full border-none bg-transparent p-0 text-[16px] text-[#17131c] placeholder:text-[#8d8695] focus:outline-none focus:ring-0"
-                  />
-                </label>
+                  <span className="text-[16px] text-[#8d8695]">
+                    Dropoff address
+                  </span>
+                </div>
               </div>
 
               <div className="mt-[18px] flex items-center gap-[18px]">
-                <Link
-                  href={ROUTES.send.href}
-                  className="flex-1 rounded-xl bg-brand-600 px-5 py-4 text-center text-[16px] font-bold text-white transition-colors hover:bg-brand-700"
-                >
+                {/* A span, not a nested link — an <a> inside an <a> is invalid
+                    and browsers will not nest the click targets predictably. */}
+                <span className="flex-1 rounded-xl bg-brand-600 px-5 py-4 text-center text-[16px] font-bold text-white transition-colors group-hover:bg-brand-700">
                   See price
-                </Link>
+                </span>
                 <PriceFrom />
               </div>
-            </div>
+            </Link>
           ) : (
             <div className="mt-[22px] flex items-center gap-[18px]">
               <Link
