@@ -15,8 +15,7 @@ import { importMapsLibrary } from '@/lib/maps-loader'
 //     when nothing has been selected and there are no coordinates yet.
 //
 //  2. Never drive element.value from React state. This component deliberately
-//     never writes .value at all. The committed address is displayed in the
-//     confirmation row below the input instead, so there is nothing to sync.
+//     never writes .value at all.
 //
 //  3. NEVER write a guard that compares the input's value against React state
 //     to detect a "programmatic echo". Assigning .value fires NO input event,
@@ -30,13 +29,116 @@ import { importMapsLibrary } from '@/lib/maps-loader'
 //
 // React 18 does not bind props or events to custom elements, so the element is
 // constructed imperatively and wired with addEventListener + cleanup.
+//
+// ─── STYLING CONTRACT ───────────────────────────────────────────────────────
+//
+// The shadow root is CLOSED (verified on the pinned 3.64). Consequences:
+//   - descendant selectors and > can never reach the internal input;
+//   - ::part() only works if Google tagged internals with part attributes,
+//     which could not be verified;
+//   - inherited properties (font-family, color) and CSS CUSTOM PROPERTIES do
+//     cross a closed boundary, so the --gmp-mat-* Material tokens below are the
+//     only supported lever.
+//
+// Whether those tokens neutralise the internal input's own border could NOT be
+// verified locally: the referrer-restricted key leaves the element degraded
+// (it paints only the search icon, with no internal input at all).
+//
+// So this layout does not DEPEND on them. Our row draws no border of its own —
+// the container around both rows is the only frame. If the tokens work, the
+// field is chromeless inside our container. If they do not, Google's border is
+// the ONLY border present, not a second one. Either way there is no box-in-box.
+//
+// Same reasoning for focus: the row's focus affordance is a background TINT,
+// never a ring or border. A tint cannot stack with Google's own focus outline
+// the way two borders would.
+
+const THEME_STYLE_ID = 'dp-place-autocomplete-theme'
+
+const THEME_CSS = `
+.dp-place-field gmp-place-autocomplete {
+  /* Material tokens — the only values that cross a closed shadow root.
+     Transparent surface/outline is the attempt to neutralise the internal
+     input's own chrome. Harmless if unsupported. */
+  --gmp-mat-color-surface: transparent;
+  --gmp-mat-color-surface-container-highest: transparent;
+  --gmp-mat-color-surface-variant: transparent;
+  --gmp-mat-color-outline: transparent;
+  --gmp-mat-color-outline-variant: transparent;
+  --gmp-mat-color-on-surface: #17131c;
+  --gmp-mat-color-on-surface-variant: #8d8695;
+  --gmp-mat-color-primary: #7b2fbe;
+  --gmp-mat-font-family: var(--font-inter), system-ui, sans-serif;
+
+  /* Applied to the host itself, which we can always style. */
+  display: block;
+  background: transparent;
+  border: 0;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 16px;
+
+  /* Google ships the host with an intrinsic width (~320px) that does not yield
+     to flex shrinking, so the row overflowed its container and pushed the
+     committed-address check outside the rounded box — badly at mobile widths.
+     min-width:0 is the load-bearing declaration: without it, width/max-width
+     are ignored because min-width wins over both. !important because these
+     compete with Google's own injected stylesheet. */
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+`
+
+// Injected once into <head> rather than rendered per instance, so two fields do
+// not emit duplicate rules. Client-only, so there is no SSR/hydration concern.
+function ensureThemeStyles() {
+  if (typeof document === 'undefined') {
+    return
+  }
+
+  if (document.getElementById(THEME_STYLE_ID)) {
+    return
+  }
+
+  const style = document.createElement('style')
+  style.id = THEME_STYLE_ID
+  style.textContent = THEME_CSS
+  document.head.append(style)
+}
+
+function RailGlyph({ variant }) {
+  // The pickup dot and dropoff square, joined by a hairline that runs between
+  // the two rows. Each row draws only its half of the line — from the glyph to
+  // its own edge — so the join is height-agnostic and stays aligned however
+  // tall the rows become.
+  const isPickup = variant === 'pickup'
+
+  return (
+    <span
+      aria-hidden
+      className="relative flex w-3 flex-none items-center justify-center self-stretch"
+    >
+      <span
+        className={`absolute left-1/2 w-px -translate-x-1/2 bg-[#e3dfe8] ${
+          isPickup ? 'top-1/2 bottom-0' : 'top-0 bottom-1/2'
+        }`}
+      />
+      <span
+        className={
+          isPickup
+            ? 'relative z-10 h-[9px] w-[9px] rounded-full border-2 border-brand-600 bg-white'
+            : 'relative z-10 h-[9px] w-[9px] bg-[#17131c]'
+        }
+      />
+    </span>
+  )
+}
 
 export function AddressAutocomplete({
   label,
-  placeholder,
+  variant = 'pickup',
   selected,
   onSelect,
-  tone = 'default',
 }) {
   const containerRef = useRef(null)
 
@@ -45,6 +147,12 @@ export function AddressAutocomplete({
   onSelectRef.current = onSelect
 
   const [status, setStatus] = useState('loading') // 'loading' | 'ready' | 'error'
+
+  // Styling only — kept out of the init effect below so that effect stays
+  // exactly what it was.
+  useEffect(() => {
+    ensureThemeStyles()
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -64,7 +172,16 @@ export function AddressAutocomplete({
           includedRegionCodes: ['ca'],
         })
 
-        element.style.width = '100%'
+        // Visual only. The label is now visually hidden, so the placeholder is
+        // what tells the customer which field this is. Support for this
+        // property on 3.64 could not be verified locally (the element is
+        // degraded without a valid referrer); assigning it is harmless if
+        // unsupported, in which case Google's default placeholder shows.
+        try {
+          element.placeholder = label
+        } catch (error) {
+          // Read-only or unsupported — fall back to Google's default.
+        }
 
         handleSelect = async (event) => {
           try {
@@ -137,50 +254,49 @@ export function AddressAutocomplete({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const captionClass =
-    tone === 'accent'
-      ? 'text-[11px] font-bold tracking-[0.08em] text-brand-600'
-      : 'text-[11px] font-bold tracking-[0.08em] text-[#8d8695]'
-
-  const borderClass =
-    tone === 'accent'
-      ? 'border-brand-600'
-      : 'border-[#e3dfe8] focus-within:border-brand-600'
-
   return (
-    <div>
-      <div className={`rounded-xl border-[1.5px] px-3.5 py-3 ${borderClass}`}>
-        <span className={`block ${captionClass}`}>{label}</span>
+    <div
+      className={`dp-place-field flex min-h-[56px] items-stretch gap-3 px-4 transition-colors focus-within:bg-[#faf8fc] ${
+        variant === 'pickup' ? 'rounded-t-2xl' : 'rounded-b-2xl'
+      }`}
+    >
+      <RailGlyph variant={variant} />
 
-        <div ref={containerRef} className="mt-1" />
+      {/* min-w-0 is required on BOTH this flex item and the one below it.
+          A flex item defaults to min-width:auto, i.e. it refuses to shrink
+          below its content — so without it the Google element's intrinsic
+          ~320px width pushes the committed-address check outside the rounded
+          container (badly at mobile widths). */}
+      <div
+        className={`flex min-w-0 flex-1 items-center gap-3 ${
+          variant === 'dropoff' ? 'border-t border-[#f0eef2]' : ''
+        }`}
+      >
+        {/* Visually hidden, but still announced. The uppercase PICKUP/DROPOFF
+            captions are gone; the placeholder carries that meaning visually. */}
+        <span className="sr-only">{label}</span>
+
+        <div ref={containerRef} className="min-w-0 flex-1" />
 
         {status === 'loading' && (
-          <p className="mt-1 text-[13px] text-[#8d8695]">Loading addresses…</p>
+          <span className="flex-none text-[13px] text-[#8d8695]">…</span>
         )}
 
         {status === 'error' && (
-          <p className="mt-1 text-[13px] text-rose-600">
-            Address search is unavailable right now. Please try again shortly.
-          </p>
+          <span className="flex-none text-[13px] text-rose-600">
+            Unavailable
+          </span>
         )}
-      </div>
 
-      {/* The committed selection, shown as text rather than written back into
-          the input — see rule 2. This is also what makes a refresh legible:
-          state is restored from sessionStorage and displayed here, with no
-          attempt to repopulate the uncontrolled element. */}
-      {selected ? (
-        <p className="mt-1.5 flex items-start gap-1.5 px-1 text-[13px] text-[#5f5868]">
-          <span aria-hidden className="mt-[2px] text-brand-600">
+        {selected && status === 'ready' && (
+          <span
+            aria-hidden
+            className="flex-none text-[15px] font-semibold text-brand-600"
+          >
             ✓
           </span>
-          <span>{selected.address}</span>
-        </p>
-      ) : (
-        <p className="mt-1.5 px-1 text-[13px] text-[#8d8695]">
-          {placeholder}
-        </p>
-      )}
+        )}
+      </div>
     </div>
   )
 }

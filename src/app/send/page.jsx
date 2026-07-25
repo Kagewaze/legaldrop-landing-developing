@@ -36,54 +36,40 @@ export default function SendAddressesPage() {
         </h1>
         <p className="mt-2 text-[15px] text-[#5f5868]">Where is it going?</p>
 
-        <div className="mt-6 flex gap-3.5">
-          {/* Pickup/dropoff connector, as in the design. */}
-          <div
-            aria-hidden
-            className="hidden flex-col items-center pt-[18px] sm:flex"
-          >
-            <span className="h-[11px] w-[11px] rounded-full border-[2.5px] border-brand-600" />
-            <span className="my-1.5 w-[2px] flex-1 bg-[#e3dfe8]" />
-            <span className="h-[10px] w-[10px] bg-brand-600" />
-          </div>
-
-          <div className="flex flex-1 flex-col gap-3">
-            <AddressAutocomplete
-              label="PICKUP"
-              placeholder="Search for a pickup address"
-              selected={flow.pickup}
-              onSelect={flow.setPickup}
-            />
-            <AddressAutocomplete
-              label="DROPOFF"
-              placeholder="Search for a dropoff address"
-              selected={flow.dropoff}
-              onSelect={flow.setDropoff}
-              tone="accent"
-            />
-          </div>
+        {/* ONE container holding both rows. The rows carry no border of their
+            own — this is the only frame, which is what stops the field reading
+            as a box inside a box. Soft shadow plus a hairline ring for
+            definition against the white card, rather than a hard border. */}
+        <div className="mt-6 rounded-2xl bg-white shadow-[0_1px_2px_rgba(23,19,28,0.04),0_6px_20px_rgba(23,19,28,0.06)] ring-1 ring-[#efecf2]">
+          <AddressAutocomplete
+            label="Pickup address"
+            variant="pickup"
+            selected={flow.pickup}
+            onSelect={flow.setPickup}
+          />
+          <AddressAutocomplete
+            label="Dropoff address"
+            variant="dropoff"
+            selected={flow.dropoff}
+            onSelect={flow.setDropoff}
+          />
         </div>
 
         {canContinue ? (
           <Link
             href="/send/details"
-            className="mt-7 block w-full rounded-xl bg-brand-600 px-5 py-4 text-center text-[16px] font-bold text-white transition-colors hover:bg-brand-700"
+            className="mt-6 block w-full rounded-xl bg-brand-600 px-5 py-[18px] text-center text-[16px] font-bold text-white transition-colors hover:bg-brand-700"
           >
             Continue
           </Link>
         ) : (
-          <>
-            <button
-              type="button"
-              disabled
-              className="mt-7 w-full cursor-not-allowed rounded-xl bg-[#e6e1ea] px-5 py-4 text-[16px] font-bold text-[#8d8695]"
-            >
-              Continue
-            </button>
-            <p className="mt-2.5 text-center text-[13px] text-[#8d8695]">
-              Choose both addresses from the suggestions to continue.
-            </p>
-          </>
+          <button
+            type="button"
+            disabled
+            className="mt-6 w-full cursor-not-allowed rounded-xl bg-[#ece7f1] px-5 py-[18px] text-[16px] font-bold text-[#9b93a5]"
+          >
+            Continue
+          </button>
         )}
       </div>
 
