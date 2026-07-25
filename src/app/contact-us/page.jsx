@@ -9,6 +9,7 @@ import { useForm } from 'react-hook-form';
 import { useState } from 'react';
 import { BuildingOffice2Icon, EnvelopeIcon, PhoneIcon } from '@heroicons/react/24/outline'
 import axios from "axios"
+import { API_BASE_URL } from '@/lib/config'
 
 export default function ContactUs() {
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
@@ -22,7 +23,7 @@ export default function ContactUs() {
     let config = {
       method: 'post',
       maxBodyLength: Infinity,
-      url: 'https://seal-app-9hhnm.ondigitalocean.app/api/contact-form',
+      url: `${API_BASE_URL}/contact-form`,
       headers: { 
         'Content-Type': 'application/json',
       },

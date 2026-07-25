@@ -1,13 +1,13 @@
 import Image from 'next/image'
 
+import { API_BASE_URL } from '@/lib/config'
+
 import { PartnerLiveTracking } from './PartnerLiveTracking'
 
 // Partner (full) tracking view. Consumes the backend's partner endpoint,
 // which returns the sender, every receiver, and the route geometry — unlike
 // the private /track/[trackingCode] view (driver-approaching-you only).
-// Hardcoded base to match this repo's convention (see /track/[trackingCode]).
-const API_BASE_URL =
-  'https://seal-app-9hhnm.ondigitalocean.app/api/public/track-partner'
+const TRACK_PARTNER_ENDPOINT = `${API_BASE_URL}/public/track-partner`
 
 function formatDate(value) {
   if (!value) {
@@ -66,7 +66,7 @@ function InfoList({ title, items }) {
 
 async function getPartnerTrackingDetails(trackingToken) {
   try {
-    const response = await fetch(`${API_BASE_URL}/${trackingToken}`, {
+    const response = await fetch(`${TRACK_PARTNER_ENDPOINT}/${trackingToken}`, {
       cache: 'no-store',
     })
 

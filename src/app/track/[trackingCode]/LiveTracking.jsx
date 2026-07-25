@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react'
 
+import { API_BASE_URL } from '@/lib/config'
+
 import { TrackingMap } from './TrackingMap'
 
-const API_BASE_URL =
-  'https://seal-app-9hhnm.ondigitalocean.app/api/public/track'
+const TRACK_ENDPOINT = `${API_BASE_URL}/public/track`
 
 // Poll cadence for live driver location + ETA updates.
 const POLL_INTERVAL_MS = 6000
@@ -86,7 +87,7 @@ export function LiveTracking({
 
     const poll = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/${trackingCode}`, {
+        const response = await fetch(`${TRACK_ENDPOINT}/${trackingCode}`, {
           cache: 'no-store',
         })
 

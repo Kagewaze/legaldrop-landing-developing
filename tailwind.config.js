@@ -36,6 +36,21 @@ module.exports = {
       },
       colors: ({ colors }) => ({
         gray: colors.neutral,
+        // Druppr brand purple. 600 is #7B2FBE, the prototype-confirmed brand
+        // colour; 500/700/800 are a hue-locked ramp around it (hsl 272°) for
+        // hover, active and emphasis states. brand-600 on white is 7.0:1, so
+        // white-on-brand-600 is safe for buttons at any text size.
+        //
+        // Token first, converge later: the ~26 scattered purple-600/700/800
+        // utilities and the two hex literals in PartnerTrackingMap.jsx are
+        // deliberately NOT migrated in this commit. This only makes
+        // bg-brand-600 (etc.) available so new work has one thing to target.
+        brand: {
+          500: '#8E43D0',
+          600: '#7B2FBE',
+          700: '#65259D',
+          800: '#521C82',
+        },
       }),
       fontFamily: {
         sans: 'var(--font-inter)',

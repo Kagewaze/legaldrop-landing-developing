@@ -1,10 +1,11 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
+import { API_BASE_URL } from '@/lib/config'
+
 import { PaymentAlert } from './PaymentAlert'
 
-const API_BASE_URL =
-  'https://seal-app-9hhnm.ondigitalocean.app/api/order/external-payment'
+const EXTERNAL_PAYMENT_ENDPOINT = `${API_BASE_URL}/order/external-payment`
 
 const currencyFormatter = new Intl.NumberFormat('en-CA', {
   style: 'currency',
@@ -68,9 +69,12 @@ function InfoList({ title, items }) {
 
 async function getPaymentDetails(orderId, trackingCode) {
   try {
-    const response = await fetch(`${API_BASE_URL}/${orderId}/${trackingCode}`, {
-      cache: 'no-store',
-    })
+    const response = await fetch(
+      `${EXTERNAL_PAYMENT_ENDPOINT}/${orderId}/${trackingCode}`,
+      {
+        cache: 'no-store',
+      },
+    )
 
     const contentType = response.headers.get('content-type') ?? ''
     const isJson = contentType.includes('application/json')

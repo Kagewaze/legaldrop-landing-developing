@@ -1,9 +1,10 @@
 import Image from 'next/image'
 
+import { API_BASE_URL } from '@/lib/config'
+
 import { LiveTracking } from './LiveTracking'
 
-const API_BASE_URL =
-  'https://seal-app-9hhnm.ondigitalocean.app/api/public/track'
+const TRACK_ENDPOINT = `${API_BASE_URL}/public/track`
 
 function formatDate(value) {
   if (!value) {
@@ -62,7 +63,7 @@ function InfoList({ title, items }) {
 
 async function getTrackingDetails(trackingCode) {
   try {
-    const response = await fetch(`${API_BASE_URL}/${trackingCode}`, {
+    const response = await fetch(`${TRACK_ENDPOINT}/${trackingCode}`, {
       cache: 'no-store',
     })
 
