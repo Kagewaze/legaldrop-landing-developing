@@ -8,6 +8,14 @@ import 'server-only'
 // deliberately NOT prefixed NEXT_PUBLIC_, so Next replaces it with undefined in
 // any browser bundle — the guard exists so that mistake surfaces at build time
 // rather than as a silently empty section in production.
+//
+// Uses Places API (NEW) — places.googleapis.com/v1. This is the version the
+// project standardises on; the send flow's address autocomplete will use the
+// same API.
+//
+// OPERATIONAL NOTE: "Places API (New)" is a SEPARATE product from the legacy
+// "Places API" in Google Cloud Console. Enabling one does not enable the other.
+// If this starts returning 403 with SERVICE_DISABLED, that is the cause.
 
 // The business's Google Place ID.
 const PLACE_ID = 'ChIJ6bQwlukxK4gRFaB2nvrNqWw'
@@ -16,8 +24,12 @@ const PLACE_ID = 'ChIJ6bQwlukxK4gRFaB2nvrNqWw'
 // Built from the Place ID so it cannot drift from the reviews being shown.
 export const GOOGLE_PLACE_URL = `https://www.google.com/maps/place/?q=place_id:${PLACE_ID}`
 
-const PLACE_DETAILS_ENDPOINT =
-  'https://maps.googleapis.com/maps/api/place/details/json'
+// Places API (New): the place ID goes in the PATH, not a query parameter.
+const PLACE_DETAILS_ENDPOINT = `https://places.googleapis.com/v1/places/${PLACE_ID}`
+
+// Field mask is REQUIRED by the new API — an unmasked request is rejected, and
+// the mask determines the billing SKU. Request only what is rendered.
+const FIELD_MASK = 'rating,userRatingCount,reviews'
 
 // 24 hours.
 //
@@ -30,12 +42,41 @@ const PLACE_DETAILS_ENDPOINT =
 // regardless of traffic. Do not lower this without checking the billing impact.
 const REVALIDATE_SECONDS = 86400
 
+// Places API (New) returns localised strings as { text, languageCode } objects
+// rather than bare strings — review.text and review.originalText both use this
+// shape. Reads the string out defensively, and tolerates a bare string in case
+// the shape ever changes back or differs by field.
+function readLocalizedText(value) {
+  if (typeof value === 'string') {
+    return value
+  }
+
+  if (typeof value?.text === 'string') {
+    return value.text
+  }
+
+  return ''
+}
+
+// Author name lives under authorAttribution in the new API. Attribution is
+// mandatory under Google's terms, so a review without a usable display name
+// cannot be rendered at all.
+function readAuthorName(review) {
+  const displayName = review?.authorAttribution?.displayName
+
+  if (typeof displayName === 'string' && displayName.trim().length > 0) {
+    return displayName
+  }
+
+  return null
+}
+
 // Returns { rating, totalCount, reviews[] } or null.
 //
-// null on EVERY failure path — missing key, network error, non-200, non-OK
-// Google status, malformed body, no reviews. The caller renders nothing at all
-// when this is null; a reviews section is not important enough to break a page
-// over, and a broken/empty one is worse than none.
+// null on EVERY failure path — missing key, network error, non-200, error body,
+// malformed body, no reviews. The caller renders nothing at all when this is
+// null; a reviews section is not important enough to break a page over, and a
+// broken/empty one is worse than none.
 export async function getGoogleReviews() {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY
 
@@ -45,39 +86,37 @@ export async function getGoogleReviews() {
     return null
   }
 
-  const url = new URL(PLACE_DETAILS_ENDPOINT)
-  url.searchParams.set('place_id', PLACE_ID)
-  url.searchParams.set('fields', 'rating,user_ratings_total,reviews')
-  url.searchParams.set('key', apiKey)
-
   try {
-    const response = await fetch(url, {
+    const response = await fetch(PLACE_DETAILS_ENDPOINT, {
+      headers: {
+        // Key travels as a header, not a query param, in the new API.
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': FIELD_MASK,
+      },
       next: { revalidate: REVALIDATE_SECONDS },
     })
 
+    // Unlike the legacy API — which signalled application errors with HTTP 200
+    // and a body status — the new API uses real HTTP status codes.
     if (!response.ok) {
       return null
     }
 
     const payload = await response.json()
 
-    // Google signals application-level failures in the body with HTTP 200,
-    // so response.ok alone is not enough.
-    if (payload?.status !== 'OK' || !payload?.result) {
+    if (!payload || typeof payload !== 'object' || payload.error) {
       return null
     }
 
-    const { rating, user_ratings_total: userRatingsTotal, reviews } =
-      payload.result
-
-    const numericRating = Number(rating)
-    const numericTotal = Number(userRatingsTotal)
+    // New API field names: userRatingCount, not user_ratings_total.
+    const numericRating = Number(payload.rating)
+    const numericTotal = Number(payload.userRatingCount)
 
     if (!Number.isFinite(numericRating) || !Number.isFinite(numericTotal)) {
       return null
     }
 
-    const rawReviews = Array.isArray(reviews) ? reviews : []
+    const rawReviews = Array.isArray(payload.reviews) ? payload.reviews : []
 
     // GOOGLE TERMS OF SERVICE — do not change this without reading them.
     //
@@ -90,14 +129,19 @@ export async function getGoogleReviews() {
     //
     // Reviews with no text are KEPT, not dropped — removing them would be
     // filtering. The card renders the quote only when text is present.
+    //
+    // `text` is the (possibly Google-translated) display text; `originalText`
+    // is the author's original. Prefer `text`, fall back to `originalText`, so
+    // a review still shows if only one is present.
     const normalized = rawReviews.slice(0, 5).map((review) => ({
-      authorName:
-        typeof review?.author_name === 'string' ? review.author_name : null,
+      authorName: readAuthorName(review),
       rating: Number(review?.rating),
-      text: typeof review?.text === 'string' ? review.text : '',
+      text:
+        readLocalizedText(review?.text) ||
+        readLocalizedText(review?.originalText),
       relativeTime:
-        typeof review?.relative_time_description === 'string'
-          ? review.relative_time_description
+        typeof review?.relativePublishTimeDescription === 'string'
+          ? review.relativePublishTimeDescription
           : null,
     }))
 
