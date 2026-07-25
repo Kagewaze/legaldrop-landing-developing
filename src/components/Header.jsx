@@ -1,134 +1,76 @@
-'use client'
-
 import Link from 'next/link'
-import {
-  Popover,
-  PopoverButton,
-  PopoverBackdrop,
-  PopoverPanel,
-} from '@headlessui/react'
-import { AnimatePresence, motion } from 'framer-motion'
+import clsx from 'clsx'
 
-import { Button } from '@/components/Button'
-import { Container } from '@/components/Container'
-import { Logo } from '@/components/Logo'
-import { NavLinks } from '@/components/NavLinks'
+import { BRAND } from '@/lib/config'
+import { NAV_LINKS, NAV_CTA } from '@/lib/navigation'
+import { HeaderMobileNav } from '@/components/HeaderMobileNav'
 
-function MenuIcon(props) {
+// Druppr site header, ported from design/DrupprNav.dc.html.
+//
+// Server component. The mobile disclosure is the only stateful part and lives
+// behind its own 'use client' boundary in HeaderMobileNav.jsx.
+//
+// Colour: the bar is brand-600 (#7B2FBE), the token added in 2a4cc41. The two
+// one-off pill hover shades below are design-specified values that have no
+// entry in the brand scale, so they stay arbitrary — see the note on the CTA.
+
+// text-[15px]/font-semibold matches the design's LINK constant; the active
+// variant matches ACTIVE (weight 700 plus a 2px underline).
+const NAV_LINK = 'text-[15px] font-semibold text-white'
+const NAV_LINK_ACTIVE =
+  'text-[15px] font-bold text-white border-b-2 border-white pb-[2px]'
+
+export function Header({ active }) {
+  // Only shippable destinations render. Everything else is defined in
+  // src/lib/navigation.js with live: false and skipped here — see that file.
+  const links = NAV_LINKS.filter((link) => link.live)
+  const cta = NAV_CTA.live ? NAV_CTA : null
+
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
-      <path
-        d="M5 6h14M5 18h14M5 12h14"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
+    // `relative` anchors the mobile sheet, which positions itself against this
+    // element so it spans the full viewport width under the bar.
+    <header className="relative bg-brand-600 text-white">
+      <div className="mx-auto flex h-[68px] max-w-[1200px] items-center justify-between gap-5 px-8">
+        <Link
+          href="/"
+          className="text-[25px] font-extrabold tracking-[-0.02em] text-white"
+        >
+          {BRAND.name}
+        </Link>
 
-function ChevronUpIcon(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
-      <path
-        d="M17 14l-5-5-5 5"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
+        {(links.length > 0 || cta) && (
+          <nav className="hidden items-center gap-8 md:flex">
+            {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                aria-current={active === link.label ? 'page' : undefined}
+                className={clsx(
+                  active === link.label ? NAV_LINK_ACTIVE : NAV_LINK,
+                )}
+              >
+                {link.label}
+              </Link>
+            ))}
 
-function MobileNavLink(props) {
-  return (
-    <PopoverButton
-      as={Link}
-      className="block text-base leading-7 tracking-tight text-gray-700"
-      {...props}
-    />
-  )
-}
+            {/* DELIBERATE DEVIATION: the design's pill reads "Sign in".
+                Accounts do not exist and are not in scope for launch, so this
+                is "Send a package" → /send instead. See NAV_CTA in
+                src/lib/navigation.js for the full rationale. While /send is
+                live: false, `cta` is null and nothing renders here. */}
+            {cta && (
+              <Link
+                href={cta.href}
+                className="rounded-full bg-white px-[22px] py-[10px] text-[15px] font-bold text-brand-600 transition-colors hover:bg-[#f2e9fa] hover:text-[#5d1f96]"
+              >
+                {cta.label}
+              </Link>
+            )}
+          </nav>
+        )}
 
-export function Header() {
-  return (
-    <header className="bg-[#fff]">
-      <nav>
-        <Container className="relative z-50 flex justify-between py-8">
-          <div className="relative z-10 flex items-center gap-16">
-            <Link href="/" aria-label="Home">
-              <Logo className="h-5 w-auto" />
-            </Link>
-            <div className="hidden lg:flex lg:gap-10">
-              <NavLinks />
-            </div>
-          </div>
-          <div className="flex items-center gap-6">
-            <Popover className="lg:hidden">
-              {({ open }) => (
-                <>
-                  <PopoverButton
-                    className="relative z-10 -m-2 inline-flex items-center rounded-lg stroke-gray-900 p-2 hover:bg-gray-200/50 hover:stroke-gray-600 active:stroke-gray-900 ui-not-focus-visible:outline-none"
-                    aria-label="Toggle site navigation"
-                  >
-                    {({ open }) =>
-                      open ? (
-                        <ChevronUpIcon className="h-6 w-6" />
-                      ) : (
-                        <MenuIcon className="h-6 w-6" />
-                      )
-                    }
-                  </PopoverButton>
-                  <AnimatePresence initial={false}>
-                    {open && (
-                      <>
-                        <PopoverBackdrop
-                          static
-                          as={motion.div}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          className="fixed inset-0 z-0 bg-gray-300/60 backdrop-blur"
-                        />
-                        <PopoverPanel
-                          static
-                          as={motion.div}
-                          initial={{ opacity: 0, y: -32 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{
-                            opacity: 0,
-                            y: -32,
-                            transition: { duration: 0.2 },
-                          }}
-                          className="absolute inset-x-0 top-0 z-0 origin-top rounded-b-2xl bg-gray-50 px-6 pb-6 pt-32 shadow-2xl shadow-gray-900/20"
-                        >
-                          <div className="space-y-4">
-                            <MobileNavLink href="/#features">
-                              Features
-                            </MobileNavLink>
-                            <MobileNavLink href="/#reviews">
-                              Our Solutions
-                            </MobileNavLink>
-                            <MobileNavLink href="/#faqs">FAQs</MobileNavLink>
-                          </div>
-                          <div className="mt-8 flex flex-col gap-4">
-                            <Button href="/contact-us" variant="outline">
-                              Contact Us
-                            </Button>
-                          </div>
-                        </PopoverPanel>
-                      </>
-                    )}
-                  </AnimatePresence>
-                </>
-              )}
-            </Popover>
-            <Button href="/contact-us" variant="outline" className="hidden lg:block">
-              Contact Us
-            </Button>
-          </div>
-        </Container>
-      </nav>
+        <HeaderMobileNav links={links} cta={cta} />
+      </div>
     </header>
   )
 }

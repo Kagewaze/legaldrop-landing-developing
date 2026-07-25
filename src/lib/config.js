@@ -32,17 +32,23 @@ export const API_BASE_URL = RAW_API_BASE_URL.replace(/\/+$/, '')
 
 // Brand naming.
 //
-// UNRESOLVED: the consumer-facing name is pending a domain decision. 'Druppr'
-// is the working consumer brand for the redesign; 'LegalDrop' remains the
-// legal/corporate entity and is what the existing app deep links
-// (legaldrop://), the partner platform, and the privacy policy all refer to.
+// STILL UNRESOLVED: the consumer-facing name is pending a domain decision.
+// 'Druppr' remains the working consumer brand for the redesign.
 //
-// This constant is the single flip point. Do NOT hardcode either name in
+// But the rendered name is 'LegalDrop' for now, deliberately. This site is live
+// at legaldrop.ca, and its Google Business Profile reviews are filed under
+// "LegalDrop". Rendering "Druppr" would put the wordmark out of step with both
+// the domain in the address bar and the name on the reviews customers arrive
+// from — which reads as the wrong site, and risks the review history not being
+// recognised as belonging to this business. The name must match the domain and
+// the reviews until the domain decision is actually made.
+//
+// This constant is still the single flip point: when Druppr is confirmed and
+// druppr.ca is secured, this one line changes. Do NOT hardcode either name in
 // components, copy, or metadata — import BRAND and reference BRAND.name (for
-// consumer-facing surfaces) or BRAND.legalName (for legal/contractual copy),
-// so the decision resolves in one edit rather than a repo-wide find-replace.
+// consumer-facing surfaces) or BRAND.legalName (for legal/contractual copy).
 export const BRAND = {
-  name: 'Druppr',
+  name: 'LegalDrop',
   legalName: 'LegalDrop',
 }
 

@@ -1,60 +1,112 @@
-import Image from 'next/image'
 import Link from 'next/link'
-import logo from "../images/logo.png"
+import clsx from 'clsx'
 
-import { Button } from '@/components/Button'
-import { Container } from '@/components/Container'
-import { TextField } from '@/components/Fields'
-import { Logomark } from '@/components/Logo'
-import { NavLinks } from '@/components/NavLinks'
-import qrCode from '@/images/qr-code.svg'
+import { BRAND } from '@/lib/config'
+import {
+  FOOTER_SECTIONS,
+  LEGAL_ENTITY,
+  SERVICE_AREA,
+  SUPPORT_EMAIL,
+  SUPPORT_PHONE,
+} from '@/lib/navigation'
 
-function QrCodeBorder(props) {
-  return (
-    <svg viewBox="0 0 96 96" fill="none" aria-hidden="true" {...props}>
-      <path
-        d="M1 17V9a8 8 0 0 1 8-8h8M95 17V9a8 8 0 0 0-8-8h-8M1 79v8a8 8 0 0 0 8 8h8M95 79v8a8 8 0 0 1-8 8h-8"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
+// Druppr site footer, ported from design/DrupprFooter.dc.html.
+//
+// Server component — nothing here is interactive.
+//
+// COLOUR CONVENTION: brand-* tokens are used for the shared brand purple
+// (#7B2FBE and its ramp). The dark footer palette below stays as arbitrary
+// values, centralised in the constants here rather than repeated across ~20
+// links. That is a deliberate choice: these shades appear in the footer and
+// nowhere else across all 11 design files, so promoting them to global Tailwind
+// tokens would imply a site-wide dark surface that does not exist. If a second
+// dark surface ever ships, move them into theme.extend.colors then.
+//
+//   #1a1421  page      #a49bad  muted link    #2e2537  hairline
+//   #c8c0d0  service   #8d8497  copyright     #e5dfea  contact (unused, null)
+
+const SECTION_HEADING = 'text-[14px] font-extrabold tracking-[0.06em] text-white'
+const FOOTER_LINK =
+  'text-[14px] text-[#a49bad] transition-colors hover:text-white'
 
 export function Footer() {
+  // Only shippable destinations render; a section whose every item is
+  // live: false is dropped entirely rather than left as a bare heading.
+  const sections = FOOTER_SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.filter((item) => item.live),
+  })).filter((section) => section.items.length > 0)
+
+  // UNCONFIRMED placeholders — the block is skipped entirely while these are
+  // null. See src/lib/navigation.js.
+  const hasContact = Boolean(SUPPORT_PHONE || SUPPORT_EMAIL)
+
+  // LEGAL_ENTITY is null until the registered company name is confirmed, so
+  // fall back to the brand name — which claims no corporate form. Any terminal
+  // period is stripped so the line below can always supply exactly one: both
+  // 'LegalDrop' and a future 'Acme Inc.' render with a single closing period.
+  const copyrightName = (LEGAL_ENTITY ?? BRAND.legalName).replace(/\.$/, '')
+
   return (
-    <footer className="border-t border-gray-200">
-      <Container>
-        <div className="flex flex-col items-start justify-between gap-y-12 pb-6 pt-16 lg:flex-row lg:items-center lg:py-16">
-          <div>
-            <div className="flex items-center text-gray-900">
-              <div className="ml-4">
-                <Image height={100} width={100} src={logo} alt="" />
-                {/* <p className="text-base font-semibold">LegalDrop</p> */}
-                <p className="mt-1 text-sm">Get In Touch.</p>
-                {/* <p className="mt-1 text-sm">Phone Number: +1-234-567-8900</p>
-                <p className="mt-1 text-sm">Email Address: info@legaldrop.com </p> */}
+    <footer className="bg-[#1a1421] text-white">
+      {sections.length > 0 && (
+        // The design is a fixed 3-column grid with no mobile treatment. The
+        // responsive steps are an addition, not a port — a fixed 3-up grid is
+        // unreadable on a phone.
+        <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-10 px-8 pb-10 pt-14 sm:grid-cols-2 lg:grid-cols-3">
+          {sections.map((section) => (
+            <div key={section.id}>
+              <h2 className={SECTION_HEADING}>{section.title}</h2>
+
+              <div
+                className={clsx(
+                  'mt-4',
+                  section.columns === 2
+                    ? 'grid grid-cols-2 gap-x-6 gap-y-[10px]'
+                    : 'flex flex-col gap-[10px]',
+                )}
+              >
+                {section.items.map((item) => (
+                  <Link key={item.href} href={item.href} className={FOOTER_LINK}>
+                    {item.label}
+                  </Link>
+                ))}
               </div>
+
+              {section.id === 'support' && hasContact && (
+                <div className="mt-[22px] text-[14px] leading-[1.8] text-[#e5dfea]">
+                  {SUPPORT_PHONE && <div>{SUPPORT_PHONE}</div>}
+                  {SUPPORT_EMAIL && <div>{SUPPORT_EMAIL}</div>}
+                </div>
+              )}
             </div>
-            <nav className="mt-11 flex gap-8">
-              <NavLinks />
-            </nav>
+          ))}
+        </div>
+      )}
+
+      <div className="border-t border-[#2e2537]">
+        <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-5 px-8 py-[22px]">
+          <div className="flex flex-wrap items-center gap-5">
+            <Link
+              href="/"
+              className="text-[20px] font-extrabold tracking-[-0.02em] text-white"
+            >
+              {BRAND.name}
+            </Link>
+            <span className="flex items-center gap-[9px] text-[14px] text-[#c8c0d0]">
+              <span
+                aria-hidden
+                className="h-[7px] w-[7px] rounded-full bg-[#b98ae0]"
+              />
+              {SERVICE_AREA}
+            </span>
           </div>
-          <div className="group relative -mx-4 flex items-center self-stretch p-4 transition-colors hover:bg-gray-100 sm:self-auto sm:rounded-2xl lg:mx-0 lg:self-auto lg:p-6">
-            {/* <div className="relative flex h-24 w-24 flex-none items-center justify-center">
-              <QrCodeBorder className="absolute inset-0 h-full w-full stroke-gray-300 transition-colors group-hover:stroke-cyan-500" />
-              <Image src={qrCode} alt="" unoptimized />
-            </div> */}
-            <div className="ml-8 lg:w-64">
-            </div>
+
+          <div className="text-[13px] text-[#8d8497]">
+            &copy; {new Date().getFullYear()} {copyrightName}. All rights reserved.
           </div>
         </div>
-        <div className="flex flex-col items-center border-t border-gray-200 pb-12 pt-8 md:flex-row-reverse md:justify-between md:pt-6">
-          <p className="mt-6 text-sm text-gray-500 md:mt-0">
-            &copy; Copyright {new Date().getFullYear()}. All rights reserved.
-          </p>
-        </div>
-      </Container>
+      </div>
     </footer>
   )
 }
