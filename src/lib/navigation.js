@@ -17,7 +17,11 @@
 // recorded in exactly one place. Nav and footer supply their own labels for the
 // same destination (the nav says "Medical", the footer says "Medical delivery"),
 // but they must never disagree about whether it is shippable.
-const ROUTES = {
+//
+// Exported so page sections can gate on a specific destination — e.g. the home
+// hero renders its address form only when ROUTES.send.live, and the services
+// grid links a row only when that row's route is live. Read it; do not mutate.
+export const ROUTES = {
   // Services
   send: { href: '/send', live: false },
   medical: { href: '/medical', live: false },
