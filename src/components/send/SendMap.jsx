@@ -132,6 +132,17 @@ export function SendMap({ pickup, dropoff }) {
 
         // ── Route ────────────────────────────────────────────────────────────
 
+        // TEMPORARY DIAGNOSTIC LOGGING — remove once the production failure is
+        // identified. Present only because the route block below swallows every
+        // error by design, so a failure is otherwise completely silent.
+        console.log('[route] entered route block', {
+          pointsLength: points.length,
+          hasPickupCoords:
+            Number.isFinite(pickup?.lat) && Number.isFinite(pickup?.lng),
+          hasDropoffCoords:
+            Number.isFinite(dropoff?.lat) && Number.isFinite(dropoff?.lng),
+        })
+
         // Only ever request with BOTH endpoints. A one-ended request is
         // meaningless and still billable.
         if (points.length < 2) {
@@ -150,6 +161,10 @@ export function SendMap({ pickup, dropoff }) {
         // Same pair as the last request — the line on screen is already
         // correct. Skipping here is what keeps re-renders free.
         if (lastRouteKeyRef.current === routeKey) {
+          // TEMPORARY DIAGNOSTIC LOGGING — remove after diagnosis.
+          console.log('[route] skipped, already requested this pair', {
+            routeKey,
+          })
           return
         }
 
@@ -163,17 +178,41 @@ export function SendMap({ pickup, dropoff }) {
         lastRouteKeyRef.current = routeKey
 
         try {
+          // TEMPORARY DIAGNOSTIC LOGGING — remove after diagnosis.
+          console.log('[route] importing routes library…')
+
           const { DirectionsService, DirectionsRenderer } =
             await importMapsLibrary('routes')
+
+          // TEMPORARY DIAGNOSTIC LOGGING — remove after diagnosis.
+          console.log('[route] routes library resolved', {
+            hasDirectionsService: typeof DirectionsService === 'function',
+            hasDirectionsRenderer: typeof DirectionsRenderer === 'function',
+          })
 
           if (cancelled || !mapInstanceRef.current) {
             return
           }
 
-          const result = await new DirectionsService().route({
-            origin: { lat: pickup.lat, lng: pickup.lng },
-            destination: { lat: dropoff.lat, lng: dropoff.lng },
+          const origin = { lat: pickup.lat, lng: pickup.lng }
+          const destination = { lat: dropoff.lat, lng: dropoff.lng }
+
+          // TEMPORARY DIAGNOSTIC LOGGING — remove after diagnosis.
+          console.log('[route] requesting directions', {
+            origin,
+            destination,
             travelMode: 'DRIVING',
+          })
+
+          const result = await new DirectionsService().route({
+            origin,
+            destination,
+            travelMode: 'DRIVING',
+          })
+
+          // TEMPORARY DIAGNOSTIC LOGGING — remove after diagnosis.
+          console.log('[route] directions returned', {
+            routeCount: result?.routes?.length ?? 0,
           })
 
           if (cancelled || !mapInstanceRef.current) {
@@ -221,10 +260,26 @@ export function SendMap({ pickup, dropoff }) {
             mapInstanceRef.current.fitBounds(routeBounds, FIT_PADDING)
           }
         } catch (error) {
-          // Denied key, Directions API not enabled, ZERO_RESULTS, network
-          // failure — all identical from here. Both pins and the map stay
-          // exactly as they were; nothing user-facing is shown and Continue is
-          // unaffected. The line is an enhancement, not a requirement.
+          // TEMPORARY DIAGNOSTIC LOGGING — remove after diagnosis.
+          //
+          // The full object, NOT error.message. Google's Directions rejections
+          // carry the useful part on `code`/`status` (REQUEST_DENIED,
+          // ZERO_RESULTS, OVER_QUERY_LIMIT, MAX_ROUTE_LENGTH_EXCEEDED…), and
+          // stringifying to a message throws exactly that away.
+          console.error('[route] directions FAILED', error)
+          console.error('[route] failure detail', {
+            code: error?.code,
+            status: error?.status,
+            name: error?.name,
+            message: error?.message,
+            endpoint: error?.endpoint,
+          })
+
+          // Fail-soft, unchanged: denied key, Directions API not enabled,
+          // ZERO_RESULTS, network failure — all identical from here. Both pins
+          // and the map stay exactly as they were; nothing user-facing is shown
+          // and Continue is unaffected. The line is an enhancement, not a
+          // requirement.
         }
       } catch (error) {
         if (!cancelled) {
