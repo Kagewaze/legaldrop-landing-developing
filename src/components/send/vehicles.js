@@ -38,7 +38,9 @@ export const VEHICLES = [
     id: 'minivan',
     apiKey: 'minivan',
     name: 'Minivan',
-    description: 'Pallets, coolers, bulk runs',
+    // Not "pallets" — a minivan cannot take a pallet. That belongs to the
+    // cargo van and box truck below.
+    description: 'Several boxes or a small furniture item',
     glyph: 'h-[13px] w-[18px] rounded-[3px]',
   },
   {

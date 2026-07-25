@@ -21,7 +21,7 @@ export function formatMoney(value) {
 // transparency but must never be added on top.
 
 export function PriceBreakdown({ quote, vehicleName, packageCount, weightLabel }) {
-  const { lineItems, platformFee, total, distanceKm } = quote
+  const { lineItems, total, distanceKm } = quote
 
   const rows = [
     { key: 'base', label: 'Base fare', value: lineItems.base },
@@ -44,7 +44,22 @@ export function PriceBreakdown({ quote, vehicleName, packageCount, weightLabel }
     // The design omits these two entirely, which is why its numbers do not sum.
     { key: 'labour', label: 'Labour', value: lineItems.labour },
     { key: 'heavyFee', label: 'Heavy item', value: lineItems.heavyFee },
-    { key: 'platformFee', label: 'Platform fee', value: platformFee },
+    // platformFee is deliberately NOT a row here. Verified against the live
+    // backend across four quotes: `total` is exactly the sum of lineItems and
+    // EXCLUDES platformFee, which is consistently 25.0% of total —
+    //   base 8 + distance 2.28                         = total 10.28, fee 2.57
+    //   base 8 + distance 2.28 + extra 16 + heavy 20   = total 46.28, fee 11.57
+    //   base 90 + distance 3.35 + labour 20 + heavy 20 = total 133.35, fee 33.34
+    // A flat 25% take rate that the API keeps outside its own `total` reads as
+    // a platform commission on the fare, not a surcharge added to the customer.
+    // Listing it would make the rows exceed the Total shown directly beneath
+    // them — which is exactly the bug this replaces.
+    //
+    // ⚠️ UNRESOLVED: whether the card is charged `total` or total+platformFee
+    // can only be settled by what /order/get-fee returns as `fee`, and calling
+    // that creates a real PaymentIntent, so it was not tested. Confirm before
+    // the payment step ships — if the fee IS charged, this panel understates
+    // the price by 25% and both the row and the Total must come back.
   ].filter((row) => row.value > 0)
 
   // Integrity check. If the parts do not add up to the total, our understanding
