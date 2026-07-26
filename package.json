@@ -15,6 +15,8 @@
     "@headlessui/tailwindcss": "^0.2.0",
     "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^3.9.1",
+    "@stripe/react-stripe-js": "^6.8.0",
+    "@stripe/stripe-js": "^9.12.0",
     "@tailwindcss/forms": "^0.5.3",
     "axios": "^1.7.9",
     "clsx": "^2.1.0",

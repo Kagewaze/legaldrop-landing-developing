@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import {
@@ -167,18 +168,24 @@ export default function SendDetailsPage() {
         )}
 
         <div className="mt-auto pt-6">
-          {/* Step 3 does not exist. The button is inert rather than pointing at
-              a route that would 404 mid-flow. */}
-          <button
-            type="button"
-            disabled
-            className="w-full cursor-not-allowed rounded-xl bg-[#e6e1ea] px-5 py-4 text-[16px] font-bold text-[#8d8695]"
-          >
-            Continue to payment
-          </button>
-          <div className="mt-3 text-center text-[12px] text-[#8d8695]">
-            Payment is not available yet.
-          </div>
+          {/* Enabled only with a real quote in hand — continuing without one
+              would land on the payment step with nothing to charge for. */}
+          {quote ? (
+            <Link
+              href="/send/pay"
+              className="block w-full rounded-xl bg-brand-600 px-5 py-4 text-center text-[16px] font-bold text-white transition-colors hover:bg-brand-700"
+            >
+              Continue to payment
+            </Link>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="w-full cursor-not-allowed rounded-xl bg-[#ece7f1] px-5 py-4 text-[16px] font-bold text-[#9b93a5]"
+            >
+              Continue to payment
+            </button>
+          )}
         </div>
       </div>
     </div>

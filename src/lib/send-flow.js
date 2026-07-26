@@ -23,6 +23,33 @@ const EMPTY_STATE = {
   packageCount: 1,
   weight: 'light',
   vehicle: 'car',
+  // The backend requires all of these on POST /order. The design collects none
+  // of them, so they are gathered on the payment step.
+  contact: {
+    senderName: '',
+    senderPhone: '',
+    receiverName: '',
+    receiverPhone: '',
+    receiverEmail: '',
+  },
+}
+
+// POST /order needs a name and phone for both ends, and at least one of
+// receiverPhone / receiverEmail. Phone is collected for the recipient, so the
+// email is genuinely optional.
+export function contactIsComplete(contact) {
+  if (!contact) {
+    return false
+  }
+
+  const filled = (value) => typeof value === 'string' && value.trim().length > 0
+
+  return (
+    filled(contact.senderName) &&
+    filled(contact.senderPhone) &&
+    filled(contact.receiverName) &&
+    (filled(contact.receiverPhone) || filled(contact.receiverEmail))
+  )
 }
 
 export const PACKAGE_COUNT_MIN = 1
@@ -48,6 +75,93 @@ export const WEIGHT_OPTIONS = [
 export function weightKgFor(weightId) {
   const option = WEIGHT_OPTIONS.find((entry) => entry.id === weightId)
   return (option ?? WEIGHT_OPTIONS[0]).kg
+}
+
+// ── Payment recovery ────────────────────────────────────────────────────────
+//
+// Deliberately a SEPARATE storage key from the flow state above, and
+// deliberately not part of the React context.
+//
+// It has to outlive things the flow state does not. It is written
+// synchronously, immediately before confirmPayment is called, so that a crash,
+// a closed laptop or a refresh mid-payment leaves a record that the next mount
+// can find. If it lived in the context it would be subject to React's render
+// timing; if it shared the flow's key it would be destroyed by the same clear
+// that runs on success.
+//
+// THE INVARIANT: a stored record means "a PaymentIntent exists and NO order has
+// been created for it yet". It is cleared in exactly one place — after
+// POST /order succeeds. That is what makes "stored record + intent already
+// succeeded" an unambiguous signal that the customer paid and we still owe them
+// an order.
+const PAYMENT_STORAGE_KEY = 'legaldrop.send-payment.v1'
+
+// Identifies the priced inputs. If any of these change, a PaymentIntent created
+// for the old ones is for the wrong amount and must not be reused.
+export function paymentInputsHash(state) {
+  return [
+    state?.pickup?.lat,
+    state?.pickup?.lng,
+    state?.dropoff?.lat,
+    state?.dropoff?.lng,
+    state?.vehicle,
+    state?.packageCount,
+    state?.weight,
+  ].join('|')
+}
+
+export function readPaymentSession() {
+  if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') {
+    return null
+  }
+
+  try {
+    const raw = sessionStorage.getItem(PAYMENT_STORAGE_KEY)
+
+    if (!raw) {
+      return null
+    }
+
+    const parsed = JSON.parse(raw)
+
+    if (
+      typeof parsed?.paymentIntentId !== 'string' ||
+      typeof parsed?.clientSecret !== 'string'
+    ) {
+      return null
+    }
+
+    return parsed
+  } catch (error) {
+    return null
+  }
+}
+
+export function writePaymentSession(session) {
+  if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') {
+    return
+  }
+
+  try {
+    sessionStorage.setItem(PAYMENT_STORAGE_KEY, JSON.stringify(session))
+  } catch (error) {
+    // Storage unavailable. The payment can still proceed; only crash-recovery
+    // is lost. Not a reason to block someone from paying.
+  }
+}
+
+// The ONLY place this is called is after POST /order succeeds. Do not add
+// another caller — clearing it early loses the record that the customer paid.
+export function clearPaymentSession() {
+  if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') {
+    return
+  }
+
+  try {
+    sessionStorage.removeItem(PAYMENT_STORAGE_KEY)
+  } catch (error) {
+    // Nothing useful to do.
+  }
 }
 
 function isPlace(value) {
@@ -86,6 +200,9 @@ function readStored() {
       // so re-validate rather than trusting whatever is in storage.
       pickup: isPlace(parsed?.pickup) ? parsed.pickup : null,
       dropoff: isPlace(parsed?.dropoff) ? parsed.dropoff : null,
+      // Merged rather than replaced, so a record written before the contact
+      // fields existed (or a partial one) still yields every key.
+      contact: { ...EMPTY_STATE.contact, ...(parsed?.contact ?? {}) },
     }
   } catch (error) {
     return null
@@ -153,6 +270,17 @@ export function SendFlowProvider({ children }) {
     (vehicle) => setState((prev) => ({ ...prev, vehicle })),
     [],
   )
+  const setContactField = useCallback(
+    (field, value) =>
+      setState((prev) => ({
+        ...prev,
+        contact: { ...prev.contact, [field]: value },
+      })),
+    [],
+  )
+  // Called once the order exists, so a second booking starts clean rather than
+  // inheriting the previous trip's addresses and contact details.
+  const resetFlow = useCallback(() => setState(EMPTY_STATE), [])
 
   const value = useMemo(
     () => ({
@@ -163,6 +291,8 @@ export function SendFlowProvider({ children }) {
       setPackageCount,
       setWeight,
       setVehicle,
+      setContactField,
+      resetFlow,
     }),
     [
       state,
@@ -172,6 +302,8 @@ export function SendFlowProvider({ children }) {
       setPackageCount,
       setWeight,
       setVehicle,
+      setContactField,
+      resetFlow,
     ],
   )
 

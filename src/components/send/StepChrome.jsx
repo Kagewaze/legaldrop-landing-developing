@@ -7,8 +7,10 @@ import { usePathname } from 'next/navigation'
 // how much is left.
 const TOTAL_STEPS = 3
 
+// Longest paths first — '/send' prefixes every other route in the flow.
 const STEPS = [
   { path: '/send/details', index: 2, label: 'Choose vehicle' },
+  { path: '/send/pay', index: 3, label: 'Payment' },
   { path: '/send', index: 1, label: 'Addresses' },
 ]
 
