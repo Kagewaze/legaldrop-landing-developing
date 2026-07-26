@@ -1,4 +1,3 @@
-import { BRAND } from '@/lib/config'
 import { SendFlowProvider } from '@/lib/send-flow'
 import { Header } from '@/components/Header'
 import { StepChrome } from '@/components/send/StepChrome'
@@ -12,8 +11,10 @@ import { StepChrome } from '@/components/send/StepChrome'
 // SendFlowProvider wraps every step, so state survives navigation between them
 // (and, via sessionStorage, a refresh).
 
+// Segment title only — no brand. The root layout's title.template appends it,
+// so composing it here too would render 'Send a package - Druppr - Druppr'.
 export const metadata = {
-  title: `Send a package | ${BRAND.name}`,
+  title: 'Send a package',
 }
 
 export default function SendLayout({ children }) {
