@@ -1,8 +1,10 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
-import { hasBothAddresses, useSendFlow } from '@/lib/send-flow'
+import { guestFetch } from '@/lib/guest-session'
+import { hasBothAddresses, useSendFlow, weightKgFor } from '@/lib/send-flow'
 import { AddressAutocomplete } from '@/components/send/AddressAutocomplete'
 import { SendMap } from '@/components/send/SendMap'
 
@@ -10,23 +12,105 @@ import { SendMap } from '@/components/send/SendMap'
 //
 // Deliberately NOT ported from the design:
 //
-//   "6.2 km · about 22 min in current traffic"
-//     Both halves are unavailable here. quote-itemized needs a vehicle, which
-//     has not been chosen yet, and it returns no duration at all — only
-//     get-fee does, and get-fee creates a real PaymentIntent. Distance appears
-//     on step 2, where it is actually known. Duration does not appear at all.
-//
-//   The route polyline
-//     Needs the Directions/Routes API. See SendMap.
+//   "about 22 min in current traffic"
+//     There is no duration to show. quote-itemized returns none, and only
+//     get-fee does — which creates a real PaymentIntent. Google's Directions
+//     result carries one, but see the note on distance below: it would be a
+//     second number from a different engine.
 //
 //   "+ Add a stop"
 //     v1 is single-stop. The API takes a receivers[] array so multi-stop is
 //     possible later, but it changes pricing, the map and the order payload,
 //     and it is not in this build.
 
+// Trip distance, from the BACKEND.
+//
+// ─── DO NOT SOURCE THIS FROM THE DIRECTIONS RESULT ──────────────────────────
+//
+// SendMap already has a Google route object in hand, and it carries a distance.
+// Using it would be free and wrong. The customer's fare is computed by the
+// backend from OSRM, and the two routing engines disagree — different road
+// graphs, different snapping. Printing Google's distance on the page that leads
+// to an OSRM-derived price shows a number the price was not calculated from,
+// and the first person to divide the fare by the distance finds it does not
+// reconcile. The only distance safe to display is the one the pricing came from.
+//
+// quote-itemized is side-effect-free — no Stripe object, no order row — so
+// calling it purely to read distanceKm is safe. vehicle 'car' and packageCount
+// 1 are a probe: distance does not vary by vehicle or package count, and none
+// of the price fields from this response are used or shown.
+function useBackendDistanceKm(pickup, dropoff) {
+  const [distanceKm, setDistanceKm] = useState(null)
+
+  // Dedupe key — the effect only re-runs when the coordinates themselves
+  // change, so re-renders cost nothing.
+  const coordinateKey =
+    pickup && dropoff
+      ? `${pickup.lat},${pickup.lng}>${dropoff.lat},${dropoff.lng}`
+      : null
+
+  useEffect(() => {
+    // Clear immediately on any change: a distance belonging to the previous
+    // pair of addresses is worse than no distance at all.
+    setDistanceKm(null)
+
+    if (!coordinateKey) {
+      return undefined
+    }
+
+    let cancelled = false
+
+    async function probe() {
+      try {
+        // Uses the shared guest session — same token as step 2, minted once.
+        const response = await guestFetch('/order/quote-itemized', {
+          method: 'POST',
+          body: {
+            senderLocation: { latitude: pickup.lat, longitude: pickup.lng },
+            receivers: [
+              {
+                receiverLocation: {
+                  latitude: dropoff.lat,
+                  longitude: dropoff.lng,
+                },
+                weight: weightKgFor('light'),
+              },
+            ],
+            vehicle: 'car',
+            packageCount: 1,
+          },
+        })
+
+        if (!response.ok) {
+          return
+        }
+
+        const payload = await response.json()
+        const value = Number((payload?.data ?? payload)?.distanceKm)
+
+        if (!cancelled && Number.isFinite(value)) {
+          setDistanceKm(value)
+        }
+      } catch (error) {
+        // Fail soft — the line simply does not appear. Continue is unaffected.
+      }
+    }
+
+    probe()
+
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [coordinateKey])
+
+  return distanceKm
+}
+
 export default function SendAddressesPage() {
   const flow = useSendFlow()
   const canContinue = hasBothAddresses(flow)
+  const distanceKm = useBackendDistanceKm(flow.pickup, flow.dropoff)
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr]">
@@ -54,6 +138,15 @@ export default function SendAddressesPage() {
             onSelect={flow.setDropoff}
           />
         </div>
+
+        {/* Quiet — it confirms the trip is understood, it is not a headline.
+            Absent entirely until the backend answers, and absent for good if
+            it does not. */}
+        {distanceKm != null && (
+          <p className="mt-3 px-1 text-[13px] text-[#8d8695]">
+            {distanceKm.toFixed(1)} km trip
+          </p>
+        )}
 
         {canContinue ? (
           <Link
