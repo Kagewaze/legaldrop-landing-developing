@@ -1,12 +1,14 @@
-import { BRAND } from '@/lib/config'
-
-// "Why <brand>" — four value cards.
+// A four-card value grid.
 //
-// Heading composes from BRAND.name — "Why Druppr" since the rename. Kept as a
-// composition rather than a literal so it tracks the constant, not a past
-// decision about it.
+// Prop-driven so the marketing pages (/medical, /legal) can reuse the styling
+// with their own audience's reasons. It holds no content of its own — a caller
+// that passes nothing renders nothing, rather than silently falling back to the
+// home page's copy on a page where that copy would be wrong.
+//
+// The home page's own content lives below as HOME_REASONS and is passed in
+// explicitly, so this component has no privileged caller.
 
-const REASONS = [
+export const HOME_REASONS = [
   {
     title: 'Same-day delivery',
     description: 'Most jobs collected within the hour.',
@@ -23,23 +25,33 @@ const REASONS = [
     icon: <span className="h-[12px] w-[12px] rotate-45 bg-white" />,
   },
   {
-    title: 'Signature on delivery',
-    description: 'Proof and photo on every drop-off.',
+    // CORRECTED. This card read "Signature on delivery — Proof and photo on
+    // every drop-off." Neither is true: the flow confirms a handover with a
+    // drop-off code, and it captures no photo. It was the same claim the
+    // medical and legal pages are written to avoid, sitting on the site's
+    // highest-traffic page. Describe the confirmation that actually exists.
+    title: 'Confirmed delivery',
+    description: 'Confirmed by drop-off code and tracked live.',
     icon: (
       <span className="mb-[3px] h-[10px] w-[14px] border-b-2 border-l-2 border-white" />
     ),
   },
 ]
 
-export function WhyBrand() {
+export function WhyBrand({ heading, reasons }) {
+  // Three cards in a four-column grid leave a dead column that reads as a
+  // missing card, so the track count follows the content. Four reasons — the
+  // home page — resolve to lg:grid-cols-4, exactly as before.
+  const columns = reasons.length === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-4'
+
   return (
     <section className="mx-auto max-w-[1200px] px-8 pt-16">
       <h2 className="text-[30px] font-extrabold tracking-[-0.02em] text-[#17131c]">
-        Why {BRAND.name}
+        {heading}
       </h2>
 
-      <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {REASONS.map((reason) => (
+      <div className={`mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 ${columns}`}>
+        {reasons.map((reason) => (
           <div key={reason.title} className="rounded-2xl bg-[#faf7fd] p-6">
             <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-brand-600">
               {reason.icon}

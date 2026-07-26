@@ -5,9 +5,9 @@
 // ONLY items with live: true and silently skip the rest. Launching a new page
 // is therefore a one-flag change in this file, not an edit to a component.
 //
-// live: true is reserved for routes that EXIST in this repo today. As of this
-// commit that is exactly two — /contact-us and /privacy-policy. Everything else
-// is scaffolding for pages that have not been built yet.
+// live: true is reserved for routes that EXIST in this repo today: /send,
+// /medical, /legal, /contact-us and /privacy-policy. Everything else is
+// scaffolding for pages that have not been built yet.
 //
 // The hrefs on non-live items are the intended final paths, not '#' placeholders.
 // That is deliberate: it is what makes flipping the flag sufficient. If a page
@@ -27,8 +27,8 @@ export const ROUTES = {
   // customer can price a delivery but not book one — the flow ends on a
   // disabled "Continue to payment".
   send: { href: '/send', live: true },
-  medical: { href: '/medical', live: false },
-  legal: { href: '/legal', live: false },
+  medical: { href: '/medical', live: true },
+  legal: { href: '/legal', live: true },
   ride: { href: '/ride', live: false },
   marketplace: { href: '/marketplace', live: false },
   dropBatch: { href: '/drop-batch', live: false },
@@ -54,17 +54,31 @@ export const ROUTES = {
   privacy: { href: '/privacy-policy', live: true },
 }
 
+// --- External destinations --------------------------------------------------
+
+// The business platform, where clinics, labs and firms open an account.
+//
+// A SEPARATE ORIGIN, not a route in this app — every use is a plain <a>, never
+// next/link. It carries the legaldrop.ca domain rather than druppr.ca because
+// that is where the platform actually serves; see BRAND in src/lib/config.js on
+// why the two names coexist.
+//
+// Kept here so the marketing pages do not each re-type it. Every B2B call to
+// action on /medical and /legal points at this single value.
+export const PARTNER_URL = 'https://partner.legaldrop.ca'
+
 // --- Header -----------------------------------------------------------------
 
-// The Druppr design's nav is Medical / Legal / Track. All three are live: false
-// today, so on their own the bar would render as a bare wordmark.
+// The Druppr design's nav is Medical / Legal / Track. Medical and Legal ship
+// with this commit; Track is still live: false.
 //
 // TRANSITIONAL: 'Contact' is NOT in the Druppr design's nav. It is here so the
 // live site keeps a working nav affordance while Medical, Legal and Track do
 // not exist — shipping a header with no navigation at all is worse than
 // deviating from the design for one link. /contact-us is a real page today.
 //
-// REMOVE this item once the design's own nav destinations ship.
+// REMOVE this item once the design's own nav destinations ship — i.e. once
+// /track ships, which is the last one outstanding.
 export const NAV_LINKS = [
   { label: 'Medical', ...ROUTES.medical },
   { label: 'Legal', ...ROUTES.legal },

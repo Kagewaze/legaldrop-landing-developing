@@ -1,3 +1,4 @@
+import { BRAND } from '@/lib/config'
 import { getGoogleReviews } from '@/lib/google-reviews'
 import { BecomeADriver } from '@/components/home/BecomeADriver'
 import { Coverage } from '@/components/home/Coverage'
@@ -5,7 +6,7 @@ import { Hero } from '@/components/home/Hero'
 import { HowItWorks } from '@/components/home/HowItWorks'
 import { Reviews } from '@/components/home/Reviews'
 import { Services } from '@/components/home/Services'
-import { WhyBrand } from '@/components/home/WhyBrand'
+import { HOME_REASONS, WhyBrand } from '@/components/home/WhyBrand'
 
 // Home page, rebuilt from the Druppr landing design.
 //
@@ -33,7 +34,9 @@ export default async function Home() {
       {showReviews && <Reviews data={reviews} />}
       <Services />
       <HowItWorks />
-      <WhyBrand />
+      {/* Content passed explicitly — WhyBrand is shared with /medical and
+          /legal and holds no copy of its own. */}
+      <WhyBrand heading={`Why ${BRAND.name}`} reasons={HOME_REASONS} />
       <Coverage />
       <BecomeADriver />
     </div>
