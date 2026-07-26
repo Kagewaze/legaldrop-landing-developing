@@ -83,12 +83,21 @@ export default function SendPayPage() {
   const [failureMessage, setFailureMessage] = useState(null)
   const [retrying, setRetrying] = useState(false)
 
+  // get-fee is in flight. Disables the confirm button so it cannot double-fire
+  // and mint two PaymentIntents for one delivery.
+  const [feePending, setFeePending] = useState(false)
+  // Shown inline under the confirm button. Distinct from `failureMessage`,
+  // which takes over the whole page — a rejected get-fee has charged nobody and
+  // is worth retrying in place.
+  const [confirmError, setConfirmError] = useState(null)
+
   // The intent currently in play. Held in a ref as well as storage so the
   // recovery UI can show it without re-reading sessionStorage.
   const paymentIntentIdRef = useRef(null)
 
-  // get-fee CREATES A REAL PAYMENTINTENT. This guard is what guarantees the
-  // boot sequence runs once per mount even under StrictMode's double-invoke.
+  // Boot no longer creates anything chargeable — get-fee moved behind the
+  // confirm button below. The guard stays because the boot sequence is still
+  // two network round-trips that should not run twice under StrictMode.
   const bootedRef = useRef(false)
 
   const inputsHash = paymentInputsHash(flow)
@@ -179,7 +188,7 @@ export default function SendPayPage() {
         setPublishableKey(key)
 
         // 2. Quote. Side-effect-free, and needed for the breakdown, for
-        //    receivers[].distance, and to validate the fee below.
+        //    receivers[].distance, and to validate the fee at confirm time.
         const quoteResponse = await guestFetch('/order/quote-itemized', {
           method: 'POST',
           body: {
@@ -267,76 +276,11 @@ export default function SendPayPage() {
           return
         }
 
-        // 4. No usable intent. THIS IS THE ONLY CALL TO get-fee, and it is the
-        //    only line in the flow that creates a Stripe object.
-        const feeResponse = await guestFetch('/order/get-fee', {
-          method: 'POST',
-          body: {
-            senderLocation: {
-              latitude: flow.pickup.lat,
-              longitude: flow.pickup.lng,
-            },
-            receivers: [
-              {
-                receiverLocation: {
-                  latitude: flow.dropoff.lat,
-                  longitude: flow.dropoff.lng,
-                },
-                weight: weightKgFor(flow.weight),
-              },
-            ],
-            vehicle: apiKeyFor(flow.vehicle),
-            packageCount: flow.packageCount,
-          },
-        })
-
-        if (!feeResponse.ok) {
-          throw new Error('Could not set up payment')
-        }
-
-        const feeBody = await feeResponse.json()
-        const feeData = feeBody?.data ?? feeBody
-        const feeAmount = Number(feeData?.fee)
-        const intentId = feeData?.paymentIntentId
-        const secret = feeData?.paymentIntentSecret
-
-        if (
-          !Number.isFinite(feeAmount) ||
-          typeof intentId !== 'string' ||
-          typeof secret !== 'string'
-        ) {
-          throw new Error('Payment setup returned an unexpected response')
-        }
-
-        if (cancelled) return
-
-        // 5. The price must not have moved between step 2 and here. If it has,
-        //    something is wrong and the customer must not pay a number they
-        //    were never shown.
-        if (Math.abs(feeAmount - normalizedQuote.total) >= 0.01) {
-          setFailureMessage(
-            `The price changed from ${formatMoney(
-              normalizedQuote.total,
-            )} to ${formatMoney(feeAmount)}.`,
-          )
-          setPhase('priceMismatch')
-          return
-        }
-
-        paymentIntentIdRef.current = intentId
-
-        // Recorded as soon as it exists, so returning to this step reuses it
-        // rather than minting another. orderPayload is added just before
-        // confirmPayment, once the contact details are known.
-        writePaymentSession({
-          inputsHash,
-          paymentIntentId: intentId,
-          clientSecret: secret,
-          fee: feeAmount,
-        })
-
-        setFee(feeAmount)
-        setClientSecret(secret)
+        // 4. No usable intent, and boot does NOT create one. get-fee mints a
+        //    real PaymentIntent, so it cannot run before the contact details
+        //    it requires have been typed — it fires from the confirm button
+        //    below. The page is usable now: contact fields plus a breakdown
+        //    priced by the side-effect-free quote above.
         setPhase('ready')
       } catch (error) {
         if (!cancelled) {
@@ -353,6 +297,135 @@ export default function SendPayPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flow.hydrated])
+
+  // ── Confirm → create the PaymentIntent ────────────────────────────────────
+  //
+  // THE ONLY CALL TO get-fee, and the only line in the flow that creates a
+  // Stripe object. It sits behind a button rather than on mount for two
+  // reasons: the backend rejects the request until the sender and receiver
+  // contact details exist, and those are typed on this page — so an on-mount
+  // call is guaranteed to 400. And even if it succeeded it would mint a live
+  // PaymentIntent for someone who has done nothing but open a page.
+  //
+  // IT MUST FIRE AT MOST ONCE. `feePending` blocks a second click while the
+  // request is open; success sets `clientSecret`, which replaces this button
+  // with the card form for the rest of this page's life.
+  const confirmAndCreateIntent = useCallback(async () => {
+    if (feePending || clientSecret) {
+      return
+    }
+
+    // The BACKEND's distance, from quote-itemized — never Google's. Same
+    // reasoning as buildOrderPayload: the two routing engines disagree and this
+    // is the number the fare was priced from.
+    const distance = quote?.distanceKm
+
+    // Required by the validator, and this is the only place it can come from.
+    // Sending null earns a 400 that reads to the customer like a card problem,
+    // so say what actually went wrong instead.
+    if (!Number.isFinite(distance)) {
+      setConfirmError(
+        'We could not confirm the distance for this trip. Please go back and re-enter the addresses.',
+      )
+      return
+    }
+
+    setFeePending(true)
+    setConfirmError(null)
+
+    try {
+      const { contact } = flow
+
+      const feeResponse = await guestFetch('/order/get-fee', {
+        method: 'POST',
+        body: {
+          senderName: contact.senderName.trim(),
+          senderPhone: contact.senderPhone.trim(),
+          senderAddress: flow.pickup.address,
+          senderLocation: {
+            latitude: flow.pickup.lat,
+            longitude: flow.pickup.lng,
+          },
+          // Normalised key ('cargovan', never the local 'cargo' id).
+          vehicle: apiKeyFor(flow.vehicle),
+          paymentMethod: 'card',
+          // Constant for general consumer packages.
+          section: 'other',
+          packageCount: flow.packageCount,
+          receivers: [
+            {
+              receiverName: contact.receiverName.trim(),
+              receiverPhone: contact.receiverPhone.trim(),
+              // Only sent when actually provided — an empty string can read as
+              // "supplied but blank" to a validator.
+              receiverEmail: contact.receiverEmail.trim() || undefined,
+              receiverAddress: flow.dropoff.address,
+              receiverLocation: {
+                latitude: flow.dropoff.lat,
+                longitude: flow.dropoff.lng,
+              },
+              weight: weightKgFor(flow.weight),
+              distance,
+            },
+          ],
+        },
+      })
+
+      if (!feeResponse.ok) {
+        throw new Error('Could not set up payment')
+      }
+
+      const feeBody = await feeResponse.json()
+      const feeData = feeBody?.data ?? feeBody
+      const feeAmount = Number(feeData?.fee)
+      const intentId = feeData?.paymentIntentId
+      const secret = feeData?.paymentIntentSecret
+
+      if (
+        !Number.isFinite(feeAmount) ||
+        typeof intentId !== 'string' ||
+        typeof secret !== 'string'
+      ) {
+        throw new Error('Payment setup returned an unexpected response')
+      }
+
+      // The price must not have moved between the quote on mount and here. If
+      // it has, something is wrong and the customer must not pay a number they
+      // were never shown. Nothing has been charged at this point.
+      if (Math.abs(feeAmount - quote.total) >= 0.01) {
+        setFailureMessage(
+          `The price changed from ${formatMoney(quote.total)} to ${formatMoney(
+            feeAmount,
+          )}.`,
+        )
+        setPhase('priceMismatch')
+        return
+      }
+
+      paymentIntentIdRef.current = intentId
+
+      // Recorded as soon as it exists, so returning to this step reuses it
+      // rather than minting another. orderPayload is added just before
+      // confirmPayment, once the contact details are known.
+      writePaymentSession({
+        inputsHash,
+        paymentIntentId: intentId,
+        clientSecret: secret,
+        fee: feeAmount,
+      })
+
+      setFee(feeAmount)
+      // Last, and the point of no return for this button: the card form takes
+      // its place from here on.
+      setClientSecret(secret)
+    } catch (error) {
+      setConfirmError(
+        error?.message ?? 'Could not set up payment. Please try again.',
+      )
+    } finally {
+      setFeePending(false)
+    }
+  }, [feePending, clientSecret, quote, flow, inputsHash])
 
   // Written immediately before confirmPayment — see PaymentForm.
   const persistBeforeConfirm = useCallback(() => {
@@ -533,7 +606,9 @@ export default function SendPayPage() {
     )
   }
 
-  if (phase === 'error' || !clientSecret || !publishableKey || !quote) {
+  // Deliberately does NOT test clientSecret. Before confirm there is no intent
+  // yet, and that is the page's normal resting state — not an error.
+  if (phase === 'error' || !publishableKey || !quote) {
     return (
       <div className="px-6 py-14 sm:px-8">
         <div className="mx-auto max-w-[560px]">
@@ -561,6 +636,16 @@ export default function SendPayPage() {
   )?.label
   const contactReady = contactIsComplete(flow.contact)
 
+  // Stricter than contactIsComplete, which accepts a recipient email in place
+  // of a phone. get-fee requires receiverPhone outright, so an email-only
+  // contact would pass that check and still 400.
+  const filled = (value) => typeof value === 'string' && value.trim().length > 0
+  const canConfirm =
+    filled(flow.contact.senderName) &&
+    filled(flow.contact.senderPhone) &&
+    filled(flow.contact.receiverName) &&
+    filled(flow.contact.receiverPhone)
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px]">
       <div className="px-6 py-8 sm:px-8">
@@ -583,19 +668,54 @@ export default function SendPayPage() {
             PAYMENT
           </div>
 
-          <Elements
-            stripe={getStripePromise(publishableKey)}
-            options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}
-          >
-            <PaymentForm
-              amount={fee}
-              canPay={contactReady}
-              blockedReason="Fill in the contact details above to pay."
-              onBeforeConfirm={persistBeforeConfirm}
-              onPaid={handlePaid}
-              onIndeterminate={handleIndeterminate}
-            />
-          </Elements>
+          {/* No intent yet: the confirm button is the only thing that can
+              create one. Once clientSecret exists — whether from this button or
+              recovered from a previous visit — the button is gone for good and
+              the card form takes over. That swap IS the once-only guard. */}
+          {clientSecret ? (
+            <Elements
+              stripe={getStripePromise(publishableKey)}
+              options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}
+            >
+              <PaymentForm
+                amount={fee}
+                canPay={contactReady}
+                blockedReason="Fill in the contact details above to pay."
+                onBeforeConfirm={persistBeforeConfirm}
+                onPaid={handlePaid}
+                onIndeterminate={handleIndeterminate}
+              />
+            </Elements>
+          ) : (
+            <div>
+              <button
+                type="button"
+                onClick={confirmAndCreateIntent}
+                disabled={!canConfirm || feePending}
+                className={`w-full rounded-xl px-5 py-[18px] text-[16px] font-bold transition-colors ${
+                  !canConfirm || feePending
+                    ? 'cursor-not-allowed bg-[#ece7f1] text-[#9b93a5]'
+                    : 'bg-brand-600 text-white hover:bg-brand-700'
+                }`}
+              >
+                {feePending
+                  ? 'Setting up payment…'
+                  : 'Confirm & continue to payment'}
+              </button>
+
+              {confirmError && (
+                <p className="mt-4 rounded-xl bg-rose-50 px-4 py-3 text-[14px] text-rose-700">
+                  {confirmError} You have not been charged.
+                </p>
+              )}
+
+              {!canConfirm && (
+                <p className="mt-3 text-center text-[13px] text-[#8d8695]">
+                  Fill in the contact details above to continue.
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
