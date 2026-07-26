@@ -349,8 +349,9 @@ export default function SendPayPage() {
           // Normalised key ('cargovan', never the local 'cargo' id).
           vehicle: apiKeyFor(flow.vehicle),
           paymentMethod: 'card',
-          // Constant for general consumer packages.
-          section: 'other',
+          // 'other' for general consumer packages, unless a ?section= preset
+          // set one of the other whitelisted values on step 1.
+          section: flow.section ?? 'other',
           packageCount: flow.packageCount,
           receivers: [
             {

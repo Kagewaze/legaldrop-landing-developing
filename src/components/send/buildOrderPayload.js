@@ -48,8 +48,9 @@ export function buildOrderPayload({ flow, quote, paymentIntentId }) {
     senderPhone: contact.senderPhone.trim(),
     // Normalised key ('cargovan', never the local 'cargo' id).
     vehicle: apiKeyFor(flow.vehicle),
-    // Constant for general consumer packages.
-    section: 'other',
+    // 'other' for general consumer packages, unless a ?section= preset set one
+    // of the other whitelisted values on step 1.
+    section: flow.section ?? 'other',
     receivers: [receiver],
     // ← THE RENAME. paymentIntentId (get-fee) becomes paymentIntent (POST /order).
     paymentIntent: paymentIntentId,

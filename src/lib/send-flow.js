@@ -23,6 +23,14 @@ const EMPTY_STATE = {
   packageCount: 1,
   weight: 'light',
   vehicle: 'car',
+  // Consignment type. 'other' is the general consumer default and the value the
+  // flow sent unconditionally before presets existed; a ?section= param on step
+  // 1 can substitute one of the other whitelisted values.
+  //
+  // NOT part of paymentInputsHash, deliberately — the backend prices every
+  // section identically, so including it would invalidate live recovery records
+  // for a change that cannot move the fare.
+  section: 'other',
   // The backend requires all of these on POST /order. The design collects none
   // of them, so they are gathered on the payment step.
   contact: {
@@ -270,6 +278,10 @@ export function SendFlowProvider({ children }) {
     (vehicle) => setState((prev) => ({ ...prev, vehicle })),
     [],
   )
+  const setSection = useCallback(
+    (section) => setState((prev) => ({ ...prev, section })),
+    [],
+  )
   const setContactField = useCallback(
     (field, value) =>
       setState((prev) => ({
@@ -291,6 +303,7 @@ export function SendFlowProvider({ children }) {
       setPackageCount,
       setWeight,
       setVehicle,
+      setSection,
       setContactField,
       resetFlow,
     }),
@@ -302,6 +315,7 @@ export function SendFlowProvider({ children }) {
       setPackageCount,
       setWeight,
       setVehicle,
+      setSection,
       setContactField,
       resetFlow,
     ],

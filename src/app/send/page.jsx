@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 
 import { guestFetch } from '@/lib/guest-session'
@@ -107,10 +107,69 @@ function useBackendDistanceKm(pickup, dropoff) {
   return distanceKm
 }
 
+// Section presets, arriving as /send?section=…
+//
+// Read from window.location rather than useSearchParams: the param is only
+// consumed in an effect, after mount, so the hook would buy nothing and would
+// force this page out of static prerendering (Next 14 requires a Suspense
+// boundary around useSearchParams in a prerendered route).
+//
+// A STRICT whitelist, not a passthrough. Whatever comes back from here is sent
+// verbatim to the backend as `section` on get-fee and POST /order, so an
+// unrecognised value is dropped rather than forwarded. A malformed param must
+// never break the flow — every failure path returns null and the store's
+// default 'other' stands.
+const SECTION_PRESETS = ['medical_supply', 'legal_document', 'other']
+
+function readSectionParam() {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  try {
+    const value = new URLSearchParams(window.location.search).get('section')
+
+    return SECTION_PRESETS.includes(value) ? value : null
+  } catch (error) {
+    return null
+  }
+}
+
 export default function SendAddressesPage() {
   const flow = useSendFlow()
   const canContinue = hasBothAddresses(flow)
   const distanceKm = useBackendDistanceKm(flow.pickup, flow.dropoff)
+
+  // Apply the preset once, on entry.
+  //
+  // GATED ON `hydrated`, and that is not optional. React runs child effects
+  // before parent ones, so this fires before the provider restores
+  // sessionStorage — and that restore replaces the whole state object, which
+  // would silently discard the section we just set. It only misbehaves when a
+  // stored record exists (a refresh or a re-entry), so the ungated version
+  // looks fine on a cold visit and loses the preset in real use.
+  //
+  // Running after hydration also settles precedence: an explicit URL param wins
+  // over whatever the tab was carrying. The ref keeps this to one write, so
+  // re-renders never clobber a section chosen later in the flow.
+  const { setSection } = flow
+  const presetApplied = useRef(false)
+
+  useEffect(() => {
+    if (!flow.hydrated || presetApplied.current) {
+      return
+    }
+
+    presetApplied.current = true
+
+    const preset = readSectionParam()
+
+    // No param, or an unrecognised one: leave the store alone so the existing
+    // value (default 'other') stands.
+    if (preset) {
+      setSection(preset)
+    }
+  }, [flow.hydrated, setSection])
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr]">
