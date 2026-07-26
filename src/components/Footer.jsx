@@ -103,7 +103,16 @@ export function Footer() {
           </div>
 
           <div className="text-[13px] text-[#8d8497]">
-            &copy; {new Date().getFullYear()} {copyrightName}. All rights reserved.
+            <div>
+              &copy; {new Date().getFullYear()} {copyrightName}. All rights
+              reserved.
+            </div>
+            {/* Deliberately literal, not composed from BRAND — it names both
+                the new wordmark and the old one, and must not follow a future
+                change to either constant. It is what makes the '© LegalDrop'
+                line above read as continuity rather than as the wrong site.
+                Muted footnote treatment: no weight, no colour, no emphasis. */}
+            <div className="mt-1 text-[12px]">Druppr — formerly LegalDrop</div>
           </div>
         </div>
       </div>

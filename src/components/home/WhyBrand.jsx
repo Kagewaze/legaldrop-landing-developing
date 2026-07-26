@@ -2,8 +2,9 @@ import { BRAND } from '@/lib/config'
 
 // "Why <brand>" — four value cards.
 //
-// Heading composes from BRAND.name, so it reads "Why LegalDrop" today and
-// "Why Druppr" the moment that constant flips.
+// Heading composes from BRAND.name — "Why Druppr" since the rename. Kept as a
+// composition rather than a literal so it tracks the constant, not a past
+// decision about it.
 
 const REASONS = [
   {
