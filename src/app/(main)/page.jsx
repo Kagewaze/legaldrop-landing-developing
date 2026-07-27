@@ -7,6 +7,15 @@ import { HowItWorks } from '@/components/home/HowItWorks'
 import { Reviews } from '@/components/home/Reviews'
 import { Services } from '@/components/home/Services'
 import { HOME_REASONS, WhyBrand } from '@/components/home/WhyBrand'
+import baystreet from '@/images/home-coverage-baystreet.jpg'
+
+// Coverage is shared with /medical and /legal, which show the band without a
+// photograph. Importing the image here rather than inside the component keeps
+// it out of those two pages entirely.
+const COVERAGE_IMAGE = {
+  src: baystreet,
+  alt: 'Bay Street in downtown Toronto at night, with traffic stopped at the lights and pedestrians crossing.',
+}
 
 // Home page, rebuilt from the Druppr landing design.
 //
@@ -37,7 +46,7 @@ export default async function Home() {
       {/* Content passed explicitly — WhyBrand is shared with /medical and
           /legal and holds no copy of its own. */}
       <WhyBrand heading={`Why ${BRAND.name}`} reasons={HOME_REASONS} />
-      <Coverage />
+      <Coverage image={COVERAGE_IMAGE} />
       <BecomeADriver />
     </div>
   )
