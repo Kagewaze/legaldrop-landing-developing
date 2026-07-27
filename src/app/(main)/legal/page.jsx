@@ -1,7 +1,11 @@
 import { BRAND } from '@/lib/config'
 import { PARTNER_URL } from '@/lib/navigation'
 import { Coverage } from '@/components/home/Coverage'
+import { ExpandingGallery } from '@/components/ExpandingGallery'
 import { WhyBrand } from '@/components/home/WhyBrand'
+import courthouse from '@/images/legal-courthouse.jpg'
+import document from '@/images/legal-document.jpg'
+import lawoffices from '@/images/legal-lawoffices.jpg'
 
 // /legal — a B2B lead-generation page for law firms.
 //
@@ -39,21 +43,32 @@ const CREDENTIALS = [
   'Fully insured',
 ]
 
+// Rendered by the shared ExpandingGallery. Descriptions are unchanged from the
+// card grid this replaced — see the constraints block above before touching a
+// word of them. Alt text describes what is in the frame and nothing more: on
+// this page especially, a photograph must not imply a proof mechanism the copy
+// deliberately does not claim.
 const SERVICES = [
   {
     title: 'Court filings',
     description:
       'Documents taken from your office to the registry, with the trip tracked and the drop-off confirmed on arrival.',
+    image: courthouse,
+    alt: 'A stone courthouse building with a Canadian flag flying outside.',
   },
   {
     title: 'Confidential document delivery',
     description:
       'Client files and sensitive correspondence carried by drivers trained on confidentiality, released at the destination you name.',
+    image: document,
+    alt: 'Two people passing a large document envelope across a desk.',
   },
   {
     title: 'Process serving',
     description:
       'Served documents delivered to the address you provide, with a timestamped record of the attempt returned to your firm.',
+    image: lawoffices,
+    alt: 'Carved "Law Offices" lettering on the facade of a building.',
   },
 ]
 
@@ -84,7 +99,11 @@ export default function LegalPage() {
     <div className="bg-white">
       <Hero />
       <Credentials />
-      <LegalServices />
+      <ExpandingGallery
+        heading="Legal services"
+        panels={SERVICES}
+        cta="Register your firm"
+      />
       <WhyBrand heading="Proof of delivery" reasons={PROOF_REASONS} />
       <Coverage />
       <FinalCta />
@@ -132,37 +151,6 @@ function Credentials() {
   )
 }
 
-function LegalServices() {
-  return (
-    <section className="mx-auto max-w-[1200px] px-8 pt-16">
-      <h2 className="text-[30px] font-extrabold tracking-[-0.02em] text-[#17131c]">
-        Legal services
-      </h2>
-
-      <div className="mt-6 grid grid-cols-1 gap-[22px] sm:grid-cols-2 lg:grid-cols-3">
-        {SERVICES.map((service) => (
-          <div
-            key={service.title}
-            className="flex flex-col rounded-[20px] border-[1.5px] border-[#eeebf1] p-7"
-          >
-            <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#f3ebfb]">
-              <span className="h-[14px] w-[12px] rounded-[2px] bg-brand-600" />
-            </div>
-            <div className="mt-5 text-[20px] font-extrabold tracking-[-0.02em] text-[#17131c]">
-              {service.title}
-            </div>
-            <div className="mt-2.5 flex-1 text-[15px] leading-[1.55] text-[#5f5868]">
-              {service.description}
-            </div>
-
-            <PartnerLink className="mt-6">Register your firm</PartnerLink>
-          </div>
-        ))}
-      </div>
-    </section>
-  )
-}
-
 function FinalCta() {
   return (
     <section className="mx-auto max-w-[1200px] px-8 py-14">
@@ -189,6 +177,9 @@ function FinalCta() {
 }
 
 // External origin — plain anchors, not next/link. Same tab, as on /medical.
+//
+// The matching PartnerLink helper went with the card grid; its per-panel CTA
+// now lives inside ExpandingGallery, which takes the label as a prop.
 function PartnerCta({ children, className = '' }) {
   return (
     <a
@@ -196,17 +187,6 @@ function PartnerCta({ children, className = '' }) {
       className={`inline-block rounded-xl bg-brand-600 px-[30px] py-4 text-[16px] font-bold text-white transition-colors hover:bg-brand-700 ${className}`}
     >
       {children}
-    </a>
-  )
-}
-
-function PartnerLink({ children, className = '' }) {
-  return (
-    <a
-      href={PARTNER_URL}
-      className={`text-[15px] font-bold text-brand-600 transition-colors hover:text-[#5d1f96] ${className}`}
-    >
-      {children} <span aria-hidden="true">→</span>
     </a>
   )
 }

@@ -1,7 +1,11 @@
 import { BRAND } from '@/lib/config'
 import { PARTNER_URL } from '@/lib/navigation'
 import { Coverage } from '@/components/home/Coverage'
+import { ExpandingGallery } from '@/components/ExpandingGallery'
 import { WhyBrand } from '@/components/home/WhyBrand'
+import pharma from '@/images/medical-pharma.jpg'
+import specimen from '@/images/medical-specimen.jpg'
+import temp from '@/images/medical-temp.jpg'
 
 // /medical — a B2B lead-generation page for clinics, labs and pharmacies.
 //
@@ -47,21 +51,31 @@ const CREDENTIALS = [
   'Temperature-controlled',
 ]
 
+// Rendered by the shared ExpandingGallery. Descriptions are unchanged from the
+// card grid this replaced — see the constraints block above before touching a
+// word of them. Alt text describes what is in the frame and nothing more: these
+// photographs must not narrate a capability the copy is careful not to claim.
 const SERVICES = [
   {
     title: 'Pharmaceutical delivery',
     description:
       'Prescriptions and pharmacy stock moved between locations the same day, by drivers certified to carry regulated goods.',
+    image: pharma,
+    alt: 'A courier moving boxes on a hand truck from a delivery van.',
   },
   {
     title: 'Lab & specimen transport',
     description:
       'Samples collected from your clinic and delivered to the receiving lab, with the handover confirmed and the trip tracked end to end.',
+    image: specimen,
+    alt: 'Sample tubes standing in a laboratory rack.',
   },
   {
     title: 'Temperature-controlled transport',
     description:
       'Cold-chain capable vehicles for goods that cannot travel at ambient temperature. Tell us the range your shipment needs.',
+    image: temp,
+    alt: 'A gloved hand holding a metal transport canister packed with cold packs.',
   },
 ]
 
@@ -97,7 +111,11 @@ export default function MedicalPage() {
     <div className="bg-white">
       <Hero />
       <Credentials />
-      <WhatWeMove />
+      <ExpandingGallery
+        heading="What we move"
+        panels={SERVICES}
+        cta="Set up your clinic account"
+      />
       <WhyBrand
         heading={`Why clinics choose ${BRAND.name}`}
         reasons={CLINIC_REASONS}
@@ -149,37 +167,6 @@ function Credentials() {
   )
 }
 
-function WhatWeMove() {
-  return (
-    <section className="mx-auto max-w-[1200px] px-8 pt-16">
-      <h2 className="text-[30px] font-extrabold tracking-[-0.02em] text-[#17131c]">
-        What we move
-      </h2>
-
-      <div className="mt-6 grid grid-cols-1 gap-[22px] sm:grid-cols-2 lg:grid-cols-3">
-        {SERVICES.map((service) => (
-          <div
-            key={service.title}
-            className="flex flex-col rounded-[20px] border-[1.5px] border-[#eeebf1] p-7"
-          >
-            <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#f3ebfb]">
-              <span className="h-[14px] w-[14px] rounded-full border-2 border-brand-600" />
-            </div>
-            <div className="mt-5 text-[20px] font-extrabold tracking-[-0.02em] text-[#17131c]">
-              {service.title}
-            </div>
-            <div className="mt-2.5 flex-1 text-[15px] leading-[1.55] text-[#5f5868]">
-              {service.description}
-            </div>
-
-            <PartnerLink className="mt-6">Set up your clinic account</PartnerLink>
-          </div>
-        ))}
-      </div>
-    </section>
-  )
-}
-
 function FinalCta() {
   return (
     <section className="mx-auto max-w-[1200px] px-8 py-14">
@@ -208,6 +195,9 @@ function FinalCta() {
 // PARTNER_URL is a different origin, so these are plain anchors — next/link is
 // for in-app routes. Same tab: opening an account is the continuation of this
 // page's journey, not a detour from it.
+//
+// The matching PartnerLink helper went with the card grid; its per-panel CTA
+// now lives inside ExpandingGallery, which takes the label as a prop.
 function PartnerCta({ children, className = '' }) {
   return (
     <a
@@ -215,17 +205,6 @@ function PartnerCta({ children, className = '' }) {
       className={`inline-block rounded-xl bg-brand-600 px-[30px] py-4 text-[16px] font-bold text-white transition-colors hover:bg-brand-700 ${className}`}
     >
       {children}
-    </a>
-  )
-}
-
-function PartnerLink({ children, className = '' }) {
-  return (
-    <a
-      href={PARTNER_URL}
-      className={`text-[15px] font-bold text-brand-600 transition-colors hover:text-[#5d1f96] ${className}`}
-    >
-      {children} <span aria-hidden="true">→</span>
     </a>
   )
 }
