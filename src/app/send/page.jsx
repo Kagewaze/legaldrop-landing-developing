@@ -41,6 +41,11 @@ import { SendMap } from '@/components/send/SendMap'
 // of the price fields from this response are used or shown.
 function useBackendDistanceKm(pickup, dropoff) {
   const [distanceKm, setDistanceKm] = useState(null)
+  // 'idle' | 'loading' | 'ready' | 'error'. Previously this probe reported
+  // nothing at all: the line was simply absent until it answered and absent
+  // for good if it failed, so on a slow connection step 1 looked frozen with
+  // no indication anything was happening.
+  const [distanceStatus, setDistanceStatus] = useState('idle')
 
   // Dedupe key — the effect only re-runs when the coordinates themselves
   // change, so re-renders cost nothing.
@@ -55,8 +60,11 @@ function useBackendDistanceKm(pickup, dropoff) {
     setDistanceKm(null)
 
     if (!coordinateKey) {
+      setDistanceStatus('idle')
       return undefined
     }
+
+    setDistanceStatus('loading')
 
     let cancelled = false
 
@@ -82,17 +90,30 @@ function useBackendDistanceKm(pickup, dropoff) {
         })
 
         if (!response.ok) {
-          return
+          throw new Error('Distance probe rejected')
         }
 
         const payload = await response.json()
         const value = Number((payload?.data ?? payload)?.distanceKm)
 
-        if (!cancelled && Number.isFinite(value)) {
+        if (cancelled) {
+          return
+        }
+
+        if (Number.isFinite(value)) {
           setDistanceKm(value)
+          setDistanceStatus('ready')
+        } else {
+          setDistanceStatus('error')
         }
       } catch (error) {
-        // Fail soft — the line simply does not appear. Continue is unaffected.
+        // STILL fails soft — Continue is deliberately unaffected by this probe,
+        // because the distance is a confirmation, not a precondition. The only
+        // change is that the customer is told the number is unavailable rather
+        // than being left watching an empty space.
+        if (!cancelled) {
+          setDistanceStatus('error')
+        }
       }
     }
 
@@ -104,7 +125,7 @@ function useBackendDistanceKm(pickup, dropoff) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coordinateKey])
 
-  return distanceKm
+  return { distanceKm, distanceStatus }
 }
 
 // Section presets, arriving as /send?section=…
@@ -138,7 +159,10 @@ function readSectionParam() {
 export default function SendAddressesPage() {
   const flow = useSendFlow()
   const canContinue = hasBothAddresses(flow)
-  const distanceKm = useBackendDistanceKm(flow.pickup, flow.dropoff)
+  const { distanceKm, distanceStatus } = useBackendDistanceKm(
+    flow.pickup,
+    flow.dropoff,
+  )
 
   // Apply the preset once, on entry.
   //
@@ -205,13 +229,20 @@ export default function SendAddressesPage() {
         </div>
 
         {/* Quiet — it confirms the trip is understood, it is not a headline.
-            Absent entirely until the backend answers, and absent for good if
-            it does not. */}
-        {distanceKm != null && (
-          <p className="mt-3 px-1 text-[13px] text-[#8d8695]">
-            {distanceKm.toFixed(1)} km trip
-          </p>
-        )}
+            A live region because it resolves asynchronously: this is exactly
+            the kind of status StepChrome's focus move is NOT for. */}
+        <p
+          className="mt-3 px-1 text-[13px] text-[#8d8695]"
+          role="status"
+          aria-live="polite"
+        >
+          {distanceStatus === 'loading' && 'Measuring the trip…'}
+          {distanceStatus === 'ready' &&
+            distanceKm != null &&
+            `${distanceKm.toFixed(1)} km trip`}
+          {distanceStatus === 'error' &&
+            'Trip distance unavailable — you can still continue.'}
+        </p>
 
         {canContinue ? (
           <Link
@@ -221,13 +252,28 @@ export default function SendAddressesPage() {
             Continue
           </Link>
         ) : (
-          <button
-            type="button"
-            disabled
-            className="mt-6 w-full cursor-not-allowed rounded-xl bg-[#ece7f1] px-5 py-[18px] text-[16px] font-bold text-[#9b93a5]"
-          >
-            Continue
-          </button>
+          /* aria-disabled rather than the `disabled` attribute. A disabled
+             button is removed from the tab order entirely, so a keyboard user
+             tabbing through the form never landed on it and was never told why
+             they could not proceed — the button was simply missing. This stays
+             focusable and carries its reason, while remaining inert: there is
+             no onClick, so activating it does nothing. */
+          <>
+            <button
+              type="button"
+              aria-disabled="true"
+              aria-describedby="continue-blocked-reason"
+              className="mt-6 w-full cursor-not-allowed rounded-xl bg-[#ece7f1] px-5 py-[18px] text-[16px] font-bold text-[#9b93a5] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+            >
+              Continue
+            </button>
+            <p
+              id="continue-blocked-reason"
+              className="mt-2.5 px-1 text-center text-[13px] text-[#8d8695]"
+            >
+              Enter both a pickup and a dropoff address to continue.
+            </p>
+          </>
         )}
       </div>
 

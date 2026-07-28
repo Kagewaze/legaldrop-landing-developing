@@ -70,7 +70,7 @@ export default function SendDetailsPage() {
     }
   }, [flow.hydrated, complete, router])
 
-  const { quotes, status } = useVehicleQuotes({
+  const { quotes, unavailable, status, distanceKm } = useVehicleQuotes({
     pickup: flow.pickup,
     dropoff: flow.dropoff,
     packageCount: flow.packageCount,
@@ -122,6 +122,8 @@ export default function SendDetailsPage() {
           selected={flow.vehicle}
           onSelect={flow.setVehicle}
           quotes={quotes}
+          unavailable={unavailable}
+          distanceKm={distanceKm}
           status={status}
         />
 
@@ -159,10 +161,17 @@ export default function SendDetailsPage() {
             <div className="text-[12px] font-extrabold tracking-[0.1em] text-[#8d8695]">
               FARE ESTIMATE
             </div>
+            {/* "Please try again shortly" is only true of a transient
+                failure. When the backend has specifically REFUSED this vehicle
+                — bike over its 10 km cap — retrying can never succeed, and
+                telling someone to wait leaves them on a dead end with no hint
+                that another vehicle would work. Say which it is. */}
             <p className="mt-3 text-[15px] text-[#5f5868]">
               {status === 'loading' || status === 'idle'
                 ? 'Calculating your price…'
-                : 'We couldn’t price this route right now. Please try again shortly.'}
+                : unavailable[flow.vehicle]
+                  ? `${vehicleById(flow.vehicle).name} can’t take this trip. Choose another vehicle above to see its price.`
+                  : 'We couldn’t price this route right now. Please try again shortly.'}
             </p>
           </div>
         )}

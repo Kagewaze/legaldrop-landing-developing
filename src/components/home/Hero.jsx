@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
-import { ROUTES } from '@/lib/navigation'
+import { ROUTES, SERVICE_AREA_PHRASE } from '@/lib/navigation'
 import cyclist from '@/images/hero-cyclist.jpg'
 
 // Home hero: a courier photograph with the booking card over it.
@@ -69,8 +69,12 @@ export function Hero() {
             The hairline ring at 7% ink defines the edge itself — without it the
             white surface meets the scrim with no termination at all. */}
         <div className="w-full max-w-[520px] rounded-[18px] bg-white p-7 shadow-[0_1px_2px_rgba(23,19,28,0.12),0_10px_24px_-8px_rgba(23,19,28,0.18),0_28px_56px_-24px_rgba(23,19,28,0.24)] ring-1 ring-[#17131c]/[0.07]">
+          {/* Sourced from navigation.js rather than hardcoded. This used to
+              read "across Toronto", which was narrower than both the metadata
+              description and the footer's service-area line — the site claimed
+              three different coverage areas. See SERVICE_AREA_PHRASE. */}
           <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-[#17131c] sm:text-[30px]">
-            Send anything across Toronto
+            Send anything across {SERVICE_AREA_PHRASE}
           </h1>
           <p className="mt-1.5 text-[15px] leading-[1.5] text-[#5f5868]">
             Same-day courier for clinics, law firms, and everyone else. See your

@@ -13,12 +13,44 @@ import { formatMoney } from '@/components/send/PriceBreakdown'
 //     inventing a pickup time is the same class of fabrication as the duration
 //     dropped from step 1.
 
-export function VehiclePicker({ selected, onSelect, quotes, status }) {
+// Bike is refused above 10 km. VERIFIED against the live backend rather than
+// assumed: quote-itemized returns 201 at 9.993 km and a bare 500 at 10.024 km,
+// with car succeeding at 23.6 km on the same coordinates — so the refusal is
+// specific to bike and the boundary is exactly 10.0, not approximately.
+//
+// The backend sends no reason with the 500, so this is the frontend's
+// inference. It is only stated when the trip distance is actually known and
+// actually over the cap; anything else falls back to the neutral wording, so a
+// transient server fault can never be reported to the customer as a distance
+// limit.
+const BIKE_MAX_KM = 10
+
+function unavailableReason(vehicleId, distanceKm) {
+  if (
+    vehicleId === 'bike' &&
+    Number.isFinite(distanceKm) &&
+    distanceKm > BIKE_MAX_KM
+  ) {
+    return `Not available over ${BIKE_MAX_KM} km`
+  }
+
+  return 'Not available for this trip'
+}
+
+export function VehiclePicker({
+  selected,
+  onSelect,
+  quotes,
+  unavailable = {},
+  distanceKm = null,
+  status,
+}) {
   return (
     <div className="flex flex-col gap-2.5">
       {VEHICLES.map((vehicle) => {
         const isSelected = vehicle.id === selected
         const quote = quotes[vehicle.id]
+        const isUnavailable = !quote && Boolean(unavailable[vehicle.id])
 
         return (
           <button
@@ -53,12 +85,19 @@ export function VehiclePicker({ selected, onSelect, quotes, status }) {
               </span>
             </span>
 
-            <span className="text-[17px] font-extrabold tracking-[-0.01em] text-[#17131c]">
+            {/* A bare "—" used to stand for every one of these cases, which
+                told a customer whose trip was too long for a bike nothing at
+                all — and left them retrying a dead end. */}
+            <span className="text-right text-[17px] font-extrabold tracking-[-0.01em] text-[#17131c]">
               {quote ? (
                 formatMoney(quote.total)
               ) : status === 'loading' ? (
                 <span className="text-[13px] font-semibold text-[#8d8695]">
                   …
+                </span>
+              ) : isUnavailable ? (
+                <span className="block max-w-[104px] text-[12px] font-semibold leading-tight text-[#8d8695]">
+                  {unavailableReason(vehicle.id, distanceKm)}
                 </span>
               ) : (
                 <span className="text-[13px] font-semibold text-[#8d8695]">

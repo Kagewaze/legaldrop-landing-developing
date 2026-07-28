@@ -56,8 +56,29 @@ function normalizeQuote(raw) {
   }
 }
 
+// The trip distance, taken from whichever vehicles DID price.
+//
+// Distance does not vary by vehicle — it is the same road route whatever is
+// driving it — so any successful quote reports the same figure. That matters
+// because it lets the picker explain a vehicle that failed: bike 500s above a
+// 10 km cap, and the only way to know the trip is over that cap is to read the
+// distance off a sibling quote that succeeded.
+function distanceFromQuotes(quotes) {
+  for (const quote of Object.values(quotes)) {
+    if (quote && Number.isFinite(quote.distanceKm)) {
+      return quote.distanceKm
+    }
+  }
+
+  return null
+}
+
 export function useVehicleQuotes({ pickup, dropoff, packageCount, weight }) {
   const [quotes, setQuotes] = useState({})
+  // Vehicles the backend refused to price for THIS trip, as a set of ids.
+  // Distinct from "not fetched yet": a null in `quotes` cannot tell the two
+  // apart, which is why a bike over the cap used to render as a bare dash.
+  const [unavailable, setUnavailable] = useState({})
   const [status, setStatus] = useState('idle') // idle | loading | ready | error
 
   const ready = Boolean(pickup && dropoff)
@@ -83,6 +104,10 @@ export function useVehicleQuotes({ pickup, dropoff, packageCount, weight }) {
 
     let cancelled = false
     setStatus('loading')
+    // Cleared immediately, unlike `quotes` — a lingering price is a harmless
+    // stale number, but "not available over 10 km" carried onto a trip that is
+    // now under 10 km is an untrue statement about the new route.
+    setUnavailable({})
 
     // Debounced so holding the package stepper does not fire a burst of
     // requests (one per vehicle, per press).
@@ -116,14 +141,23 @@ export function useVehicleQuotes({ pickup, dropoff, packageCount, weight }) {
               })
 
               if (!response.ok) {
-                return [vehicle.id, null]
+                // The backend refused THIS vehicle for THIS trip. It answers
+                // with a bare 500 and no reason, so the reason is inferred
+                // from the distance in VehiclePicker rather than guessed here.
+                return [vehicle.id, null, true]
               }
 
               const payload = await response.json()
 
-              return [vehicle.id, normalizeQuote(payload?.data ?? payload)]
+              return [
+                vehicle.id,
+                normalizeQuote(payload?.data ?? payload),
+                false,
+              ]
             } catch (error) {
-              return [vehicle.id, null]
+              // Network failure rather than a refusal — do not claim the
+              // vehicle is unavailable on the strength of a dropped request.
+              return [vehicle.id, null, false]
             }
           }),
         )
@@ -132,8 +166,17 @@ export function useVehicleQuotes({ pickup, dropoff, packageCount, weight }) {
           return
         }
 
-        const next = Object.fromEntries(entries)
+        const next = Object.fromEntries(
+          entries.map(([id, quote]) => [id, quote]),
+        )
+        const refused = Object.fromEntries(
+          entries
+            .filter(([, quote, wasRefused]) => quote === null && wasRefused)
+            .map(([id]) => [id, true]),
+        )
+
         setQuotes(next)
+        setUnavailable(refused)
         setStatus(
           Object.values(next).some((quote) => quote !== null)
             ? 'ready'
@@ -153,5 +196,5 @@ export function useVehicleQuotes({ pickup, dropoff, packageCount, weight }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inputKey])
 
-  return { quotes, status }
+  return { quotes, unavailable, status, distanceKm: distanceFromQuotes(quotes) }
 }

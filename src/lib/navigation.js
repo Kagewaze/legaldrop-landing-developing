@@ -23,9 +23,8 @@
 // grid links a row only when that row's route is live. Read it; do not mutate.
 export const ROUTES = {
   // Services
-  // Steps 1 and 2 of the send flow exist. Step 3 (payment) does not yet, so a
-  // customer can price a delivery but not book one — the flow ends on a
-  // disabled "Continue to payment".
+  // All three steps of the send flow ship: addresses, vehicle and price, and
+  // Stripe payment with crash recovery. A customer can price AND book.
   send: { href: '/send', live: true },
   medical: { href: '/medical', live: true },
   legal: { href: '/legal', live: true },
@@ -94,9 +93,9 @@ export const NAV_LINKS = [
 // primary action is starting a delivery, so the button reads "Send a package"
 // and targets /send instead.
 //
-// /send has not been built, so this is live: false and the button does not
-// render at all yet — better to show no call to action than a dead one. Flip
-// this to live: true the moment the send flow ships.
+// The send flow has shipped, so ROUTES.send.live is true and this button
+// renders. It inherits that flag rather than carrying its own, which is what
+// kept the two from drifting while the flow was still being built.
 export const NAV_CTA = { label: 'Send a package', ...ROUTES.send }
 
 // --- Footer -----------------------------------------------------------------
@@ -182,6 +181,25 @@ export const SUPPORT_EMAIL = null
 // when config.js is next touched.
 export const LEGAL_ENTITY = null
 
-// The service-area line in the footer's bottom bar. Copy, not configuration,
-// but kept here so it is not buried in JSX.
+// --- Service area -----------------------------------------------------------
+//
+// One source of truth for how far the service reaches, in two registers.
+//
+// Three call sites used to disagree. The home hero hardcoded "Send anything
+// across Toronto" — the narrowest of the three, and an understatement of the
+// coverage; the root metadata description says "Toronto and the GTA"; the
+// footer line below says "Now serving Toronto and the GTA".
+//
+//   SERVICE_AREA_PHRASE — drops into running copy ("Send anything across …").
+//                         Deliberately does NOT name a city: it matches the
+//                         site tagline, "Your city's same-day delivery
+//                         network", and stays true as more cities open.
+//   SERVICE_AREA        — the standalone line in the footer's bottom bar.
+//
+// STILL NOT WIRED: src/app/layout.jsx's metadata description spells the area
+// out longhand and is not driven from here. That file was out of scope when
+// this constant landed — align it when layout.jsx is next touched.
+export const SERVICE_AREA_PHRASE = 'your city'
+
+// Copy, not configuration, but kept here so it is not buried in JSX.
 export const SERVICE_AREA = 'Now serving Toronto and the GTA'
