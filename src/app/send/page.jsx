@@ -184,17 +184,23 @@ export default function SendAddressesPage() {
             as a box inside a box. Soft shadow plus a hairline ring for
             definition against the white card, rather than a hard border. */}
         <div className="mt-6 rounded-2xl bg-white shadow-[0_1px_2px_rgba(23,19,28,0.04),0_6px_20px_rgba(23,19,28,0.06)] ring-1 ring-[#efecf2]">
+          {/* onClear sets the address back to null, which is the only way the
+              store can lose one — nothing else in the flow ever does it. That
+              flips hasBothAddresses false, so Continue disables, the distance
+              line goes, and the map drops back to a single pin. */}
           <AddressAutocomplete
             label="Pickup address"
             variant="pickup"
             selected={flow.pickup}
             onSelect={flow.setPickup}
+            onClear={() => flow.setPickup(null)}
           />
           <AddressAutocomplete
             label="Dropoff address"
             variant="dropoff"
             selected={flow.dropoff}
             onSelect={flow.setDropoff}
+            onClear={() => flow.setDropoff(null)}
           />
         </div>
 

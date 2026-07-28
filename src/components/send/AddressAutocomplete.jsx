@@ -14,14 +14,47 @@ import { importMapsLibrary } from '@/lib/maps-loader'
 //     'input' or 'change' for commit purposes — they fire on every keystroke,
 //     when nothing has been selected and there are no coordinates yet.
 //
-//  2. Never drive element.value from React state. This component deliberately
-//     never writes .value at all.
+//  2. Do not BIND element.value to React state. There is exactly ONE permitted
+//     write: a single hydration write per mount, when the flow store already
+//     holds an address from earlier in this tab — a refresh, or stepping back
+//     from /send/details.
+//
+//     Why that write has to exist: without it the element renders empty while
+//     the store says an address is set. The customer saw a committed-address
+//     check, a "19.9 km trip" line, a live itemised fare and an enabled
+//     Continue, with both fields blank — because hasBothAddresses() reads
+//     state and the element's value was never restored. That let someone reach
+//     the payment step on addresses they had not entered in that session.
+//
+//     What makes it safe, and what is still forbidden:
+//       - it happens AT MOST ONCE per mount (hydratedRef), and never once the
+//         customer has committed a selection of their own (userCommittedRef);
+//       - so it can never echo a later state change back into the input, which
+//         is the actual failure mode of a controlled element here;
+//       - assigning .value fires NO input/change/gmp-select event (see rule 3),
+//         so it cannot forge a commit or a quote request;
+//       - it is wrapped in try/catch. If the setter is unsupported on the
+//         pinned version the field simply stays empty — exactly the behaviour
+//         before this write existed — rather than throwing into init's catch
+//         and rendering the row as "Unavailable".
+//
+//     STILL FORBIDDEN, and this is the part not to misread: a useEffect that
+//     writes .value whenever `selected` changes, a value= prop, or any other
+//     ongoing sync. One latched write on mount is NOT a binding, and this
+//     amendment is not permission to add one.
 //
 //  3. NEVER write a guard that compares the input's value against React state
 //     to detect a "programmatic echo". Assigning .value fires NO input event,
 //     so such a guard never fires in the case it was written for — and it DOES
 //     fire on legitimate typing that happens to match state, silently dropping
 //     a real user selection. It is wrong in both directions.
+//
+//     This is the partner platform's regression, commit 870fbe6, and it is a
+//     DIFFERENT thing from the hydration write in rule 2. That guard ran on
+//     every change and tried to INFER intent by comparing two values that are
+//     legitimately equal much of the time. The hydration write infers nothing
+//     and reads nothing back: it fires once, from a latch, at a moment we
+//     choose. Comparison is what was wrong, not assignment.
 //
 //  4. The init effect has an empty dependency array on purpose. If it depended
 //     on `value` or on the callback, the element would be torn down and rebuilt
@@ -139,12 +172,26 @@ export function AddressAutocomplete({
   variant = 'pickup',
   selected,
   onSelect,
+  onClear,
 }) {
   const containerRef = useRef(null)
 
   // Latest callback without re-running the init effect. See rule 4.
   const onSelectRef = useRef(onSelect)
   onSelectRef.current = onSelect
+
+  // The constructed element. Held here because the hydration effect and the
+  // clear button both need it, and both live outside the init effect that owns
+  // its lifetime.
+  const elementRef = useRef(null)
+
+  // The rule-2 latch: at most one hydration write per mount, ever.
+  const hydratedRef = useRef(false)
+
+  // Set the moment the customer commits a real selection. From then on the
+  // element holds text they chose, and hydration must never overwrite it —
+  // formattedAddress and the string Google displays are not always identical.
+  const userCommittedRef = useRef(false)
 
   const [status, setStatus] = useState('loading') // 'loading' | 'ready' | 'error'
 
@@ -171,6 +218,11 @@ export function AddressAutocomplete({
           // Canada only — the service area is Toronto and the GTA.
           includedRegionCodes: ['ca'],
         })
+
+        // Published for the hydration effect and the clear button. Assigned
+        // before the status flip below, so by the time either of them can see
+        // status === 'ready' the element is already reachable.
+        elementRef.current = element
 
         // Visual only. The label is now visually hidden, so the placeholder is
         // what tells the customer which field this is. Support for this
@@ -214,6 +266,10 @@ export function AddressAutocomplete({
               return
             }
 
+            // Set BEFORE the commit, so the re-render this triggers cannot
+            // reach the hydration effect with the latch still open.
+            userCommittedRef.current = true
+
             onSelectRef.current({
               address: place.formattedAddress ?? '',
               lat,
@@ -249,10 +305,61 @@ export function AddressAutocomplete({
       }
 
       element?.remove()
+      elementRef.current = null
     }
-    // Mount once. See rule 4 above.
+    // Mount once. See rule 4 above. Adding `selected` here to drive hydration
+    // is exactly the mistake rule 2 forbids — it would tear the element down
+    // and rebuild it mid-typing. Hydration is a separate effect, below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // ── Mount hydration — the one permitted .value write. See rule 2. ─────────
+  //
+  // Keyed on [selected, status] because the two things it needs arrive
+  // independently, in an order that is NOT guaranteed: the element appears when
+  // the Maps library resolves, and the address appears when SendFlowProvider
+  // restores sessionStorage. React runs child effects before parent ones, so on
+  // a cold mount `selected` is still null here — whichever of the two lands
+  // second is what triggers the write.
+  //
+  // The latch, not the dependency list, is what keeps this to a single write.
+  useEffect(() => {
+    if (hydratedRef.current || userCommittedRef.current) {
+      return
+    }
+
+    const element = elementRef.current
+
+    if (!element || !selected?.address) {
+      return
+    }
+
+    hydratedRef.current = true
+
+    try {
+      element.value = selected.address
+    } catch (error) {
+      // Setter unsupported on the pinned version. The field stays empty, which
+      // is precisely the behaviour this write replaced — never a throw that
+      // would leave the row reading "Unavailable".
+    }
+  }, [selected, status])
+
+  // Drop the committed address and put the row back to an empty, typeable
+  // state. Clearing the STORE is what actually matters: it is what turns
+  // Continue back into a disabled button, so even if the .value clear below
+  // fails there is no path to booking on an address the customer has dropped.
+  function handleClear() {
+    try {
+      if (elementRef.current) {
+        elementRef.current.value = ''
+      }
+    } catch (error) {
+      // As above — the store clear below still runs.
+    }
+
+    onClear?.()
+  }
 
   return (
     <div
@@ -288,13 +395,25 @@ export function AddressAutocomplete({
           </span>
         )}
 
-        {selected && status === 'ready' && (
-          <span
-            aria-hidden
-            className="flex-none text-[15px] font-semibold text-brand-600"
+        {/* This replaces the ✓ that used to sit here, and does its job as well
+            as its own. That checkmark was aria-hidden, so the only confirmation
+            an address had committed was invisible to assistive tech — and there
+            was no way whatsoever to change an address once chosen, because
+            nothing in the flow could set one back to null. A named button is
+            both the confirmation and the way out.
+
+            Gated on `selected` alone, deliberately NOT on status === 'ready':
+            a stale address has to stay clearable when Maps is degraded, which
+            is exactly the moment someone most needs to be rid of it. */}
+        {selected && (
+          <button
+            type="button"
+            onClick={handleClear}
+            aria-label={`Clear ${label.toLowerCase()}`}
+            className="flex h-7 w-7 flex-none items-center justify-center rounded-full text-[13px] leading-none text-brand-600 transition-colors hover:bg-[#f3ebfb] hover:text-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
           >
-            ✓
-          </span>
+            <span aria-hidden>✕</span>
+          </button>
         )}
       </div>
     </div>
