@@ -30,9 +30,7 @@ const STEPS = [
 export function HowItWorks() {
   return (
     <section className="mx-auto max-w-[1200px] px-8 pt-16">
-      <h2 className="text-[30px] font-extrabold tracking-[-0.02em] text-[#17131c]">
-        How it works
-      </h2>
+      <h2 className="text-3xl font-extrabold text-[#17131c]">How it works</h2>
 
       <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {STEPS.map((step, index) => (
@@ -42,13 +40,13 @@ export function HowItWorks() {
               index === 0 ? 'border-brand-600' : 'border-[#e3d6f2]'
             }`}
           >
-            <div className="text-[13px] font-extrabold tracking-[0.1em] text-brand-600">
+            <div className="text-sm font-semibold tracking-label text-brand-600">
               {step.number}
             </div>
-            <div className="mt-2 text-[18px] font-bold tracking-[-0.01em] text-[#17131c]">
+            <div className="mt-2 text-lg font-bold text-[#17131c]">
               {step.title}
             </div>
-            <div className="mt-1.5 text-[14px] leading-[1.5] text-[#5f5868]">
+            <div className="mt-1.5 text-sm text-[#5f5868]">
               {step.description}
             </div>
           </div>

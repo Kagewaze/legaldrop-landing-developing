@@ -14,11 +14,13 @@ import { HeaderMobileNav } from '@/components/HeaderMobileNav'
 // one-off pill hover shades below are design-specified values that have no
 // entry in the brand scale, so they stay arbitrary — see the note on the CTA.
 
-// text-[15px]/font-semibold matches the design's LINK constant; the active
-// variant matches ACTIVE (weight 700 plus a 2px underline).
-const NAV_LINK = 'text-[15px] font-semibold text-white'
+// Both variants are semibold: nav is nav, and weight is not what should carry
+// the active state — the 2px underline does that on its own. The design's
+// LINK/ACTIVE pair used 600/700, but a one-step weight change between adjacent
+// nav items reads as a rendering inconsistency rather than as emphasis.
+const NAV_LINK = 'text-base font-semibold text-white'
 const NAV_LINK_ACTIVE =
-  'text-[15px] font-bold text-white border-b-2 border-white pb-[2px]'
+  'text-base font-semibold text-white border-b-2 border-white pb-[2px]'
 
 export function Header({ active }) {
   // Only shippable destinations render. Everything else is defined in
@@ -33,7 +35,7 @@ export function Header({ active }) {
       <div className="mx-auto flex h-[68px] max-w-[1200px] items-center justify-between gap-5 px-8">
         <Link
           href="/"
-          className="text-[25px] font-extrabold tracking-[-0.02em] text-white"
+          className="text-2xl font-bold text-white"
         >
           {BRAND.name}
         </Link>
@@ -61,7 +63,7 @@ export function Header({ active }) {
             {cta && (
               <Link
                 href={cta.href}
-                className="rounded-full bg-white px-[22px] py-[10px] text-[15px] font-bold text-brand-600 transition-colors hover:bg-[#f2e9fa] hover:text-[#5d1f96]"
+                className="rounded-full bg-white px-[22px] py-[10px] text-base font-semibold text-brand-600 transition-colors hover:bg-[#f2e9fa] hover:text-[#5d1f96]"
               >
                 {cta.label}
               </Link>

@@ -43,9 +43,7 @@ export function ExpandingGallery({ heading, panels, cta }) {
 
   return (
     <section className="mx-auto max-w-[1200px] px-8 pt-16">
-      <h2 className="text-[30px] font-extrabold tracking-[-0.02em] text-[#17131c]">
-        {heading}
-      </h2>
+      <h2 className="text-3xl font-extrabold text-[#17131c]">{heading}</h2>
 
       <div className="mt-6 flex flex-col gap-[22px] lg:h-[440px] lg:flex-row lg:gap-4">
         {panels.map((panel, index) => (
@@ -66,7 +64,7 @@ export function ExpandingGallery({ heading, panels, cta }) {
 function Panel({ panel, cta, titleId, open, onOpen }) {
   return (
     <div
-      className={`relative isolate min-h-[320px] overflow-hidden rounded-[20px] lg:min-h-0 lg:flex-[0_1_76px] lg:transition-[flex-grow] lg:duration-[360ms] lg:ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:!transition-none ${
+      className={`relative isolate min-h-[320px] overflow-hidden rounded-card lg:min-h-0 lg:flex-[0_1_76px] lg:transition-[flex-grow] lg:duration-slow lg:ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:!transition-none ${
         open ? 'lg:flex-[1_1_76px]' : ''
       }`}
     >
@@ -99,7 +97,7 @@ function Panel({ panel, cta, titleId, open, onOpen }) {
           Transitioned on the same 360ms as the width so the two move together. */}
       <div
         aria-hidden="true"
-        className={`absolute inset-0 bg-[#1c1424]/35 transition-colors duration-[360ms] motion-reduce:!transition-none ${
+        className={`absolute inset-0 bg-[#1c1424]/35 transition-colors duration-slow motion-reduce:!transition-none ${
           open ? '' : 'lg:bg-[#1c1424]/[0.62]'
         }`}
       />
@@ -144,7 +142,7 @@ function Panel({ panel, cta, titleId, open, onOpen }) {
       >
         <span
           aria-hidden="true"
-          className={`rotate-180 text-[15px] font-bold tracking-[0.01em] text-white [writing-mode:vertical-rl] ${
+          className={`rotate-180 text-base font-semibold tracking-label text-white [writing-mode:vertical-rl] ${
             open ? 'invisible' : ''
           }`}
         >
@@ -178,13 +176,11 @@ function Panel({ panel, cta, titleId, open, onOpen }) {
       >
         <h3
           id={titleId}
-          className="text-[20px] font-extrabold tracking-[-0.02em] text-white"
+          className="text-xl font-bold text-white"
         >
           {panel.title}
         </h3>
-        <p className="mt-2.5 text-[15px] leading-[1.55] text-white/85">
-          {panel.description}
-        </p>
+        <p className="mt-2.5 text-base text-white/85">{panel.description}</p>
 
         {/* External origin, so a plain anchor rather than next/link, same tab —
             as everywhere else on these two pages. Underline on hover instead of
@@ -192,7 +188,7 @@ function Panel({ panel, cta, titleId, open, onOpen }) {
             contrast. */}
         <a
           href={PARTNER_URL}
-          className="pointer-events-auto mt-6 self-start text-[15px] font-bold text-white underline-offset-4 hover:underline"
+          className="pointer-events-auto mt-6 self-start text-base font-semibold text-white underline-offset-4 hover:underline"
         >
           {cta} <span aria-hidden="true">→</span>
         </a>
@@ -201,7 +197,7 @@ function Panel({ panel, cta, titleId, open, onOpen }) {
       {/* Hairline, matching home/Coverage.jsx: an overlay, not a ring on the
           wrapper, because an inset box-shadow paints beneath child content and
           would sit behind the photograph. */}
-      <div className="pointer-events-none absolute inset-0 z-30 rounded-[20px] ring-1 ring-inset ring-brand-600/25" />
+      <div className="pointer-events-none absolute inset-0 z-30 rounded-card ring-1 ring-inset ring-brand-600/25" />
     </div>
   )
 }

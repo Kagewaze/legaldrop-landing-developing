@@ -15,12 +15,10 @@ export function BecomeADriver() {
 
   return (
     <section className="mx-auto max-w-[1200px] px-8 py-14">
-      <div className="flex flex-wrap items-center justify-between gap-8 rounded-[22px] bg-brand-600 p-8 text-white sm:p-11">
+      <div className="flex flex-wrap items-center justify-between gap-8 rounded-card bg-brand-600 p-8 text-white sm:p-11">
         <div className="max-w-[560px]">
-          <div className="text-[26px] font-extrabold tracking-[-0.02em] sm:text-[30px]">
-            Become a driver
-          </div>
-          <div className="mt-2 text-[16px] leading-[1.5] opacity-85">
+          <div className="text-3xl font-bold">Become a driver</div>
+          <div className="mt-2 text-base opacity-85">
             Own your vehicle? Set your own hours, take medical and legal jobs
             once you are certified, and get paid weekly.
           </div>
@@ -28,7 +26,7 @@ export function BecomeADriver() {
 
         <Link
           href={href}
-          className="rounded-xl bg-white px-[30px] py-4 text-[16px] font-bold text-brand-600 transition-colors hover:bg-[#f2e9fa] hover:text-[#5d1f96]"
+          className="rounded-control bg-white px-[30px] py-4 text-base font-semibold text-brand-600 transition-colors hover:bg-[#f2e9fa] hover:text-[#5d1f96]"
         >
           Start earning
         </Link>

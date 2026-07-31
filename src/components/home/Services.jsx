@@ -11,7 +11,7 @@ import { ROUTES } from '@/lib/navigation'
 // below is currently live: false, so today every row renders as plain content.
 
 const ICON_TILE =
-  'flex h-[38px] w-[38px] flex-none items-center justify-center rounded-[11px]'
+  'flex h-[38px] w-[38px] flex-none items-center justify-center rounded-tile'
 
 // Icons are simple CSS shapes, as in the design — no icon library.
 const DELIVER = [
@@ -104,10 +104,10 @@ function ServiceRow({ service, iconBackground }) {
     <>
       <div className={`${ICON_TILE} ${iconBackground}`}>{service.icon}</div>
       <div>
-        <div className="text-[15px] font-bold text-[#17131c]">
+        <div className="text-base font-bold text-[#17131c]">
           {service.title}
         </div>
-        <div className="mt-0.5 text-[13px] text-[#5f5868]">
+        <div className="mt-0.5 text-sm text-[#5f5868]">
           {service.description}
         </div>
       </div>
@@ -135,10 +135,8 @@ function CardHeader({ title, meta, className }) {
     <div
       className={`flex items-baseline justify-between px-6 py-5 ${className}`}
     >
-      <div className="text-[20px] font-extrabold tracking-[-0.02em]">
-        {title}
-      </div>
-      <div className="text-[12px] font-bold tracking-[0.08em]">{meta}</div>
+      <div className="text-xl font-bold">{title}</div>
+      <div className="text-xs font-semibold tracking-label">{meta}</div>
     </div>
   )
 }
@@ -146,15 +144,15 @@ function CardHeader({ title, meta, className }) {
 export function Services() {
   return (
     <section className="mx-auto max-w-[1200px] px-8 pt-16">
-      <h2 className="text-[30px] font-extrabold tracking-[-0.03em] text-[#17131c] sm:text-[38px]">
+      <h2 className="text-3xl font-extrabold text-[#17131c] sm:text-4xl">
         Everything {BRAND.name} does
       </h2>
-      <p className="mt-2.5 max-w-[560px] text-[17px] text-[#5f5868]">
+      <p className="mt-2.5 max-w-[560px] text-lg text-[#5f5868]">
         One app for sending, moving, and driving in the Greater Toronto Area.
       </p>
 
       <div className="mt-8 grid grid-cols-1 gap-[22px] sm:grid-cols-2 lg:grid-cols-3">
-        <div className="flex flex-col overflow-hidden rounded-[20px] border-[1.5px] border-[#eeebf1]">
+        <div className="flex flex-col overflow-hidden rounded-card border-[1.5px] border-[#eeebf1] shadow-card">
           <CardHeader
             title="Deliver"
             meta={<span className="opacity-75">5 services</span>}
@@ -171,7 +169,7 @@ export function Services() {
           </div>
         </div>
 
-        <div className="flex flex-col overflow-hidden rounded-[20px] border-[1.5px] border-[#eeebf1]">
+        <div className="flex flex-col overflow-hidden rounded-card border-[1.5px] border-[#eeebf1] shadow-card">
           <CardHeader
             title="Move"
             meta={<span className="opacity-60">5 services</span>}
@@ -188,7 +186,7 @@ export function Services() {
           </div>
         </div>
 
-        <div className="flex flex-col overflow-hidden rounded-[20px] border-[1.5px] border-[#eeebf1]">
+        <div className="flex flex-col overflow-hidden rounded-card border-[1.5px] border-[#eeebf1] shadow-card">
           <CardHeader
             title="Learn"
             meta={<span className="opacity-60">Driver training</span>}
@@ -200,10 +198,10 @@ export function Services() {
                 <span className="h-[14px] w-[14px] rounded-full border-2 border-brand-600 border-t-transparent" />
               </div>
               <div>
-                <div className="text-[15px] font-bold text-[#17131c]">
+                <div className="text-base font-bold text-[#17131c]">
                   Training hub
                 </div>
-                <div className="mt-0.5 text-[13px] text-[#5f5868]">
+                <div className="mt-0.5 text-sm text-[#5f5868]">
                   Certifications that unlock higher-paying jobs
                 </div>
               </div>
@@ -216,7 +214,7 @@ export function Services() {
                   className="flex items-center gap-2.5 rounded-[11px] bg-[#faf7fd] px-3.5 py-3"
                 >
                   <span className="h-[7px] w-[7px] flex-none rounded-full bg-brand-600" />
-                  <span className="text-[14px] font-semibold text-[#17131c]">
+                  <span className="text-sm font-semibold text-[#17131c]">
                     {certification}
                   </span>
                 </div>

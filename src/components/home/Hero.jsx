@@ -63,20 +63,28 @@ export function Hero() {
           card overflowing a fixed-height box. */}
       <div className="mx-auto flex max-w-[1200px] items-center px-8 py-14 lg:min-h-[520px] lg:py-16">
         {/* Over a photograph the card has to read as a lifted surface rather
-            than a pasted rectangle. Three low-opacity layers do that where one
-            60px blur cannot: a 2px contact shadow that seats the edge, a mid
-            shadow for the lift, and a wide soft one for the ambient falloff.
-            The hairline ring at 7% ink defines the edge itself — without it the
-            white surface meets the scrim with no termination at all. */}
-        <div className="w-full max-w-[520px] rounded-[18px] bg-white p-7 shadow-[0_1px_2px_rgba(23,19,28,0.12),0_10px_24px_-8px_rgba(23,19,28,0.18),0_28px_56px_-24px_rgba(23,19,28,0.24)] ring-1 ring-[#17131c]/[0.07]">
+            than a pasted rectangle. shadow-hero is three low-opacity layers,
+            which does that where one 60px blur cannot: a 2px contact shadow
+            that seats the edge, a mid shadow for the lift, and a wide soft one
+            for the ambient falloff. The hairline ring at 7% ink defines the
+            edge itself — without it the white surface meets the scrim with no
+            termination at all. */}
+        <div className="w-full max-w-[520px] rounded-card bg-white p-7 shadow-hero ring-1 ring-[#17131c]/[0.07]">
           {/* Sourced from navigation.js rather than hardcoded. This used to
               read "across Toronto", which was narrower than both the metadata
               description and the footer's service-area line — the site claimed
-              three different coverage areas. See SERVICE_AREA_PHRASE. */}
-          <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-[#17131c] sm:text-[30px]">
+              three different coverage areas. See SERVICE_AREA_PHRASE.
+
+              THREE STEPS, NOT TWO. The card is max-w-[520px], and below `sm`
+              it narrows with the viewport — at 390px the headline has only
+              255px of line box. Measured there, 48px wraps this copy to FOUR
+              lines and pushes the card from 409px to 555px; 30px holds two.
+              So mobile stays at 3xl and the full 60px only lands at `lg`,
+              where the card is locked at its 520px maximum. */}
+          <h1 className="text-3xl font-extrabold text-[#17131c] sm:text-5xl lg:text-6xl">
             Send anything across {SERVICE_AREA_PHRASE}
           </h1>
-          <p className="mt-1.5 text-[15px] leading-[1.5] text-[#5f5868]">
+          <p className="mt-1.5 text-base text-[#5f5868]">
             Same-day courier for clinics, law firms, and everyone else. See your
             price before you book.
           </p>
@@ -104,15 +112,15 @@ export function Hero() {
               className="group mt-[22px] block select-none"
             >
               <div className="flex flex-col gap-2.5" aria-hidden="true">
-                <div className="flex items-center gap-3 rounded-xl border-[1.5px] border-[#e3dfe8] px-4 py-3.5 transition-colors group-hover:border-[#d5cddd]">
+                <div className="flex items-center gap-3 rounded-control border-[1.5px] border-[#e3dfe8] px-4 py-3.5 transition-colors group-hover:border-[#d5cddd]">
                   <span className="h-[11px] w-[11px] flex-none rounded-full border-[2.5px] border-brand-600" />
-                  <span className="text-[16px] text-[#8d8695]">
+                  <span className="text-base text-[#8d8695]">
                     Pickup address
                   </span>
                 </div>
-                <div className="flex items-center gap-3 rounded-xl border-[1.5px] border-[#e3dfe8] px-4 py-3.5 transition-colors group-hover:border-[#d5cddd]">
+                <div className="flex items-center gap-3 rounded-control border-[1.5px] border-[#e3dfe8] px-4 py-3.5 transition-colors group-hover:border-[#d5cddd]">
                   <span className="h-[11px] w-[11px] flex-none bg-brand-600" />
-                  <span className="text-[16px] text-[#8d8695]">
+                  <span className="text-base text-[#8d8695]">
                     Dropoff address
                   </span>
                 </div>
@@ -121,7 +129,7 @@ export function Hero() {
               <div className="mt-[18px] flex items-center gap-[18px]">
                 {/* A span, not a nested link — an <a> inside an <a> is invalid
                     and browsers will not nest the click targets predictably. */}
-                <span className="flex-1 rounded-xl bg-brand-600 px-5 py-4 text-center text-[16px] font-bold text-white transition-colors group-hover:bg-brand-700">
+                <span className="flex-1 rounded-control bg-brand-600 px-5 py-4 text-center text-base font-semibold text-white transition-colors group-hover:bg-brand-700">
                   See price
                 </span>
                 <PriceFrom />
@@ -131,7 +139,7 @@ export function Hero() {
             <div className="mt-[22px] flex items-center gap-[18px]">
               <Link
                 href="/contact-us"
-                className="flex-1 rounded-xl bg-brand-600 px-5 py-4 text-center text-[16px] font-bold text-white transition-colors hover:bg-brand-700"
+                className="flex-1 rounded-control bg-brand-600 px-5 py-4 text-center text-base font-semibold text-white transition-colors hover:bg-brand-700"
               >
                 Get in touch
               </Link>
@@ -146,11 +154,9 @@ export function Hero() {
 
 function PriceFrom() {
   return (
-    <div className="text-right leading-[1.2]">
-      <div className="text-[12px] font-semibold text-[#8d8695]">from</div>
-      <div className="text-[22px] font-extrabold tracking-[-0.02em] text-[#17131c]">
-        $8.00
-      </div>
+    <div className="text-right">
+      <div className="text-xs font-semibold text-[#8d8695]">from</div>
+      <div className="text-2xl font-bold text-[#17131c]">$8.00</div>
     </div>
   )
 }

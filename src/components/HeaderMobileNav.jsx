@@ -45,7 +45,7 @@ export function HeaderMobileNav({ links, cta }) {
               key={link.href}
               as={Link}
               href={link.href}
-              className="border-b border-white/20 py-[14px] text-[17px] font-semibold text-white"
+              className="border-b border-white/20 py-[14px] text-lg font-semibold text-white"
             >
               {link.label}
             </PopoverButton>
@@ -55,7 +55,7 @@ export function HeaderMobileNav({ links, cta }) {
             <PopoverButton
               as={Link}
               href={cta.href}
-              className="mt-[14px] rounded-[12px] bg-white py-[14px] text-center text-[16px] font-bold text-brand-600"
+              className="mt-[14px] rounded-control bg-white py-[14px] text-center text-base font-semibold text-brand-600"
             >
               {cta.label}
             </PopoverButton>

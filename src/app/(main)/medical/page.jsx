@@ -135,10 +135,10 @@ function Hero() {
     <section className="border-b border-[#f0eaf6] bg-[#faf7fd]">
       <div className="mx-auto max-w-[1200px] px-8 py-16 sm:py-20">
         <div className="max-w-[720px]">
-          <h1 className="text-[36px] font-extrabold leading-[1.05] tracking-[-0.03em] text-[#17131c] sm:text-[46px]">
+          <h1 className="text-4xl font-extrabold text-[#17131c] sm:text-5xl">
             Medical courier for GTA clinics and labs
           </h1>
-          <p className="mt-4 max-w-[560px] text-[17px] leading-[1.55] text-[#5f5868]">
+          <p className="mt-4 max-w-[560px] text-lg text-[#5f5868]">
             Same-day secure transport for specimens, pharmaceuticals, and
             temperature-sensitive goods, handled by certified drivers.
           </p>
@@ -157,7 +157,7 @@ function Credentials() {
         {CREDENTIALS.map((credential) => (
           <div key={credential} className="flex items-center gap-2.5">
             <span className="h-[7px] w-[7px] flex-none rounded-full bg-brand-600" />
-            <span className="text-[14px] font-semibold tracking-[0.01em]">
+            <span className="text-sm font-semibold tracking-label">
               {credential}
             </span>
           </div>
@@ -170,12 +170,10 @@ function Credentials() {
 function FinalCta() {
   return (
     <section className="mx-auto max-w-[1200px] px-8 py-14">
-      <div className="flex flex-wrap items-center justify-between gap-8 rounded-[22px] bg-brand-600 p-8 text-white sm:p-11">
+      <div className="flex flex-wrap items-center justify-between gap-8 rounded-card bg-brand-600 p-8 text-white sm:p-11">
         <div className="max-w-[560px]">
-          <div className="text-[26px] font-extrabold tracking-[-0.02em] sm:text-[30px]">
-            Set up your clinic account
-          </div>
-          <div className="mt-2 text-[16px] leading-[1.5] opacity-85">
+          <div className="text-3xl font-bold">Set up your clinic account</div>
+          <div className="mt-2 text-base opacity-85">
             Standing routes, per-location billing and certified drivers, managed
             from the {BRAND.name} partner platform.
           </div>
@@ -183,7 +181,7 @@ function FinalCta() {
 
         <a
           href={PARTNER_URL}
-          className="rounded-xl bg-white px-[30px] py-4 text-[16px] font-bold text-brand-600 transition-colors hover:bg-[#f2e9fa] hover:text-[#5d1f96]"
+          className="rounded-control bg-white px-[30px] py-4 text-base font-semibold text-brand-600 transition-colors hover:bg-[#f2e9fa] hover:text-[#5d1f96]"
         >
           Get started
         </a>
@@ -202,7 +200,7 @@ function PartnerCta({ children, className = '' }) {
   return (
     <a
       href={PARTNER_URL}
-      className={`inline-block rounded-xl bg-brand-600 px-[30px] py-4 text-[16px] font-bold text-white transition-colors hover:bg-brand-700 ${className}`}
+      className={`inline-block rounded-control bg-brand-600 px-[30px] py-4 text-base font-semibold text-white transition-colors hover:bg-brand-700 ${className}`}
     >
       {children}
     </a>

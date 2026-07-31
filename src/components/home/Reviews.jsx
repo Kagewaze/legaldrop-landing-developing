@@ -35,8 +35,12 @@ function Stars({ rating }) {
   const filled = Math.max(0, Math.min(5, Math.round(rating)))
 
   return (
+    // tracking-[2px] is NOT letter-spacing on text and must not be folded into
+    // tracking-label. It is the gap between ★ glyphs — 2px at 14px is 0.143em,
+    // where the label token is 0.08em, so the token would visibly tighten the
+    // star row. Optical spacing of a glyph run, not typographic tracking.
     <div
-      className="text-[14px] tracking-[2px] text-brand-600"
+      className="text-sm tracking-[2px] text-brand-600"
       aria-label={`${rating} out of 5`}
     >
       <span aria-hidden="true">
@@ -53,14 +57,14 @@ export function Reviews({ data }) {
   return (
     <section className="mx-auto max-w-[1200px] px-8 pt-12">
       <div className="flex flex-wrap items-baseline justify-between gap-6">
-        <h2 className="text-[30px] font-extrabold tracking-[-0.02em] text-[#17131c]">
+        <h2 className="text-3xl font-extrabold text-[#17131c]">
           Rated {rating.toFixed(1)} on Google
         </h2>
         <a
           href={GOOGLE_PLACE_URL}
           target="_blank"
           rel="noreferrer"
-          className="text-[15px] font-bold text-brand-600 transition-colors hover:text-[#5d1f96]"
+          className="text-base font-semibold text-brand-600 transition-colors hover:text-[#5d1f96]"
         >
           See all reviews
         </a>
@@ -70,14 +74,14 @@ export function Reviews({ data }) {
         {reviews.map((review, index) => (
           <article
             key={`${review.authorName}-${index}`}
-            className="rounded-2xl border-[1.5px] border-[#eeebf1] p-6"
+            className="rounded-card border-[1.5px] border-[#eeebf1] p-6 shadow-card"
           >
             <div className="flex items-center gap-3.5">
-              <div className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-[#f3ebfb] text-[15px] font-extrabold text-brand-600">
+              <div className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-[#f3ebfb] text-base font-bold text-brand-600">
                 {initialsFrom(review.authorName)}
               </div>
               <div>
-                <div className="text-[16px] font-bold text-[#17131c]">
+                <div className="text-base font-bold text-[#17131c]">
                   {review.authorName}
                 </div>
                 <Stars rating={review.rating} />
@@ -87,13 +91,11 @@ export function Reviews({ data }) {
             {/* Verbatim. Not truncated — see the terms note in
                 src/lib/google-reviews.js. */}
             {review.text && (
-              <p className="mt-4 text-[15px] leading-[1.6] text-[#433d4b]">
-                {review.text}
-              </p>
+              <p className="mt-4 text-base text-[#433d4b]">{review.text}</p>
             )}
 
             {review.relativeTime && (
-              <p className="mt-3 text-[13px] text-[#8d8695]">
+              <p className="mt-3 text-sm text-[#8d8695]">
                 {review.relativeTime}
               </p>
             )}
@@ -105,7 +107,7 @@ export function Reviews({ data }) {
           expectation: this is not a curated wall of the best reviews — the API
           returns up to five and Google decides which, with no way to configure
           the selection. */}
-      <p className="mt-3.5 text-[13px] text-[#8d8695]">
+      <p className="mt-3.5 text-sm text-[#8d8695]">
         Reviews from Google, based on {totalCount}{' '}
         {totalCount === 1 ? 'review' : 'reviews'}. Google selects which reviews
         are shown.

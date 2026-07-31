@@ -27,10 +27,8 @@ export function Coverage({ image }) {
     <div className="mx-auto flex max-w-[1200px] items-center gap-3.5 px-8 py-9">
       <span className="h-3 w-3 flex-none rounded-full bg-brand-600" />
       <div>
-        <div className="text-[20px] font-extrabold tracking-[-0.02em] text-[#17131c]">
-          {SERVICE_AREA}
-        </div>
-        <div className="mt-0.5 text-[14px] text-[#5f5868]">{CITIES}</div>
+        <div className="text-xl font-bold text-[#17131c]">{SERVICE_AREA}</div>
+        <div className="mt-0.5 text-sm text-[#5f5868]">{CITIES}</div>
       </div>
     </div>
   )
@@ -58,7 +56,7 @@ export function Coverage({ image }) {
           Native 8:3 from the static import's intrinsic 2400x900, so the height
           is known before the bytes arrive and nothing below it moves. */}
       <div className="mx-auto max-w-[1200px] px-8 pb-9">
-        <div className="relative overflow-hidden rounded-[20px]">
+        <div className="relative overflow-hidden rounded-card">
           <Image
             src={image.src}
             alt={image.alt}
@@ -74,7 +72,7 @@ export function Coverage({ image }) {
               is still a hairline, and it holds on light images too — this is
               the pattern for card images from here on, so it has to survive
               both. Do not thicken it; a coloured frame reads cheap. */}
-          <div className="pointer-events-none absolute inset-0 rounded-[20px] ring-1 ring-inset ring-brand-600/25" />
+          <div className="pointer-events-none absolute inset-0 rounded-card ring-1 ring-inset ring-brand-600/25" />
         </div>
       </div>
     </section>

@@ -25,9 +25,8 @@ import {
 //   #1a1421  page      #a49bad  muted link    #2e2537  hairline
 //   #c8c0d0  service   #8d8497  copyright     #e5dfea  contact (unused, null)
 
-const SECTION_HEADING = 'text-[14px] font-extrabold tracking-[0.06em] text-white'
-const FOOTER_LINK =
-  'text-[14px] text-[#a49bad] transition-colors hover:text-white'
+const SECTION_HEADING = 'text-sm font-semibold tracking-label text-white'
+const FOOTER_LINK = 'text-sm text-[#a49bad] transition-colors hover:text-white'
 
 export function Footer() {
   // Only shippable destinations render; a section whose every item is
@@ -73,8 +72,12 @@ export function Footer() {
                 ))}
               </div>
 
+              {/* leading-[1.8] below is retained deliberately — the sm token's
+                  1.55 is body-copy leading, and this is a stacked contact block
+                  of one-line items where the looser rhythm is what separates
+                  them. Not a leftover. */}
               {section.id === 'support' && hasContact && (
-                <div className="mt-[22px] text-[14px] leading-[1.8] text-[#e5dfea]">
+                <div className="mt-[22px] text-sm leading-[1.8] text-[#e5dfea]">
                   {SUPPORT_PHONE && <div>{SUPPORT_PHONE}</div>}
                   {SUPPORT_EMAIL && <div>{SUPPORT_EMAIL}</div>}
                 </div>
@@ -89,11 +92,11 @@ export function Footer() {
           <div className="flex flex-wrap items-center gap-5">
             <Link
               href="/"
-              className="text-[20px] font-extrabold tracking-[-0.02em] text-white"
+              className="text-xl font-bold text-white"
             >
               {BRAND.name}
             </Link>
-            <span className="flex items-center gap-[9px] text-[14px] text-[#c8c0d0]">
+            <span className="flex items-center gap-[9px] text-sm text-[#c8c0d0]">
               <span
                 aria-hidden
                 className="h-[7px] w-[7px] rounded-full bg-[#b98ae0]"
@@ -102,7 +105,7 @@ export function Footer() {
             </span>
           </div>
 
-          <div className="text-[13px] text-[#8d8497]">
+          <div className="text-sm text-[#8d8497]">
             <div>
               &copy; {new Date().getFullYear()} {copyrightName}. All rights
               reserved.
@@ -112,7 +115,7 @@ export function Footer() {
                 change to either constant. It is what makes the '© LegalDrop'
                 line above read as continuity rather than as the wrong site.
                 Muted footnote treatment: no weight, no colour, no emphasis. */}
-            <div className="mt-1 text-[12px]">Druppr — formerly LegalDrop</div>
+            <div className="mt-1 text-xs">Druppr — formerly LegalDrop</div>
           </div>
         </div>
       </div>

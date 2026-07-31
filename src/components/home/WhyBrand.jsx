@@ -46,20 +46,18 @@ export function WhyBrand({ heading, reasons }) {
 
   return (
     <section className="mx-auto max-w-[1200px] px-8 pt-16">
-      <h2 className="text-[30px] font-extrabold tracking-[-0.02em] text-[#17131c]">
-        {heading}
-      </h2>
+      <h2 className="text-3xl font-extrabold text-[#17131c]">{heading}</h2>
 
       <div className={`mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 ${columns}`}>
         {reasons.map((reason) => (
-          <div key={reason.title} className="rounded-2xl bg-[#faf7fd] p-6">
-            <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-brand-600">
+          <div key={reason.title} className="rounded-card bg-[#faf7fd] p-6 shadow-card">
+            <div className="flex h-9 w-9 items-center justify-center rounded-tile bg-brand-600">
               {reason.icon}
             </div>
-            <div className="mt-4 text-[17px] font-bold text-[#17131c]">
+            <div className="mt-4 text-lg font-bold text-[#17131c]">
               {reason.title}
             </div>
-            <div className="mt-1.5 text-[14px] leading-[1.5] text-[#5f5868]">
+            <div className="mt-1.5 text-sm text-[#5f5868]">
               {reason.description}
             </div>
           </div>
