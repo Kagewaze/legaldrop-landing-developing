@@ -8,6 +8,7 @@ import {
   SERVICE_AREA,
   SUPPORT_EMAIL,
   SUPPORT_PHONE,
+  formatPhone,
 } from '@/lib/navigation'
 
 // Druppr site footer, ported from design/DrupprFooter.dc.html.
@@ -78,7 +79,7 @@ export function Footer() {
                   them. Not a leftover. */}
               {section.id === 'support' && hasContact && (
                 <div className="mt-[22px] text-sm leading-[1.8] text-[#e5dfea]">
-                  {SUPPORT_PHONE && <div>{SUPPORT_PHONE}</div>}
+                  {SUPPORT_PHONE && <div>{formatPhone(SUPPORT_PHONE)}</div>}
                   {SUPPORT_EMAIL && <div>{SUPPORT_EMAIL}</div>}
                 </div>
               )}

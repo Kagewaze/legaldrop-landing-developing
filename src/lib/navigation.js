@@ -155,10 +155,48 @@ export const FOOTER_SECTIONS = [
 // like an outage to the customer and it is the number that ends up in receipts,
 // screenshots and complaints.
 //
-// Footer skips the entire contact block while these are null. Set them here and
-// the block appears — no component change required.
+// Footer skips the entire contact block while these are null, and /contact-us
+// skips the matching row. Set them here and both appear — no component change
+// required.
+//
+// THESE ARE NOW THE ONLY SOURCE. /contact-us used to hardcode its own phone and
+// Gmail address, so the footer printed nothing while that page printed values
+// nobody had signed off on. Both hardcoded values are gone; do not reintroduce
+// a contact detail at a call site.
+//
+// SUPPORT_PHONE STORES DIGITS, NOT A FORMATTED STRING — E.164, e.g.
+// '+13435984928'. It is used verbatim as a `tel:` href, and a tel: URI
+// containing brackets and spaces is not something to rely on. Display
+// formatting is formatPhone()'s job, below, so the value and its presentation
+// cannot drift apart.
 export const SUPPORT_PHONE = null
 export const SUPPORT_EMAIL = null
+
+// Renders SUPPORT_PHONE for humans: '+13435984928' -> '+1 (343) 598-4928'.
+//
+// Every surface that PRINTS the number goes through this; every surface that
+// LINKS it uses the raw constant. That split is the whole point — one stored
+// value, so the footer and /contact-us cannot disagree the day a real number
+// lands.
+//
+// Returns the input untouched when it is not a 10- or 11-digit NANP number,
+// which covers both null (nothing renders anyway) and a future non-North
+// American number, which this format would otherwise mangle into a lie.
+export function formatPhone(value) {
+  if (!value) {
+    return value
+  }
+
+  const digits = String(value).replace(/\D/g, '')
+  const national =
+    digits.length === 11 && digits.startsWith('1') ? digits.slice(1) : digits
+
+  if (national.length !== 10) {
+    return value
+  }
+
+  return `+1 (${national.slice(0, 3)}) ${national.slice(3, 6)}-${national.slice(6)}`
+}
 
 // UNCONFIRMED — the registered legal entity name must be supplied by the
 // business owner. It stays null until then.

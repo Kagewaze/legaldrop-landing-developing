@@ -1,19 +1,73 @@
 "use client"
-import Image from 'next/image'
-import track from '@/images/track.jpg'
-import { Button } from '@/components/Button'
-import { CirclesBackground } from '@/components/CirclesBackground'
-import { Container } from '@/components/Container'
-import { Layout } from '@/components/Layout'
+import { EnvelopeIcon, PhoneIcon } from '@heroicons/react/24/outline'
+import Link from 'next/link'
 import { useForm } from 'react-hook-form';
 import { useState } from 'react';
-import { BuildingOffice2Icon, EnvelopeIcon, PhoneIcon } from '@heroicons/react/24/outline'
 import axios from "axios"
+
+import { Layout } from '@/components/Layout'
 import { API_BASE_URL } from '@/lib/config'
+import {
+  PARTNER_URL,
+  ROUTES,
+  SERVICE_AREA,
+  SUPPORT_EMAIL,
+  SUPPORT_PHONE,
+  formatPhone,
+} from '@/lib/navigation'
+
+// /contact-us — brought onto the design system.
+//
+// CONTACT DETAILS ARE NOT WRITTEN HERE. This page used to hardcode a phone
+// number and a Gmail address while the footer, reading SUPPORT_PHONE and
+// SUPPORT_EMAIL from src/lib/navigation.js, printed nothing — two sources of
+// truth disagreeing on the one page whose entire job is being reachable. Both
+// now come from navigation.js, and each row is gated independently so one can
+// ship without the other. If you are here to add a phone number, add it there.
+//
+// The page is deliberately useful with both of them null, which is the state it
+// ships in: the form is the working channel, and the left column carries the
+// destinations a visitor most often actually wanted.
+
+// Field language copied from the send flow (src/components/send/ContactFields.jsx)
+// so focus reads brand purple here exactly as it does there. Before this, these
+// inputs set no border and no ring, inheriting @tailwindcss/forms' defaults —
+// a grey-500 border and a BLUE focus ring, the only blue on the site.
+const FIELD =
+  'block w-full rounded-control border-[1.5px] border-[#e3dfe8] bg-white px-4 py-3 text-base text-[#17131c] placeholder:text-[#8d8695] transition-colors focus:border-brand-600 focus:outline-none focus:ring-0'
+
+const LABEL = 'mb-1.5 block text-start text-sm font-semibold text-[#17131c]'
+
+// role="alert" matches the precedent in send/AddressAutocomplete.jsx: a message
+// that appears in response to what the user just did has to be announced, not
+// merely rendered.
+const ERROR = 'mt-1.5 text-sm text-[#b42318]'
+
+const CONTACT_LINK = 'transition-colors hover:text-[#17131c]'
+
+// Built ONLY from destinations that already exist and are already flagged
+// shippable in navigation.js, filtered through the same `live` gate the Footer
+// uses — so a route that has not shipped cannot leak onto the page that
+// promises to help. No response-time claim appears here or anywhere on this
+// page: nobody has measured one.
+const OTHER_WAYS = [
+  {
+    ...ROUTES.send,
+    label: 'Send a package',
+    description: 'Get a price and book a driver online.',
+  },
+  {
+    href: PARTNER_URL,
+    live: true,
+    external: true,
+    label: 'Set up a business account',
+    description: 'Standing routes and per-location billing for clinics and firms.',
+  },
+]
 
 export default function ContactUs() {
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
-   const [loading, setLoading] = useState(false); 
+   const [loading, setLoading] = useState(false);
 
   const onSubmit = async (contactData) => {
     setLoading(true);
@@ -24,12 +78,12 @@ export default function ContactUs() {
       method: 'post',
       maxBodyLength: Infinity,
       url: `${API_BASE_URL}/contact-form`,
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
       },
       data : data
     };
-    
+
     axios.request(config)
     .then((response) => {
       console.log(JSON.stringify(response.data));
@@ -40,191 +94,215 @@ export default function ContactUs() {
     .catch((error) => {
       console.log(error);
       alert('Failed to send the form. Something went wrong.');
-    }) 
+    })
     .finally(() => {
-      setLoading(false); 
+      setLoading(false);
     }
   );
   };
 
+  // Both null today. The whole <dl> is skipped rather than left as an empty
+  // list, same as the Footer's contact block.
+  const hasContact = Boolean(SUPPORT_PHONE || SUPPORT_EMAIL)
+  const otherWays = OTHER_WAYS.filter((way) => way.live)
+
   return (
     <Layout>
-      <div className="relative isolate bg-white" id="contact-us">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 lg:grid-cols-2">
-        <div className="relative px-6 pb-20 pt-24 sm:pt-32 lg:static lg:px-8 lg:py-48">
-        <div className="mx-auto max-w-xl lg:mx-0 lg:max-w-lg">
-            <div className="absolute inset-y-0 left-0 -z-10 w-full overflow-hidden bg-gray-100 ring-1 ring-gray-900/10 lg:w-1/2">
-              <svg
-                aria-hidden="true"
-                className="absolute inset-0 size-full stroke-gray-200 [mask-image:radial-gradient(100%_100%_at_top_right,white,transparent)]"
-              >
-                <defs>
-                  <pattern
-                    x="100%"
-                    y={-1}
-                    id="83fd4e5a-9d52-42fc-97b6-718e5d7ee527"
-                    width={200}
-                    height={200}
-                    patternUnits="userSpaceOnUse"
-                  >
-                    <path d="M130 200V.5M.5 .5H200" fill="none" />
-                  </pattern>
-                </defs>
-                <rect fill="white" width="100%" height="100%" strokeWidth={0} />
-                <svg x="100%" y={-1} className="overflow-visible fill-gray-50">
-                  <path d="M-470.5 0h201v201h-201Z" strokeWidth={0} />
-                </svg>
-                <rect fill="url(#83fd4e5a-9d52-42fc-97b6-718e5d7ee527)" width="100%" height="100%" strokeWidth={0} />
-              </svg>
+      <div className="bg-white" id="contact-us">
+        <div className="mx-auto max-w-[1200px] px-8 py-16 sm:py-20">
+          {/* 5/7 rather than 50/50, and items-start rather than the grid's
+              default stretch. Both columns used to be cells of one row whose
+              height was set by the taller one, so the left column's short
+              content sat top-aligned above ~435px of nothing. */}
+          <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-12">
+            <div className="lg:col-span-5">
+              <h1 className="text-pretty text-4xl font-extrabold text-[#17131c] sm:text-5xl">
+                Get in touch
+              </h1>
+              <p className="mt-4 text-lg text-[#5f5868]">
+                We are one click away from serving you better today!
+              </p>
+
+              {hasContact && (
+                <dl className="mt-8 space-y-4 text-base text-[#5f5868]">
+                  {SUPPORT_PHONE && (
+                    <div className="flex items-center gap-x-3">
+                      <dt className="flex-none">
+                        <span className="sr-only">Telephone</span>
+                        <PhoneIcon aria-hidden="true" className="h-6 w-6 text-[#8d8695]" />
+                      </dt>
+                      <dd>
+                        {/* href takes the stored digits; only the label is
+                            formatted. See formatPhone in navigation.js. */}
+                        <a href={`tel:${SUPPORT_PHONE}`} className={CONTACT_LINK}>
+                          {formatPhone(SUPPORT_PHONE)}
+                        </a>
+                      </dd>
+                    </div>
+                  )}
+                  {SUPPORT_EMAIL && (
+                    <div className="flex items-center gap-x-3">
+                      <dt className="flex-none">
+                        <span className="sr-only">Email</span>
+                        <EnvelopeIcon aria-hidden="true" className="h-6 w-6 text-[#8d8695]" />
+                      </dt>
+                      <dd>
+                        <a href={`mailto:${SUPPORT_EMAIL}`} className={CONTACT_LINK}>
+                          {SUPPORT_EMAIL}
+                        </a>
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              )}
+
+              {otherWays.length > 0 && (
+                <div className="mt-8 rounded-card bg-[#faf7fd] p-6 shadow-card">
+                  <h2 className="text-xl font-bold text-[#17131c]">
+                    Other ways to reach us
+                  </h2>
+                  <ul className="mt-4 space-y-4">
+                    {otherWays.map((way) => (
+                      <li key={way.href}>
+                        {/* PARTNER_URL is a different origin, so it is a plain
+                            anchor — next/link is for in-app routes. */}
+                        {way.external ? (
+                          <a
+                            href={way.href}
+                            className="text-base font-semibold text-brand-600 transition-colors hover:text-brand-700"
+                          >
+                            {way.label}
+                          </a>
+                        ) : (
+                          <Link
+                            href={way.href}
+                            className="text-base font-semibold text-brand-600 transition-colors hover:text-brand-700"
+                          >
+                            {way.label}
+                          </Link>
+                        )}
+                        <p className="mt-1 text-sm text-[#5f5868]">
+                          {way.description}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <p className="mt-6 text-sm text-[#8d8695]">{SERVICE_AREA}</p>
             </div>
-            <h2 className="text-pretty text-4xl font-semibold tracking-tight text-purple-900 sm:text-5xl">
-              Get In Touch
-            </h2>
-            <p className="mt-6 text-lg/8 text-gray-600">
-            We are one click away from serving you better today!
-            </p>
-            <dl className="mt-10 space-y-4 text-base/7 text-gray-600">
-              <div className="flex gap-x-4">
-                <dt className="flex-none">
-                  <span className="sr-only">Telephone</span>
-                  <PhoneIcon aria-hidden="true" className="h-7 w-6 text-gray-400" />
-                </dt>
-                <dd>
-                  <a href="tel: +13435984928" className="hover:text-gray-900">
-                  +13435984928
-                  </a>
-                </dd>
-              </div>
-              <div className="flex gap-x-4">
-                <dt className="flex-none">
-                  <span className="sr-only">Email</span>
-                  <EnvelopeIcon aria-hidden="true" className="h-7 w-6 text-gray-400" />
-                </dt>
-                <dd>
-                  <a href="mailto:legaldropeng@gmail.com" className="hover:text-gray-900">
-                  legaldropeng@gmail.com
-                  </a>
-                </dd>
-              </div>
-            </dl>
-          </div>
-        </div>
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="px-6 pb-24 pt-20 sm:pb-32 lg:px-8 lg:py-48"
-          >
-            <div className="mx-auto max-w-xl lg:mr-0 lg:max-w-lg">
-              <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
-                {/* First Name */}
-                <div>
-                  <label
-                    htmlFor="firstName"
-                    className="block text-sm/6 font-semibold text-gray-900 text-start"
-                  >
-                    First Name
-                  </label>
-                  <input
-                    id="firstName"
-                    type="text"
-                    autoComplete="given-name"
-                    className="block w-full rounded-md bg-white px-3.5 py-2 text-base text-gray-900"
-                    {...register('firstName', { required: 'First name is required' })}
-                  />
-                  {errors.firstName && <p className="text-red-500">{errors.firstName.message}</p>}
-                </div>
 
-                {/* Last Name */}
-                <div>
-                  <label
-                    htmlFor="lastName"
-                    className="block text-sm/6 font-semibold text-gray-900 text-start"
-                  >
-                    Last Name
-                  </label>
-                  <input
-                    id="lastName"
-                    type="text"
-                    autoComplete="family-name"
-                    className="block w-full rounded-md bg-white px-3.5 py-2 text-base text-gray-900"
-                    {...register('lastName', { required: 'Last name is required' })}
-                  />
-                  {errors.lastName && <p className="text-red-500">{errors.lastName.message}</p>}
-                </div>
+            <div className="lg:col-span-7">
+              {/* border + shadow-card is the site's recipe for a white card on
+                  a white page — see home/Reviews.jsx and home/Services.jsx.
+                  shadow-card alone is a 6% tint and does not read here. */}
+              <form
+                onSubmit={handleSubmit(onSubmit)}
+                className="rounded-card border-[1.5px] border-[#eeebf1] bg-white p-6 shadow-card sm:p-8"
+              >
+                <h2 className="text-xl font-bold text-[#17131c]">
+                  Send us a message
+                </h2>
 
-                {/* Email */}
-                <div className="sm:col-span-2">
-                  <label
-                    htmlFor="email"
-                    className="block text-sm/6 font-semibold text-gray-900 text-start"
-                  >
-                    Email
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    autoComplete="email"
-                    className="block w-full rounded-md bg-white px-3.5 py-2 text-base text-gray-900"
-                    {...register('email', {
-                      required: 'Email is required',
-                      pattern: {
-                        value: /^\S+@\S+$/i,
-                        message: 'Invalid email format',
-                      },
+                <div className="mt-6 grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
+                  {/* First Name */}
+                  <div>
+                    <label htmlFor="firstName" className={LABEL}>
+                      First Name
+                    </label>
+                    <input
+                      id="firstName"
+                      type="text"
+                      autoComplete="given-name"
+                      className={FIELD}
+                      {...register('firstName', { required: 'First name is required' })}
+                    />
+                    {errors.firstName && <p role="alert" className={ERROR}>{errors.firstName.message}</p>}
+                  </div>
+
+                  {/* Last Name */}
+                  <div>
+                    <label htmlFor="lastName" className={LABEL}>
+                      Last Name
+                    </label>
+                    <input
+                      id="lastName"
+                      type="text"
+                      autoComplete="family-name"
+                      className={FIELD}
+                      {...register('lastName', { required: 'Last name is required' })}
+                    />
+                    {errors.lastName && <p role="alert" className={ERROR}>{errors.lastName.message}</p>}
+                  </div>
+
+                  {/* Email */}
+                  <div className="sm:col-span-2">
+                    <label htmlFor="email" className={LABEL}>
+                      Email
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      className={FIELD}
+                      {...register('email', {
+                        required: 'Email is required',
+                        pattern: {
+                          value: /^\S+@\S+$/i,
+                          message: 'Invalid email format',
+                        },
+                      })}
+                    />
+                    {errors.email && <p role="alert" className={ERROR}>{errors.email.message}</p>}
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label htmlFor="phoneNumber" className={LABEL}>
+                      Phone Number
+                    </label>
+                    <input
+                      id="phoneNumber"
+                      type="tel"
+                      autoComplete="tel"
+                      maxLength={10}
+                      className={FIELD}
+                      {...register('phoneNumber', { required: 'Phone Number is required',
+                    pattern: {
+                          value: /^\d{10}$/,
+                          message: 'Phone number must be 10 digits',
+                    },
                     })}
-                  />
-                  {errors.email && <p className="text-red-500">{errors.email.message}</p>}
+                    />
+                    {errors.phoneNumber && <p role="alert" className={ERROR}>{errors.phoneNumber.message}</p>}
+                  </div>
+
+                  {/* Message */}
+                  <div className="sm:col-span-2">
+                    <label htmlFor="message" className={LABEL}>
+                      Message
+                    </label>
+                    <textarea
+                      id="message"
+                      rows={4}
+                      className={FIELD}
+                      {...register('message')}
+                    />
+                  </div>
                 </div>
 
-                <div className="sm:col-span-2">
-                  <label
-                    htmlFor="phoneNumber"
-                    className="block text-sm/6 font-semibold text-gray-900 text-start"
+                <div className="mt-8 flex justify-end">
+                  <button
+                    type="submit"
+                    className="rounded-control bg-brand-600 px-[30px] py-4 text-base font-semibold text-white transition-colors hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-[#ece7f1] disabled:text-[#9b93a5]"
+                    disabled={loading}
                   >
-                    Phone Number
-                  </label>
-                  <input
-                    id="phoneNumber"
-                    type="tel"
-                    autoComplete="phoneNumber"
-                    maxLength={10}
-                    className="block w-full rounded-md bg-white px-3.5 py-2 text-base text-gray-900"
-                    {...register('phoneNumber', { required: 'Phone Number is required',
-                  pattern: {
-                        value: /^\d{10}$/,
-                        message: 'Phone number must be 10 digits',
-                  },
-                  })}
-                  />
-                  {errors.phoneNumber && <p className="text-red-500">{errors.phoneNumber.message}</p>}
+                    {loading ? 'Sending...' : 'Send Message'}
+                  </button>
                 </div>
-
-                {/* Message */}
-                <div className="sm:col-span-2">
-                  <label
-                    htmlFor="message"
-                    className="block text-sm/6 font-semibold text-gray-900 text-start"
-                  >
-                    Message
-                  </label>
-                  <textarea
-                    id="message"
-                    rows={4}
-                    className="block w-full rounded-md bg-white px-3.5 py-2 text-base text-gray-900"
-                    {...register('message')}
-                  />
-                </div>
-              </div>
+              </form>
             </div>
-            <div className="mt-8 flex justify-end">
-              <Button
-                type="submit"
-                className="rounded-md bg-purple-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-500 focus:outline-2 focus:outline-offset-2 focus:outline-purple-600"
-                disabled={loading}
-              >
-                {loading ? 'Sending...' : 'Send Message'}
-              </Button>
-            </div>
-          </form>
+          </div>
         </div>
       </div>
     </Layout>
