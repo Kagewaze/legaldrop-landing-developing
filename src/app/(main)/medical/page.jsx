@@ -108,7 +108,7 @@ const CLINIC_REASONS = [
 
 export default function MedicalPage() {
   return (
-    <div className="bg-white">
+    <div className="bg-surface-page">
       <Hero />
       <Credentials />
       <ExpandingGallery
@@ -132,10 +132,10 @@ export default function MedicalPage() {
 // proposition and the action, on the design's own tinted band.
 function Hero() {
   return (
-    <section className="border-b border-[#f0eaf6] bg-[#faf7fd]">
-      <div className="mx-auto max-w-[1200px] px-8 py-16 sm:py-20">
+    <section className="border-b border-[#f0eaf6] bg-surface-tint">
+      <div className="mx-auto max-w-[1200px] px-8 py-16 sm:py-24">
         <div className="max-w-[720px]">
-          <h1 className="text-4xl font-extrabold text-[#17131c] sm:text-5xl">
+          <h1 className="font-display text-4xl font-extrabold text-[#17131c] sm:text-5xl">
             Medical courier for GTA clinics and labs
           </h1>
           <p className="mt-4 max-w-[560px] text-lg text-[#5f5868]">
@@ -152,7 +152,7 @@ function Hero() {
 
 function Credentials() {
   return (
-    <section className="bg-[#241a2e] text-white">
+    <section className="bg-surface-ink text-white">
       <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-x-8 gap-y-3 px-8 py-6">
         {CREDENTIALS.map((credential) => (
           <div key={credential} className="flex items-center gap-2.5">
@@ -169,10 +169,10 @@ function Credentials() {
 
 function FinalCta() {
   return (
-    <section className="mx-auto max-w-[1200px] px-8 py-14">
+    <section className="mx-auto max-w-[1200px] px-8 py-16 sm:py-24">
       <div className="flex flex-wrap items-center justify-between gap-8 rounded-card bg-brand-600 p-8 text-white sm:p-11">
         <div className="max-w-[560px]">
-          <div className="text-3xl font-bold">Set up your clinic account</div>
+          <div className="font-display text-3xl font-bold">Set up your clinic account</div>
           <div className="mt-2 text-base opacity-85">
             Standing routes, per-location billing and certified drivers, managed
             from the {BRAND.name} partner platform.

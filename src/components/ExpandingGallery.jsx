@@ -42,8 +42,10 @@ export function ExpandingGallery({ heading, panels, cta }) {
   const baseId = useId()
 
   return (
-    <section className="mx-auto max-w-[1200px] px-8 pt-16">
-      <h2 className="text-3xl font-extrabold text-[#17131c]">{heading}</h2>
+    <section className="mx-auto max-w-[1200px] px-8 py-16 sm:py-24">
+      <h2 className="font-display text-3xl font-extrabold text-[#17131c]">
+        {heading}
+      </h2>
 
       <div className="mt-6 flex flex-col gap-[22px] lg:h-[440px] lg:flex-row lg:gap-4">
         {panels.map((panel, index) => (
@@ -196,8 +198,12 @@ function Panel({ panel, cta, titleId, open, onOpen }) {
 
       {/* Hairline, matching home/Coverage.jsx: an overlay, not a ring on the
           wrapper, because an inset box-shadow paints beneath child content and
-          would sit behind the photograph. */}
-      <div className="pointer-events-none absolute inset-0 z-30 rounded-card ring-1 ring-inset ring-brand-600/25" />
+          would sit behind the photograph.
+
+          Neutral rather than brand — a purple frame is decoration doing a
+          structural job, and purple is reserved for action. See the fuller
+          note at the Coverage call site, including when this is too weak. */}
+      <div className="pointer-events-none absolute inset-0 z-30 rounded-card ring-1 ring-inset ring-[#17131c]/10" />
     </div>
   )
 }

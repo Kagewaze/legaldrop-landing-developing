@@ -1,4 +1,4 @@
-import { Inter } from 'next/font/google'
+import { Inter, Manrope } from 'next/font/google'
 import clsx from 'clsx'
 
 import { BRAND } from '@/lib/config'
@@ -8,6 +8,23 @@ const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-inter',
+})
+
+// Display face for headings and 30px band titles. Body copy stays Inter.
+//
+// Self-hosted by next/font at build time — no request to fonts.gstatic.com at
+// runtime, so no third-party connection on the critical path. The latin subset
+// is a 24.3 kB variable woff2 carrying the whole 200..800 axis.
+//
+// NARROWING THE WEIGHT RANGE SAVES NOTHING. Google serves the identical file
+// for wght@600..800 as for the full axis — a variable font carries its axis
+// inside the binary, and the range in the request only narrows the declared
+// font-weight descriptor. Do not add a `weight` option here expecting a
+// smaller download; there isn't one.
+const manrope = Manrope({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-manrope',
 })
 
 // Site-wide metadata. Composed from BRAND so the wordmark in the tab tracks the
@@ -34,7 +51,14 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={clsx('bg-gray-50 antialiased', inter.variable)}>
+    <html
+      lang="en"
+      className={clsx(
+        'bg-surface-page antialiased',
+        inter.variable,
+        manrope.variable,
+      )}
+    >
       <body>{children}</body>
     </html>
   )

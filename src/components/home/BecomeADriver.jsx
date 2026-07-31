@@ -14,10 +14,10 @@ export function BecomeADriver() {
     : '/contact-us'
 
   return (
-    <section className="mx-auto max-w-[1200px] px-8 py-14">
+    <section className="mx-auto max-w-[1200px] px-8 py-16 sm:py-24">
       <div className="flex flex-wrap items-center justify-between gap-8 rounded-card bg-brand-600 p-8 text-white sm:p-11">
         <div className="max-w-[560px]">
-          <div className="text-3xl font-bold">Become a driver</div>
+          <div className="font-display text-3xl font-bold">Become a driver</div>
           <div className="mt-2 text-base opacity-85">
             Own your vehicle? Set your own hours, take medical and legal jobs
             once you are certified, and get paid weekly.

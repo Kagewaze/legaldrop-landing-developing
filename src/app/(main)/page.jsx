@@ -37,8 +37,9 @@ export default async function Home() {
   const showReviews = reviews !== null && reviews.totalCount > 0
 
   return (
-    // The root layout sets bg-gray-50; the design's page surface is white.
-    <div className="bg-white">
+    // surface.page — a warm off-white, not #fff. Cards on this page are pure
+    // white, so they sit ON the ground rather than dissolving into it.
+    <div className="bg-surface-page">
       <Hero />
       {showReviews && <Reviews data={reviews} />}
       <Services />

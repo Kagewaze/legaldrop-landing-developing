@@ -40,7 +40,7 @@ function Stars({ rating }) {
     // where the label token is 0.08em, so the token would visibly tighten the
     // star row. Optical spacing of a glyph run, not typographic tracking.
     <div
-      className="text-sm tracking-[2px] text-brand-600"
+      className="text-sm tracking-[2px] text-[#17131c]"
       aria-label={`${rating} out of 5`}
     >
       <span aria-hidden="true">
@@ -55,9 +55,9 @@ export function Reviews({ data }) {
   const { rating, totalCount, reviews } = data
 
   return (
-    <section className="mx-auto max-w-[1200px] px-8 pt-12">
+    <section className="mx-auto max-w-[1200px] px-8 py-16 sm:py-24">
       <div className="flex flex-wrap items-baseline justify-between gap-6">
-        <h2 className="text-3xl font-extrabold text-[#17131c]">
+        <h2 className="font-display text-3xl font-extrabold text-[#17131c]">
           Rated {rating.toFixed(1)} on Google
         </h2>
         <a
@@ -77,7 +77,7 @@ export function Reviews({ data }) {
             className="rounded-card border-[1.5px] border-[#eeebf1] p-6 shadow-card"
           >
             <div className="flex items-center gap-3.5">
-              <div className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-[#f3ebfb] text-base font-bold text-brand-600">
+              <div className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-surface-tint text-base font-bold text-[#17131c]">
                 {initialsFrom(review.authorName)}
               </div>
               <div>

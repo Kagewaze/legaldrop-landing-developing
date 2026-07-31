@@ -1,5 +1,6 @@
 const headlessuiPlugin = require('@headlessui/tailwindcss')
 const formsPlugin = require('@tailwindcss/forms')
+const defaultTheme = require('tailwindcss/defaultTheme')
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -90,6 +91,34 @@ module.exports = {
       },
       colors: ({ colors }) => ({
         gray: colors.neutral,
+
+        // SURFACES. Named by the job they do, not by their value, so "what
+        // colour is a card?" has one answer.
+        //
+        // These replace 12 ad-hoc tones that had accumulated across the
+        // marketing pages. Four near-identical light tints were doing
+        // overlapping jobs — #faf7fd, #f3ebfb, #f2ebfb and #f6f4f8, two of
+        // which differed by a single point in the green channel and appeared in
+        // the same grid — and four darks (#1a1220, #1a1421, #1c1424, #241a2e)
+        // were serving as page, footer, band and card-header grounds.
+        //
+        // `page` is a WARM off-white, not #fff. That is the load-bearing
+        // decision in this set: cards are pure white, so a white card now sits
+        // ON a surface instead of dissolving into it. Every card shadow and
+        // hairline on the site depends on that 4-point separation to be
+        // visible at all.
+        //
+        // ONE DARK IS DELIBERATELY NOT HERE. #1c1424 survives in
+        // ExpandingGallery as the photo scrim. It is not a surface — it is a
+        // contrast-tuned overlay whose opacity steps are calculated against
+        // measured text ratios (5.08:1 collapsed, 6.8:1 open). Folding it into
+        // `ink` would change those numbers. Same for the Hero gradient.
+        surface: {
+          page: '#fbf9f8', // warm off-white — the page ground
+          raised: '#ffffff', // cards and raised elements
+          tint: '#f7f3fb', // the single light tint
+          ink: '#1a1421', // the single dark
+        },
         // Druppr brand purple. 600 is #7B2FBE, the prototype-confirmed brand
         // colour; 500/700/800 are a hue-locked ramp around it (hsl 272°) for
         // hover, active and emphasis states. brand-600 on white is 7.0:1, so
@@ -108,6 +137,20 @@ module.exports = {
       }),
       fontFamily: {
         sans: 'var(--font-inter)',
+
+        // DISPLAY FACE — Manrope, opt-in only.
+        //
+        // `sans` stays Inter and remains the global default. Nothing inherits
+        // Manrope: it is applied deliberately via `font-display`, and only to
+        // type at display size — h1, h2, and the 30px band titles that are
+        // divs rather than headings. The tag is not what decides the face;
+        // the size is. A display face at 14px does nothing except cost a
+        // second font in the critical path, which is why the footer's 14px
+        // section headings stay Inter despite being <h2>.
+        //
+        // Falls back through Inter to the system stack, so a failed font load
+        // degrades to the body face rather than to Times.
+        display: ['var(--font-manrope)', ...defaultTheme.fontFamily.sans],
       },
       keyframes: {
         'fade-in': {

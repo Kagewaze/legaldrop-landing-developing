@@ -16,10 +16,14 @@ export function Hero() {
   const sendIsLive = ROUTES.send.live
 
   return (
-    // The background is a dark brand-tinted ink rather than the SVG's pale
-    // #eceee8: it is what shows for the instant before the photograph paints,
-    // and a pale flash under a dark scrim reads as a broken image.
-    <section className="relative isolate overflow-hidden bg-[#1a1220]">
+    // The background is a dark ink rather than the SVG's pale #eceee8: it is
+    // what shows for the instant before the photograph paints, and a pale
+    // flash under a dark scrim reads as a broken image.
+    //
+    // surface.ink, the shared dark token. This was #1a1220 — two points off
+    // the token and indistinguishable from it. The SCRIM below is a separate
+    // matter and keeps its own values; see the note there.
+    <section className="relative isolate overflow-hidden bg-surface-ink">
       {/* `fill` supplies position:absolute + inset:0 inline; the class list only
           has to place the layer behind the content and frame the crop.
 
@@ -81,7 +85,7 @@ export function Hero() {
               lines and pushes the card from 409px to 555px; 30px holds two.
               So mobile stays at 3xl and the full 60px only lands at `lg`,
               where the card is locked at its 520px maximum. */}
-          <h1 className="text-3xl font-extrabold text-[#17131c] sm:text-5xl lg:text-6xl">
+          <h1 className="font-display text-3xl font-extrabold text-[#17131c] sm:text-5xl lg:text-6xl">
             Send anything across {SERVICE_AREA_PHRASE}
           </h1>
           <p className="mt-1.5 text-base text-[#5f5868]">

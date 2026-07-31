@@ -23,8 +23,17 @@ import {
 // tokens would imply a site-wide dark surface that does not exist. If a second
 // dark surface ever ships, move them into theme.extend.colors then.
 //
-//   #1a1421  page      #a49bad  muted link    #2e2537  hairline
-//   #c8c0d0  service   #8d8497  copyright     #e5dfea  contact (unused, null)
+//   surface.ink  page   #a49bad  muted link    #2e2537  hairline
+//   #c8c0d0  service     #8d8497  copyright     #e5dfea  contact (unused, null)
+//
+// The footer ground is now the shared surface.ink token rather than a local
+// #1a1421 literal — same value, one definition. The remaining shades above are
+// still footer-only and stay arbitrary.
+//
+// SECTION_HEADING is deliberately NOT font-display. These are <h2> elements,
+// but they render at 14px, and a display face at micro-label size buys nothing
+// and costs a second font on the critical path. The face follows the size, not
+// the tag.
 
 const SECTION_HEADING = 'text-sm font-semibold tracking-label text-white'
 const FOOTER_LINK = 'text-sm text-[#a49bad] transition-colors hover:text-white'
@@ -48,7 +57,7 @@ export function Footer() {
   const copyrightName = (LEGAL_ENTITY ?? BRAND.legalName).replace(/\.$/, '')
 
   return (
-    <footer className="bg-[#1a1421] text-white">
+    <footer className="bg-surface-ink text-white">
       {sections.length > 0 && (
         // The design is a fixed 3-column grid with no mobile treatment. The
         // responsive steps are an addition, not a port — a fixed 3-up grid is

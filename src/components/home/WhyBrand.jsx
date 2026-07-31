@@ -45,13 +45,15 @@ export function WhyBrand({ heading, reasons }) {
   const columns = reasons.length === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-4'
 
   return (
-    <section className="mx-auto max-w-[1200px] px-8 pt-16">
-      <h2 className="text-3xl font-extrabold text-[#17131c]">{heading}</h2>
+    <section className="mx-auto max-w-[1200px] px-8 py-16 sm:py-24">
+      <h2 className="font-display text-3xl font-extrabold text-[#17131c]">
+        {heading}
+      </h2>
 
       <div className={`mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 ${columns}`}>
         {reasons.map((reason) => (
-          <div key={reason.title} className="rounded-card bg-[#faf7fd] p-6 shadow-card">
-            <div className="flex h-9 w-9 items-center justify-center rounded-tile bg-brand-600">
+          <div key={reason.title} className="rounded-card bg-surface-raised p-6 shadow-card">
+            <div className="flex h-9 w-9 items-center justify-center rounded-tile bg-[#17131c]">
               {reason.icon}
             </div>
             <div className="mt-4 text-lg font-bold text-[#17131c]">
