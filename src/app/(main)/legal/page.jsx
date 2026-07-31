@@ -78,19 +78,19 @@ const PROOF_REASONS = [
   {
     title: 'Timestamped tracking',
     description: 'Every job carries a live, time-stamped record of the trip.',
-    icon: <span className="h-[4px] w-[14px] rounded-[2px] bg-white" />,
+    icon: <span className="h-[4px] w-[14px] rounded-[2px] bg-[#17131c]" />,
   },
   {
     title: 'Drop-off code confirmation',
     description: 'A code confirms the handover at the destination.',
     icon: (
-      <span className="mb-[3px] h-[10px] w-[14px] border-b-2 border-l-2 border-white" />
+      <span className="mb-[3px] h-[10px] w-[14px] border-b-2 border-l-2 border-[#17131c]" />
     ),
   },
   {
     title: 'Vetted drivers',
     description: 'Confidentiality training is required to take these jobs.',
-    icon: <span className="h-[12px] w-[12px] rotate-45 bg-white" />,
+    icon: <span className="h-[12px] w-[12px] rotate-45 bg-[#17131c]" />,
   },
 ]
 

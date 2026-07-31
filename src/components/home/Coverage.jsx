@@ -29,12 +29,19 @@ export function Coverage({ image }) {
     // The design puts a "Check your address →" link on the right. Omitted: it
     // has no destination, and there is no address-checking page to send anyone
     // to. The band still carries the information on its own.
-    <div className="mx-auto flex max-w-[1200px] items-center gap-3.5 px-8">
-      <span className="h-3 w-3 flex-none rounded-full bg-[#8d8695]" />
-      <div>
-        <div className="text-xl font-bold text-[#17131c]">{SERVICE_AREA}</div>
-        <div className="mt-0.5 text-sm text-[#5f5868]">{CITIES}</div>
-      </div>
+    // The status dot that used to lead this line is gone. It was decorative
+    // when it was brand purple; recoloured neutral it read as an artifact
+    // rather than an indicator, since it never indicated anything.
+    //
+    // The flex wrapper went with it — a single child does not need one, and
+    // `gap` between one item is not a thing. Consequence: the copy now starts
+    // at the 1200px column's own px-8 edge, 26px left of where the dot and its
+    // gap used to push it, which is the same left edge every other section on
+    // the page aligns to. That alignment is the reason not to reinstate the
+    // offset with padding.
+    <div className="mx-auto max-w-[1200px] px-8">
+      <div className="text-xl font-bold text-[#17131c]">{SERVICE_AREA}</div>
+      <div className="mt-0.5 text-sm text-[#5f5868]">{CITIES}</div>
     </div>
   )
 
@@ -73,18 +80,21 @@ export function Coverage({ image }) {
               would sit behind the photograph and never be seen.
 
               NEUTRAL, NOT BRAND. This was brand-600/25 — a purple frame on a
-              photograph, which is decoration doing a structural job. Purple now
-              means "you can act on this", and a picture frame is not an action.
+              photograph, which is decoration doing a structural job. Purple is
+              reserved for action, and a picture frame is not an action.
 
-              KNOWN LIMITATION, deliberately accepted: this image is Bay Street
-              at night and its edges are near-black, so ink at 10% over them is
-              close to invisible. The previous note here argued exactly that
-              point in favour of a stronger value. The line still does its job
-              on light images, which is most of them, and a visible purple frame
-              on every photograph was the worse of the two failures. If the edge
-              needs defining on dark photographs specifically, the answer is
-              white at a low alpha, not more ink. */}
-          <div className="pointer-events-none absolute inset-0 rounded-card ring-1 ring-inset ring-[#17131c]/10" />
+              WHITE, NOT INK, AND THE DARK PHOTOGRAPH IS WHY. Ink at 10% was
+              tried and is invisible here: this image is Bay Street at night and
+              its edges are near-black, so a near-black hairline over them
+              separates nothing. A light line is the only kind that can define
+              an edge against a dark frame. 12% keeps it a hairline rather than
+              a highlight, and it still reads on light images because it sits
+              over the photograph's own edge pixels, not over the band.
+
+              This is the pattern for card images from here on, so it has to
+              survive both cases — that is what ruled ink out. Do not thicken
+              it; a visible frame reads cheap. */}
+          <div className="pointer-events-none absolute inset-0 rounded-card ring-1 ring-inset ring-white/[0.12]" />
         </div>
       </div>
     </section>

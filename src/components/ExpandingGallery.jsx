@@ -196,14 +196,26 @@ function Panel({ panel, cta, titleId, open, onOpen }) {
         </a>
       </div>
 
-      {/* Hairline, matching home/Coverage.jsx: an overlay, not a ring on the
-          wrapper, because an inset box-shadow paints beneath child content and
-          would sit behind the photograph.
+      {/* Hairline. An overlay rather than a ring on the wrapper: an inset
+          box-shadow paints beneath child content, so a ring on the wrapper
+          would sit behind the photograph and never be seen.
 
           Neutral rather than brand — a purple frame is decoration doing a
-          structural job, and purple is reserved for action. See the fuller
-          note at the Coverage call site, including when this is too weak. */}
-      <div className="pointer-events-none absolute inset-0 z-30 rounded-card ring-1 ring-inset ring-[#17131c]/10" />
+          structural job, and purple is reserved for action.
+
+          WHITE, NOT INK, AND THE SCRIMS ARE WHY. Every panel here is darkened
+          by design before this line paints over it: the flat wash above runs
+          0.35 open and 0.62 collapsed, with a second directional layer on top.
+          There is no state in which this edge is light. Ink at a low alpha
+          disappears into it completely — a near-black line over a deliberately
+          near-black edge separates nothing. A light hairline is the only kind
+          that can terminate this frame at all.
+
+          12% keeps it a hairline rather than a highlight, and it is the same
+          value home/Coverage.jsx uses for the same reason, so card images
+          across the site terminate identically. Do not thicken it; a visible
+          frame reads cheap. */}
+      <div className="pointer-events-none absolute inset-0 z-30 rounded-card ring-1 ring-inset ring-white/[0.12]" />
     </div>
   )
 }
