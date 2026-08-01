@@ -2,6 +2,19 @@ import Link from 'next/link'
 
 import { BRAND } from '@/lib/config'
 import { ROUTES } from '@/lib/navigation'
+import {
+  DesignatedDriver,
+  DropBatch,
+  LegalDocuments,
+  Marketplace,
+  MedicalDelivery,
+  PetTransport,
+  RentCar,
+  RequestRide,
+  SendPackage,
+  TowTruck,
+  TrainingHub,
+} from '@/components/icons'
 
 // "Everything <brand> does" — three grouped service cards.
 //
@@ -10,47 +23,47 @@ import { ROUTES } from '@/lib/navigation'
 // section can never emit a dead link to a page that does not exist. Every route
 // below is currently live: false, so today every row renders as plain content.
 
+// The tile sets the icon colour for everything it wraps: the icons are
+// fill="currentColor" and carry no colour of their own, so this one class is
+// what makes all eleven ink. Change the ground here and the glyphs follow.
 const ICON_TILE =
-  'flex h-[38px] w-[38px] flex-none items-center justify-center rounded-tile'
+  'flex h-[38px] w-[38px] flex-none items-center justify-center rounded-tile text-[#17131c]'
 
-// Icons are simple CSS shapes, as in the design — no icon library.
+// Icons come from the shared silhouette set in src/components/icons.jsx.
+// They replaced inline CSS shapes — a circle, a dash, a diamond — that were
+// placeholders and said nothing about the service they labelled. Size is set
+// here; colour comes from ICON_TILE above.
 const DELIVER = [
   {
     route: ROUTES.send,
     title: 'Send a package',
     description: 'Same-day pickup, anywhere in the city',
-    icon: <span className="h-[11px] w-[14px] rounded-[2px] border-2 border-[#17131c]" />,
+    icon: <SendPackage className="h-5 w-5" />,
   },
   {
     route: ROUTES.medical,
     title: 'Medical delivery',
     description: 'Specimens and pharma, temp-controlled',
-    icon: <span className="h-[14px] w-[14px] rounded-full border-2 border-[#17131c]" />,
+    icon: <MedicalDelivery className="h-5 w-5" />,
   },
   {
     route: ROUTES.legal,
     title: 'Legal documents',
     description: 'Court filings with chain of custody',
-    icon: <span className="h-[14px] w-[12px] rounded-[2px] bg-[#17131c]" />,
+    icon: <LegalDocuments className="h-5 w-5" />,
   },
   {
     route: ROUTES.dropBatch,
     title: 'Drop Batch',
     description: 'Many stops on one optimised route',
-    icon: (
-      <span className="flex gap-[3px]">
-        <span className="h-[5px] w-[5px] bg-[#17131c]" />
-        <span className="h-[5px] w-[5px] bg-[#17131c]" />
-        <span className="h-[5px] w-[5px] bg-[#17131c]" />
-      </span>
-    ),
+    icon: <DropBatch className="h-5 w-5" />,
   },
   {
     route: ROUTES.marketplace,
     title: 'Marketplace',
     // Brand name comes from config — never hardcoded.
     description: `Local shops delivering through ${BRAND.name}`,
-    icon: <span className="h-[12px] w-[12px] rotate-45 bg-[#17131c]" />,
+    icon: <Marketplace className="h-5 w-5" />,
   },
 ]
 
@@ -59,36 +72,31 @@ const MOVE = [
     route: ROUTES.ride,
     title: 'Request a ride',
     description: 'Point to point, priced up front',
-    icon: <span className="h-[9px] w-[16px] rounded-[3px] bg-[#17131c]" />,
+    icon: <RequestRide className="h-5 w-5" />,
   },
   {
     route: ROUTES.tow,
     title: 'Tow truck',
     description: 'Roadside help and flatbed towing',
-    icon: <span className="h-[4px] w-[16px] bg-[#17131c]" />,
+    icon: <TowTruck className="h-5 w-5" />,
   },
   {
     route: ROUTES.designatedDriver,
     title: 'Designated driver',
     description: 'We drive you home in your own car',
-    icon: <span className="h-[14px] w-[14px] rounded-full bg-[#17131c]" />,
+    icon: <DesignatedDriver className="h-5 w-5" />,
   },
   {
     route: ROUTES.petTransport,
     title: 'Pet transport',
     description: 'Vet visits and grooming runs',
-    icon: (
-      <span className="flex items-center gap-[3px]">
-        <span className="h-[6px] w-[6px] rounded-full bg-[#17131c]" />
-        <span className="h-[10px] w-[10px] rounded-full bg-[#17131c]" />
-      </span>
-    ),
+    icon: <PetTransport className="h-5 w-5" />,
   },
   {
     route: ROUTES.rentACar,
     title: 'Rent a car',
     description: 'Hourly or daily, delivered to you',
-    icon: <span className="h-[14px] w-[14px] rounded-[3px] border-2 border-[#17131c]" />,
+    icon: <RentCar className="h-5 w-5" />,
   },
 ]
 
@@ -163,8 +171,27 @@ export function Services() {
           One app for sending, moving, and driving in the Greater Toronto Area.
         </p>
 
+        {/* bg-surface-raised ON ALL THREE CARDS IS LOAD-BEARING. DO NOT REMOVE
+            IT AS REDUNDANT — it looks redundant and is not.
+
+            These cards sit on the tinted band above, so without an explicit
+            surface they are transparent and inherit it. That is not a subtle
+            loss: every icon tile inside them is ALSO surface-tint, so card,
+            tile and section all resolve to the same #f7f3fb and the tiles
+            vanish completely. The row icons then read as floating on nothing,
+            and the tinted card headers disappear along with them.
+
+            This is not hypothetical. These cards carried no background for one
+            release after the section became a band, and that is exactly what
+            shipped. It was invisible while the icons were flat placeholder
+            shapes and obvious the moment they became real ones.
+
+            The white is also the point of the surfaces pass: cards are
+            surface.raised so they sit ON a ground rather than dissolve into
+            it. A card on a tinted band with no background of its own is the
+            one case where that premise silently fails. */}
         <div className="mt-8 grid grid-cols-1 gap-[22px] sm:grid-cols-2 lg:grid-cols-3">
-          <div className="flex flex-col overflow-hidden rounded-card border-[1.5px] border-[#eeebf1] shadow-card">
+          <div className="flex flex-col overflow-hidden rounded-card border-[1.5px] border-[#eeebf1] bg-surface-raised shadow-card">
             <CardHeader
               title="Deliver"
               meta={<span className="opacity-60">5 services</span>}
@@ -181,7 +208,7 @@ export function Services() {
             </div>
           </div>
 
-          <div className="flex flex-col overflow-hidden rounded-card border-[1.5px] border-[#eeebf1] shadow-card">
+          <div className="flex flex-col overflow-hidden rounded-card border-[1.5px] border-[#eeebf1] bg-surface-raised shadow-card">
             <CardHeader
               title="Move"
               meta={<span className="opacity-60">5 services</span>}
@@ -198,7 +225,7 @@ export function Services() {
             </div>
           </div>
 
-          <div className="flex flex-col overflow-hidden rounded-card border-[1.5px] border-[#eeebf1] shadow-card">
+          <div className="flex flex-col overflow-hidden rounded-card border-[1.5px] border-[#eeebf1] bg-surface-raised shadow-card">
             <CardHeader
               title="Learn"
               meta={<span className="opacity-60">Driver training</span>}
@@ -207,7 +234,7 @@ export function Services() {
             <div className="flex flex-1 flex-col px-6 pb-6 pt-[22px]">
               <div className="flex gap-3.5">
                 <div className={`${ICON_TILE} bg-surface-tint`}>
-                  <span className="h-[14px] w-[14px] rounded-full border-2 border-[#17131c] border-t-transparent" />
+                  <TrainingHub className="h-5 w-5" />
                 </div>
                 <div>
                   <div className="text-base font-bold text-[#17131c]">

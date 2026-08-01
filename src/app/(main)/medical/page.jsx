@@ -1,5 +1,11 @@
 import { BRAND } from '@/lib/config'
 import { PARTNER_URL } from '@/lib/navigation'
+import {
+  AuditableRecord,
+  CertifiedDriver,
+  MonthlyInvoicing,
+  ScheduledRoutes,
+} from '@/components/icons'
 import { Coverage } from '@/components/home/Coverage'
 import { ExpandingGallery } from '@/components/ExpandingGallery'
 import { WhyBrand } from '@/components/home/WhyBrand'
@@ -86,23 +92,23 @@ const CLINIC_REASONS = [
     title: 'Certified drivers',
     description:
       'TDG certification is required to take these jobs, and enforced.',
-    icon: <span className="h-[12px] w-[12px] rotate-45 bg-[#17131c]" />,
+    icon: <CertifiedDriver className="h-5 w-5" />,
   },
   {
     title: 'A record you can audit',
     description:
       'Every job carries live tracking and drop-off code confirmation.',
-    icon: <span className="h-[4px] w-[14px] rounded-[2px] bg-[#17131c]" />,
+    icon: <AuditableRecord className="h-5 w-5" />,
   },
   {
     title: 'Standing scheduled routes',
     description: 'Recurring pickups at set times, arranged on your account.',
-    icon: <span className="h-[14px] w-[14px] rounded-full border-2 border-[#17131c]" />,
+    icon: <ScheduledRoutes className="h-5 w-5" />,
   },
   {
     title: 'Monthly invoicing',
     description: 'Billed monthly, split per location for multi-site practices.',
-    icon: <span className="h-[11px] w-[14px] rounded-[2px] border-2 border-[#17131c]" />,
+    icon: <MonthlyInvoicing className="h-5 w-5" />,
   },
 ]
 

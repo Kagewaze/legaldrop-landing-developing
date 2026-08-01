@@ -1,3 +1,10 @@
+import {
+  ConfirmedDelivery,
+  LiveTracking,
+  SameDayDelivery,
+  TdgCertified,
+} from '@/components/icons'
+
 // A four-card value grid.
 //
 // Prop-driven so the marketing pages (/medical, /legal) can reuse the styling
@@ -12,17 +19,17 @@ export const HOME_REASONS = [
   {
     title: 'Same-day delivery',
     description: 'Most jobs collected within the hour.',
-    icon: <span className="h-[14px] w-[14px] rounded-full border-2 border-[#17131c]" />,
+    icon: <SameDayDelivery className="h-5 w-5" />,
   },
   {
     title: 'Live tracking',
     description: 'A map link for you and your recipient.',
-    icon: <span className="h-[4px] w-[14px] rounded-[2px] bg-[#17131c]" />,
+    icon: <LiveTracking className="h-5 w-5" />,
   },
   {
     title: 'TDG-certified drivers',
     description: 'Trained for medical and regulated goods.',
-    icon: <span className="h-[12px] w-[12px] rotate-45 bg-[#17131c]" />,
+    icon: <TdgCertified className="h-5 w-5" />,
   },
   {
     // CORRECTED. This card read "Signature on delivery — Proof and photo on
@@ -32,9 +39,7 @@ export const HOME_REASONS = [
     // highest-traffic page. Describe the confirmation that actually exists.
     title: 'Confirmed delivery',
     description: 'Confirmed by drop-off code and tracked live.',
-    icon: (
-      <span className="mb-[3px] h-[10px] w-[14px] border-b-2 border-l-2 border-[#17131c]" />
-    ),
+    icon: <ConfirmedDelivery className="h-5 w-5" />,
   },
 ]
 
@@ -53,15 +58,17 @@ export function WhyBrand({ heading, reasons }) {
       <div className={`mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 ${columns}`}>
         {reasons.map((reason) => (
           <div key={reason.title} className="rounded-card bg-surface-raised p-6 shadow-card">
-            {/* Tinted tile with an ink glyph, not an ink tile with a white
+            {/* Tinted tile with an ink icon, not an ink tile with a white
                 one. A 36px solid-ink square repeated four across made the
                 lightest section on the page carry its heaviest elements. The
                 tint holds the tile's shape without the mass.
 
-                Callers supply the glyph, so its colour is set at each call
-                site — home, /medical and /legal. All eleven are ink; a glyph
-                left white here is invisible, not merely off-palette. */}
-            <div className="flex h-9 w-9 items-center justify-center rounded-tile bg-surface-tint">
+                THE COLOUR IS SET HERE, ONCE. Callers supply the icon, but the
+                icons are fill="currentColor" and carry no colour of their own,
+                so this text class is what inks all of them — home, /medical
+                and /legal alike. A caller passing a colour would override it;
+                none do, and none should. */}
+            <div className="flex h-9 w-9 items-center justify-center rounded-tile bg-surface-tint text-[#17131c]">
               {reason.icon}
             </div>
             <div className="mt-4 text-lg font-bold text-[#17131c]">

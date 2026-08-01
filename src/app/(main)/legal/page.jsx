@@ -1,5 +1,10 @@
 import { BRAND } from '@/lib/config'
 import { PARTNER_URL } from '@/lib/navigation'
+import {
+  DropOffCode,
+  TimestampedTracking,
+  VettedDrivers,
+} from '@/components/icons'
 import { Coverage } from '@/components/home/Coverage'
 import { ExpandingGallery } from '@/components/ExpandingGallery'
 import { WhyBrand } from '@/components/home/WhyBrand'
@@ -78,19 +83,17 @@ const PROOF_REASONS = [
   {
     title: 'Timestamped tracking',
     description: 'Every job carries a live, time-stamped record of the trip.',
-    icon: <span className="h-[4px] w-[14px] rounded-[2px] bg-[#17131c]" />,
+    icon: <TimestampedTracking className="h-5 w-5" />,
   },
   {
     title: 'Drop-off code confirmation',
     description: 'A code confirms the handover at the destination.',
-    icon: (
-      <span className="mb-[3px] h-[10px] w-[14px] border-b-2 border-l-2 border-[#17131c]" />
-    ),
+    icon: <DropOffCode className="h-5 w-5" />,
   },
   {
     title: 'Vetted drivers',
     description: 'Confidentiality training is required to take these jobs.',
-    icon: <span className="h-[12px] w-[12px] rotate-45 bg-[#17131c]" />,
+    icon: <VettedDrivers className="h-5 w-5" />,
   },
 ]
 
