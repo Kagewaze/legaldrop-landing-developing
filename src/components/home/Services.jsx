@@ -177,16 +177,48 @@ function ServiceRow({ service, featured = false }) {
   // Only a live route becomes interactive. Everything else is plain content —
   // no href, no hover affordance suggesting it can be clicked.
   //
-  // The hover stays exactly as it was: colours only, 150ms, which no-ops under
-  // prefers-reduced-motion because a colour change with no transform has
-  // nothing to reduce. Card-level hover is a separate piece of work and is
-  // deliberately NOT here — these cards are not links, and lifting something
-  // that cannot be clicked reads as a broken affordance.
+  // ELEVATION, NOT MOVEMENT. The hover is a ground change plus one step up the
+  // shadow ramp: shadow-card is the card at rest, shadow-lift is this row
+  // sitting above it. There is no transform, and that is deliberate — every
+  // hover in this product is colour-only, and a single service row is not the
+  // place to introduce translate motion to the entire site.
+  //
+  // THE GROUND IS AN INK WASH, NOT surface-tint, AND THE ALPHA IS MEASURED.
+  // This used to be hover:bg-surface-tint — the same #f7f3fb as the icon tile
+  // inside the row — so on hover the tile dissolved into its own hover state
+  // and the glyph was left floating on nothing.
+  //
+  // A LIGHTER WASH DOES NOT FIX THAT, IT MAKES IT WORSE. The tile only
+  // separates from the white card by 1.10:1 to begin with, and every step from
+  // white toward #f7f3fb closes that gap before it reopens. Measured against
+  // the tile:
+  //
+  //     white (at rest)   1.10:1   the separation the tile normally gets
+  //     ink 4%            1.01:1   invisible — the dissolve, relocated
+  //     ink 6%            1.03:1   still worse than at rest
+  //     ink 10%           1.12:1   first step that clears the rest state
+  //
+  // So 10% is a FLOOR, not a preference. The polarity inverts on hover — a
+  // slightly darker chip on white becomes a slightly lighter one on grey — and
+  // the tile stays legible on both sides of the change. Do not lighten this
+  // toward the tile; that is the bug it was written to fix.
+  //
+  // `transition` rather than `transition-colors`, because box-shadow is not a
+  // colour and would otherwise snap while the ground faded. duration-base is
+  // the existing 200ms token.
+  //
+  // THE motion-reduce GUARD IS NOW REQUIRED. This hover used to be colour-only,
+  // which had nothing for prefers-reduced-motion to reduce. An animating shadow
+  // is a real motion and the setting has to be able to stop it. Plain form, not
+  // `!` — there is no responsive variant here for it to lose to.
+  //
+  // Card-level hover is deliberately NOT here — these cards are not links, and
+  // lifting something that cannot be clicked reads as a broken affordance.
   if (service.route?.live) {
     return (
       <Link
         href={service.route.href}
-        className={`${layout} rounded-2xl transition-colors hover:bg-surface-tint`}
+        className={`${layout} rounded-2xl transition duration-base motion-reduce:transition-none hover:bg-[#17131c]/10 hover:shadow-lift`}
       >
         {body}
       </Link>
