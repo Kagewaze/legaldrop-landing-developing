@@ -34,18 +34,70 @@ import { PARTNER_URL } from '@/lib/navigation'
 // writing-mode is not a core Tailwind 3.4 utility (it lands in v4), hence the
 // arbitrary property.
 
-export function ExpandingGallery({ heading, panels, cta }) {
+// ── PRESENTATION PROPS ARE ADDITIVE AND DEFAULT TO TODAY'S OUTPUT ───────────
+//
+// /legal renders this as its hero — first section, h1, dark ground. /medical
+// renders it mid-page as an h2 section on the page ground, exactly as both did
+// before hero mode existed.
+//
+// EVERY OPTION BELOW DEFAULTS TO WHAT THIS COMPONENT ALREADY EMITTED, and the
+// wrapper only appears when a ground is asked for. That is what keeps
+// /medical's prerendered HTML byte-identical across this change — verified by
+// diffing .next/server/app/medical.html before and after, not by inspection.
+// If you add another option here, give it the same treatment: a default that
+// reproduces current output, and re-run that diff.
+//
+// The PANEL DOM is otherwise NOT parameterised — only its heading TAG is. Its
+// scrim opacities are
+// calculated against measured text ratios at a 440px row (see the notes in
+// Panel below), and the row height is not a prop for the same reason — change
+// either and both pages' contrast maths need redoing, not just the caller's.
+const DEFAULT_CONTAINER = 'mx-auto max-w-[1200px] px-8 py-16 sm:py-24'
+const DEFAULT_HEADING = 'font-display text-3xl font-extrabold text-[#17131c]'
+
+export function ExpandingGallery({
+  heading,
+  panels,
+  cta,
+  // 'h1' when this section IS the page's hero; 'h2' everywhere else.
+  headingLevel: Heading = 'h2',
+  headingClassName = DEFAULT_HEADING,
+  containerClassName = DEFAULT_CONTAINER,
+  // A full-bleed ground. When omitted there is NO wrapper element at all, so
+  // the DOM is what it has always been.
+  groundClassName,
+  // An optional lead paragraph under the heading. Omitted, nothing renders.
+  lede,
+  ledeClassName,
+  // The panel titles sit one level under the section heading. Default h3 is
+  // correct under an h2; a hero using h1 passes h2 so the outline does not
+  // skip a level. The TAG is all that changes — the panel's markup, classes
+  // and aria wiring are untouched.
+  panelHeadingLevel = 'h3',
+  // MOBILE HERO MODE. Below lg this component is normally three full-height
+  // cards, one after another — fine mid-page, far too tall when the gallery IS
+  // the hero (1389px on a 390 phone, 1.65 viewports before anything else).
+  //
+  // With this on, below lg the open panel keeps its full card and the closed
+  // ones become 64px rows that expand in place. Every service stays reachable,
+  // which matters here precisely because there is no duplicate list further
+  // down the page to fall back on.
+  //
+  // At lg and up this changes NOTHING: the lateral accordion already solves the
+  // same problem by collapsing to 76px strips.
+  mobileHeroMode = false,
+}) {
   const [openIndex, setOpenIndex] = useState(0)
 
   // Panel titles are referenced by id from their button's aria-labelledby, so
   // the ids have to be unique per instance — both pages render one of these.
   const baseId = useId()
 
-  return (
-    <section className="mx-auto max-w-[1200px] px-8 py-16 sm:py-24">
-      <h2 className="font-display text-3xl font-extrabold text-[#17131c]">
-        {heading}
-      </h2>
+  const section = (
+    <section className={containerClassName}>
+      <Heading className={headingClassName}>{heading}</Heading>
+
+      {lede && <p className={ledeClassName}>{lede}</p>}
 
       <div className="mt-6 flex flex-col gap-[22px] lg:h-[440px] lg:flex-row lg:gap-4">
         {panels.map((panel, index) => (
@@ -54,6 +106,8 @@ export function ExpandingGallery({ heading, panels, cta }) {
             panel={panel}
             cta={cta}
             titleId={`${baseId}-${index}`}
+            headingLevel={panelHeadingLevel}
+            mobileHero={mobileHeroMode}
             open={index === openIndex}
             onOpen={() => setOpenIndex(index)}
           />
@@ -61,14 +115,34 @@ export function ExpandingGallery({ heading, panels, cta }) {
       </div>
     </section>
   )
+
+  return groundClassName ? (
+    <div className={groundClassName}>{section}</div>
+  ) : (
+    section
+  )
 }
 
-function Panel({ panel, cta, titleId, open, onOpen }) {
+function Panel({
+  panel,
+  cta,
+  titleId,
+  open,
+  onOpen,
+  headingLevel: PanelHeading = 'h3',
+  mobileHero = false,
+}) {
+  // Compact only below lg, only in hero mode, only when closed. Every class
+  // this adds is appended — when mobileHero is false the emitted strings are
+  // character-for-character what they have always been, which is what keeps
+  // /medical's rendered DOM identical.
+  const compact = mobileHero && !open
+
   return (
     <div
       className={`relative isolate min-h-[320px] overflow-hidden rounded-card lg:min-h-0 lg:flex-[0_1_76px] lg:transition-[flex-grow] lg:duration-slow lg:ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:!transition-none ${
-        open ? 'lg:flex-[1_1_76px]' : ''
-      }`}
+        compact ? 'max-lg:h-16 max-lg:min-h-0 ' : ''
+      }${open ? 'lg:flex-[1_1_76px]' : ''}`}
     >
       {/* flex-grow is the only animated property here: one width transition per
           click, nothing else moving. The panels keep a fixed 76px basis, so a
@@ -101,7 +175,7 @@ function Panel({ panel, cta, titleId, open, onOpen }) {
         aria-hidden="true"
         className={`absolute inset-0 bg-[#1c1424]/35 transition-colors duration-slow motion-reduce:!transition-none ${
           open ? '' : 'lg:bg-[#1c1424]/[0.62]'
-        }`}
+        }${compact ? ' max-lg:bg-[#1c1424]/[0.62]' : ''}`}
       />
 
       {/* SCRIM, PART TWO — the directional layer, over the text.
@@ -127,7 +201,7 @@ function Panel({ panel, cta, titleId, open, onOpen }) {
           pointer-events-none apart from that link, so a click anywhere else on
           the panel reaches this button.
 
-          Its accessible name comes from the <h3> below via aria-labelledby
+          Its accessible name comes from the panel title below via aria-labelledby
           rather than from the rotated span, which is marked decorative. Name
           computation follows aria-labelledby into hidden elements, so the button
           keeps its name while collapsed, and the title is not announced twice
@@ -174,14 +248,14 @@ function Panel({ panel, cta, titleId, open, onOpen }) {
           open
             ? 'lg:visible lg:opacity-100 lg:delay-[340ms]'
             : 'lg:invisible lg:opacity-0'
-        }`}
+        }${compact ? ' max-lg:hidden' : ''}`}
       >
-        <h3
+        <PanelHeading
           id={titleId}
           className="text-xl font-bold text-white"
         >
           {panel.title}
-        </h3>
+        </PanelHeading>
         <p className="mt-2.5 text-base text-white/85">{panel.description}</p>
 
         {/* External origin, so a plain anchor rather than next/link, same tab —
@@ -195,6 +269,42 @@ function Panel({ panel, cta, titleId, open, onOpen }) {
           {cta} <span aria-hidden="true">→</span>
         </a>
       </div>
+
+      {/* THE COMPACT ROW CONTROL — mobile hero mode only, closed panels only.
+          `lg:hidden` and the existing accordion button's `hidden lg:flex` are
+          exact complements, so only ever one of them is displayed and only one
+          is ever in the tab order.
+
+          Its accessible name is its own visible text rather than
+          aria-labelledby: the heading it would point at is display:none at this
+          width, and a control whose label is the words printed on it needs no
+          indirection. The heading is back in the tree the moment the panel
+          opens.
+
+          Chevron is inline rather than from the icon set — components/icons.jsx
+          is out of scope for this change, and this is one 12px glyph. */}
+      {compact && (
+        <button
+          type="button"
+          onClick={onOpen}
+          aria-expanded={false}
+          className="absolute inset-0 z-30 flex items-center justify-between gap-4 px-5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-white lg:hidden"
+        >
+          <span className="text-base font-semibold text-white">
+            {panel.title}
+          </span>
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className="h-3 w-3 flex-none text-white"
+          >
+            <path
+              fill="currentColor"
+              d="M12 15.5 3.5 7l1.8-1.8L12 11.9l6.7-6.7L20.5 7 12 15.5Z"
+            />
+          </svg>
+        </button>
+      )}
 
       {/* Hairline. An overlay rather than a ring on the wrapper: an inset
           box-shadow paints beneath child content, so a ring on the wrapper

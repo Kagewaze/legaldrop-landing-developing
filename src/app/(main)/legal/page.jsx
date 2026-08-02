@@ -97,43 +97,60 @@ const PROOF_REASONS = [
   },
 ]
 
+// THE GALLERY IS THE HERO.
+//
+// This page used to open with a text-only tinted band and show the photography
+// three sections down. It now leads with the photography and the text band is
+// gone — the h1 and its lead moved onto the gallery, which renders once, at the
+// top, as the page's first section. There is no second copy: the same three
+// photographs a visitor sees at the top ARE the service panels.
+//
+// The design's own hero centred on an "AFFIDAVIT OF SERVICE" proof pack — a job
+// number, a signature line, a seal status, a PDF download. Every element of it
+// is on the exclusion list above, which is why this page never had a visual
+// hero panel to promote in the first place. The photographs carry it instead.
+//
+// The hero ground is surface-ink and the credentials strip directly beneath is
+// also surface-ink, so the two read as one dark masthead that the photographs
+// sit inside, rather than as a tint band followed by a dark rule.
+//
+// The h1 and lead below are the vetted copy from the old hero, unchanged. The
+// old hero also carried a "Register your firm" button; it is not duplicated
+// here because the open panel already shows that exact call to action a few
+// hundred pixels lower, pointing at the same place.
 export default function LegalPage() {
   return (
     <div className="bg-surface-page">
-      <Hero />
-      <Credentials />
       <ExpandingGallery
-        heading="Legal services"
+        heading="Legal document delivery for GTA firms"
+        // "served documents" was here. Unqualified it reads as asserting that
+        // service was legally effected, which this business does not claim.
+        // It survived in the old hero because the Process serving panel sat
+        // close enough to qualify it; promoting this copy to the top moved
+        // that qualifier several hundred pixels away. So the lede now mirrors
+        // how :74 frames it — the trip and the record, never the legal
+        // outcome: "a timestamped record of the attempt returned to your firm."
+        lede="Filings, confidential files and process-serving runs moved by vetted drivers, with proof on every job."
         panels={SERVICES}
         cta="Register your firm"
+        headingLevel="h1"
+        // Panel titles move up with the section heading. Left at their default
+        // h3 under an h1 the outline skips a level, which is what this page
+        // shipped for the first build of this rework.
+        panelHeadingLevel="h2"
+        // Below lg this gallery is the whole hero, and three full-height cards
+        // made that 1389px on a 390 phone. Compact mode keeps the open panel
+        // and turns the other two into tappable rows.
+        mobileHeroMode
+        groundClassName="bg-surface-ink"
+        headingClassName="font-display text-4xl font-extrabold text-white sm:text-5xl"
+        ledeClassName="mt-4 max-w-[560px] text-lg text-white/85"
       />
+      <Credentials />
       <WhyBrand heading="Proof of delivery" reasons={PROOF_REASONS} />
       <Coverage />
       <FinalCta />
     </div>
-  )
-}
-
-// The design's hero centres on an "AFFIDAVIT OF SERVICE" proof pack — a job
-// number, a signature line, a seal status, a PDF download. All of it is
-// excluded above, so the panel is not reproduced.
-function Hero() {
-  return (
-    <section className="border-b border-[#f0eaf6] bg-surface-tint">
-      <div className="mx-auto max-w-[1200px] px-8 py-16 sm:py-24">
-        <div className="max-w-[720px]">
-          <h1 className="font-display text-4xl font-extrabold text-[#17131c] sm:text-5xl">
-            Legal document delivery for GTA firms
-          </h1>
-          <p className="mt-4 max-w-[560px] text-lg text-[#5f5868]">
-            Filings, confidential files, and served documents moved by vetted
-            drivers, with proof on every job.
-          </p>
-
-          <PartnerCta className="mt-8">Register your firm</PartnerCta>
-        </div>
-      </div>
-    </section>
   )
 }
 
@@ -177,17 +194,11 @@ function FinalCta() {
   )
 }
 
-// External origin — plain anchors, not next/link. Same tab, as on /medical.
+// The PartnerCta helper that used to live here went with the text hero — that
+// hero was its only caller. Every remaining partner link on this page is a
+// plain anchor at its own call site: FinalCta above, and the per-panel CTA
+// inside ExpandingGallery, which takes the label as a prop.
 //
-// The matching PartnerLink helper went with the card grid; its per-panel CTA
-// now lives inside ExpandingGallery, which takes the label as a prop.
-function PartnerCta({ children, className = '' }) {
-  return (
-    <a
-      href={PARTNER_URL}
-      className={`inline-block rounded-control bg-brand-600 px-[30px] py-4 text-base font-semibold text-white transition-colors hover:bg-brand-700 ${className}`}
-    >
-      {children}
-    </a>
-  )
-}
+// PARTNER_URL is a different origin, so these are anchors rather than
+// next/link, and they open in the same tab: registering a firm is the
+// continuation of this page's journey, not a detour from it.

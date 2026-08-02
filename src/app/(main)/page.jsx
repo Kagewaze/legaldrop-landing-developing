@@ -6,6 +6,11 @@ import { Hero } from '@/components/home/Hero'
 import { HowItWorks } from '@/components/home/HowItWorks'
 import { Reviews } from '@/components/home/Reviews'
 import { Services } from '@/components/home/Services'
+import {
+  LEGAL_VERTICAL,
+  MEDICAL_VERTICAL,
+  VerticalSection,
+} from '@/components/home/VerticalSection'
 import { HOME_REASONS, WhyBrand } from '@/components/home/WhyBrand'
 import baystreet from '@/images/home-coverage-baystreet.jpg'
 
@@ -44,6 +49,13 @@ export default async function Home() {
       {showReviews && <Reviews data={reviews} />}
       <Services />
       <HowItWorks />
+      {/* The two account-based verticals. They sit here, between HowItWorks and
+          WhyBrand, because that was the page's only place where two sections
+          shared a ground and the scroll went flat. Medical carries the tint
+          band and leads with its photograph; Legal reverses both. Copy for
+          each is constrained — see the block in VerticalSection.jsx. */}
+      <VerticalSection {...MEDICAL_VERTICAL} imageSide="left" tinted />
+      <VerticalSection {...LEGAL_VERTICAL} imageSide="right" />
       {/* Content passed explicitly — WhyBrand is shared with /medical and
           /legal and holds no copy of its own. */}
       <WhyBrand heading={`Why ${BRAND.name}`} reasons={HOME_REASONS} />
