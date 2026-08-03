@@ -44,24 +44,34 @@ const CTA_PRIMARY =
 // Secondary is a bordered ghost, not a second filled button: two solid CTAs of
 // equal weight is how a page fails to have a primary action at all.
 const CTA_SECONDARY =
-  `inline-flex items-center justify-center rounded-control border border-white/25 px-[30px] py-4 text-base font-semibold text-white transition-colors duration-base motion-reduce:transition-none hover:bg-white/10 ${FOCUS}`
+  `inline-flex min-h-11 items-center justify-center rounded-control px-0 py-2 text-base font-semibold text-white underline decoration-white/40 underline-offset-4 transition-colors duration-base motion-reduce:transition-none hover:decoration-white sm:border sm:border-white/25 sm:px-[30px] sm:py-4 sm:no-underline sm:hover:bg-white/10 ${FOCUS}`
 
-// The kinds of movement the platform coordinates. A restrained signal, not a
-// service menu: plain text, no links, nothing implying each is separately
-// bookable from here. Only /send, /medical and /legal are live routes, and the
-// two that have destinations are already reachable from the nav and from their
-// own sections further down the page.
-const CATEGORIES = ['Medical', 'Legal', 'Business', 'Parcel']
+// THE CATEGORY ROW WAS REMOVED IN PHASE 2.1, and its removal is the single
+// largest saving in the mobile hero.
+//
+// It read 'Medical · Legal · Business · Parcel' directly under a sentence that
+// already reads 'Specimens, filings, business deliveries and parcels' — the same
+// list, twice, four lines apart. Phase 2.1 then put the same categories a third
+// time inside the demonstration's dispatch queue, where they are attached to
+// actual jobs rather than floating as a taxonomy.
+//
+// Saying it once, in the place where it means something, cost ~52px of mobile
+// height and improved the desktop composition too. Do not reinstate it.
 
 export function HeroNetwork() {
   return (
     <section className="bg-surface-ink text-white">
-      <div className="mx-auto max-w-[1200px] px-8 py-16 sm:py-20 lg:py-24">
+      {/* py-10 while stacked, not py-16. The section rhythm elsewhere on the
+          page is py-16 sm:py-24, but the hero is the one section whose height
+          is measured against the first viewport rather than against its
+          neighbours — 48px of symmetric padding is 48px of proposition pushed
+          below the fold. Full rhythm returns from sm. */}
+      <div className="mx-auto max-w-[1200px] px-8 py-10 sm:py-20 lg:py-24">
         {/* The visual is capped rather than given a free 1fr: the proposition
             has to stay the larger thing on the screen. A 520px ceiling holds
             the demo at roughly 45% of the column at 1440 and stops it growing
             into a billboard on wide displays. */}
-        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,520px)] lg:gap-14">
+        <div className="grid grid-cols-1 items-center gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,520px)] lg:gap-14">
           <div>
             <h1 className="text-balance font-display text-3xl font-extrabold text-white sm:text-5xl lg:text-6xl">
               Same-day logistics infrastructure for the GTA
@@ -75,14 +85,22 @@ export function HeroNetwork() {
                 "recorded" is a fact. "Evidenced" implies evidentiary weight,
                 which Phase 0's D10 table lists as blocked pending legal review.
                 Reverting this word is a one-line change once that clears. */}
-            <p className="mt-5 max-w-[560px] text-lg text-white/85">
+            {/* text-base while stacked, text-lg from sm. The scale reserves
+                text-lg for lead paragraphs, which this is — but at 390 the
+                18px setting runs to four lines and costs ~35px of the first
+                viewport. 16px holds it to three lines and stays a full step
+                above body minimum. The measure is unchanged. */}
+            <p className="mt-4 max-w-[560px] text-base text-white/85 sm:mt-5 sm:text-lg">
               Specimens, filings, business deliveries and parcels — dispatched,
               tracked and recorded on one platform.
             </p>
 
-            {/* Full width while stacked, so the two buttons form one tidy
-                column instead of two ragged widths; auto from sm up. */}
-            <div className="mt-8 flex flex-col gap-3.5 sm:flex-row sm:flex-wrap">
+            {/* Primary keeps its full-width filled treatment while stacked.
+                Secondary drops its border below sm and reads as a text action —
+                lighter, shorter, and no longer a second box competing for the
+                same weight. It keeps min-h-11 so the target stays valid, and its
+                focus ring is unchanged. */}
+            <div className="mt-6 flex flex-col items-start gap-1 sm:mt-8 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3.5">
               <Link
                 href={ROUTES.send.href}
                 className={`${CTA_PRIMARY} w-full sm:w-auto`}
@@ -96,19 +114,6 @@ export function HeroNetwork() {
                 Talk to our team
               </Link>
             </div>
-
-            {/* Separator dots are decorative and are hidden rather than read as
-                punctuation between every item. */}
-            <ul className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm font-semibold tracking-label text-white/70">
-              {CATEGORIES.map((category, index) => (
-                <li key={category} className="flex items-center gap-3">
-                  {index > 0 && (
-                    <span aria-hidden="true" className="h-1 w-1 rounded-full bg-white/30" />
-                  )}
-                  {category}
-                </li>
-              ))}
-            </ul>
           </div>
 
           <NetworkDemo />

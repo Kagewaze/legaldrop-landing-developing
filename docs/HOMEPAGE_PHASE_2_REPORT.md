@@ -325,3 +325,185 @@ Reviewed against the five questions, from the first screen only:
 ## 21. Phase 3
 
 **Phase 3 has not begun.** No operational proof bar, no platform showcase, no regulated-vertical redesign, no trust section, no consumer booking form, no address inputs, no Places autocomplete, no price estimation, no `/send` handoff, no reviews or partner movement, no chain-of-custody artifact, no integrations, no new compliance claims, no driver recruitment, no footer restructuring, and no section reordering beyond replacing the hero.
+
+---
+
+# Phase 2.1 Refinement
+
+> Resolves weaknesses **R8** (the demonstration showed one job) and **R9** (the mobile hero was 1.22 viewports) from §17/§19 above. Architecture unchanged: `HeroNetwork` stays server-rendered, `NetworkDemo` remains the only client island, no Maps, no Places, no animation library, no new island.
+
+## Files modified
+
+| File | Change |
+|---|---|
+| `src/components/home/HeroNetwork.jsx` | Mobile padding and rhythm; category row removed; secondary CTA treatment |
+| `src/components/home/NetworkDemo.jsx` | Dispatch queue added; specific category labels; diagram cropped; redundant caption removed |
+| `docs/HOMEPAGE_PHASE_2_REPORT.md` | This section |
+
+No other file touched. No shared component, no config.
+
+## Mobile height change
+
+| Width | Phase 2 | Phase 2.1 | Δ |
+|---|---:|---:|---:|
+| **390** | **1,030 px (1.22 screens)** | **835 px (0.99 screens)** | **−195 px, −19%** |
+| 768 | 1,113 px | 1,055 px | −58 px |
+| 1024 | 767 px | 714 px | −53 px |
+| 1440 | 696 px | 696 px | 0 |
+
+**The 390 hero is now 0.99 of a viewport** — the target was "approximately one". At 1440 the height is unchanged: the queue rows added roughly what the removed category row saved.
+
+### Where the 195 px came from
+
+| Change | Saving |
+|---|---:|
+| Category row removed (redundant — see below) | ~52 px |
+| Section padding `py-16` → `py-10` while stacked | 48 px |
+| Sub-copy `text-lg` → `text-base` below sm (4 lines → 3) | ~35 px |
+| Secondary CTA: bordered button → text action below sm | ~24 px |
+| Diagram viewBox cropped 240 → 210 units (empty band) | ~22 px |
+| Panel padding `p-5` → `p-4`, grid gap `10` → `7`, misc rhythm | ~30 px |
+| Dispatch queue added (two rows) | **+56 px** |
+
+**Nothing was achieved by shrinking text below the design-system minimum, truncating the proposition, hiding the visual, or removing a CTA.** Measured: **0 elements under 12 px** in the hero at all four widths.
+
+### What is inside the first 390 px viewport **[measured]**
+
+Druppr wordmark · **complete H1** · **complete supporting statement** · **Book a delivery** · **Talk to our team** · **Product demonstration** · **Sample data** · **Medical specimen** · **Assigned** · **Downtown → North York** · **Legal filing**
+
+Panel **95% visible**, route diagram **100% visible**.
+
+## CTA layout change
+
+| | Below `sm` | `sm` and up |
+|---|---|---|
+| **Book a delivery** | Full-width filled brand-600 button | Auto-width filled button |
+| **Talk to our team** | Underlined text action, `min-h-11`, no border | Bordered ghost button |
+
+The primary remains visually dominant at every width. The secondary keeps a **44 px minimum target** (`min-h-11`) and its **focus ring is unchanged** — verified: focused hero CTA reports `ring: true`, `href="/send"`. Gap between the two tightened from `3.5` to `1` while stacked, since a text action does not need button-sized separation.
+
+## Network density change
+
+The panel now shows **one animated job above a two-row queue**:
+
+```
+Medical specimen                    [Assigned]
+Downtown → North York
+▬▬▬▬ ▬▬▬▬ ──── ────
+─────────────────────────────────────────────
+Legal filing                         Assigned
+Business delivery                     Pending
+```
+
+- **One orchestrated motion sequence** — unchanged. The queue rows are **inert and muted** (`text-white/50`), so they read as other work in the system rather than a second animation.
+- Queue categories are taken from the rotation **after** the active one, so no job is ever listed twice and the visible set changes as the primary cycles — breadth without added motion.
+- Queue statuses are **fixed per slot** (`Assigned`, `Pending`), both real values from the production model.
+- Three of four categories are on screen at once, never all four — the panel would crowd.
+
+This is the change that moves the panel from *"we track a delivery"* to *"several kinds of job run on one system"*.
+
+## Category label changes
+
+| Phase 2 | Phase 2.1 |
+|---|---|
+| Medical | **Medical specimen** |
+| Legal | **Legal filing** |
+| Business | **Business delivery** |
+| Parcel | **Same-day parcel** |
+
+`Business` was the weakness named in §17 — a taxonomy label beside three concrete nouns. **`Business delivery`** was chosen over `Scheduled business route`: a business booking a delivery is plainly true, whereas "scheduled route" asserts a scheduling product this repository cannot evidence.
+
+Panel label also changed from `Network demonstration` to **`Product demonstration`**, matching the brief's wording.
+
+### One redundancy removed
+
+The visible step caption was dropped from the primary row. It read `Downtown → North York · Driver assigned` beside a chip reading **Assigned** — a restatement that also wrapped badly at 390. The chip carries the product's own vocabulary and survives; the captions remain in the data and now surface in the screen-reader description, where the plain-English gloss is genuinely useful (*"Assigned — driver assigned"*).
+
+Likewise the standalone category row was removed from the hero: it listed `Medical · Legal · Business · Parcel` four lines under a sentence already reading *"Specimens, filings, business deliveries and parcels"*, and Phase 2.1 puts the same categories a third time in the queue — where they are attached to actual jobs.
+
+## Bundle measurements **[measured]**
+
+| Metric | Phase 2 | Phase 2.1 | Budget |
+|---|---:|---:|---|
+| `/` route size | 2.73 kB | **2.86 kB** | — |
+| **`/` First Load JS** | 102 kB | **102 kB** | ≤ 130 kB ✅ |
+| **Shared JS** | 87.2 kB | **87.2 kB** | ~87.2 kB ✅ |
+| Route type | `○ (Static)` | **`○ (Static)`** | static ✅ |
+| Client islands on `/` | 2 | **2** | no new island ✅ |
+
+## Maps and Places **[measured]**
+
+| Route | Requests |
+|---|---|
+| `/` | **0** |
+| `/medical` | 0 |
+| `/legal` | 0 |
+| `/send` | 7 (expected — the address flow) |
+
+## Accessibility results **[measured]**
+
+| Check | Result |
+|---|---|
+| `<h1>` count on `/` | **1** |
+| Landmarks | header / main / nav / footer |
+| Interactive elements without focus treatment | **0** |
+| Contrast failures | **0** |
+| Text below 12 px in the hero | **0** at all four widths |
+| `aria-live` regions in the hero | **0** |
+| SVG hidden from AT | ✅ `aria-hidden="true"` |
+| Focusable elements inside the visual | **0** |
+| Horizontal overflow | none at any width |
+| Focused hero primary CTA | ring present, `href="/send"` |
+
+The screen-reader description now includes the queue and the plain-English step glosses, still as a single static paragraph — no announcement on transition.
+
+## Reduced-motion results **[measured]**
+
+| Check | Result |
+|---|---|
+| Sequence stops | ✅ state identical across 3 seconds |
+| Complete state shown | ✅ "Delivered" |
+| Secondary jobs shown | ✅ queue present, no cycling |
+| Product visual retained | ✅ |
+
+## JavaScript-disabled results **[measured]**
+
+| Check | Result |
+|---|---|
+| Headline / sub-copy | ✅ both present |
+| Both CTAs | ✅ "Book a delivery", "Talk to our team" |
+| Complete route + final status | ✅ "Delivered" |
+| Secondary jobs | ✅ queue rendered |
+| Demonstration labelling | ✅ "Product demonstration" + "Sample data" |
+| Panel not empty | ✅ diagram 247 px tall |
+
+## Regression results **[measured]**
+
+| Route | HTTP | `<h1>` | Console errors | CLS | Notes |
+|---|---|---|---|---|---|
+| `/` | 200 | 1 | **0** | **0** | 0 contrast fails, 0 focus gaps, 0 Maps |
+| `/medical` | 200 | 1 | **0** | 0.0067 | 12 known false positives, 5 pre-existing focus gaps (R1) |
+| `/legal` | 200 | 1 | **0** | 0 | 4 pre-existing focus gaps (R1) |
+| `/send` | 200 | 1 | **0** | 0 | 2 pre-existing (R2/R3) |
+| `/track/[code]` | 200 | 1 | **0** | 0 | unaffected |
+| `/track-partner/[token]` | 200 | 1 | **0** | 0 | unaffected |
+
+**No CLS regression** — homepage CLS is now **0** (was 0.0001).
+
+## Screenshots captured
+
+`p21-after-390.png` · `p21-after-390-full.png` · `p21-after-768.png` · `p21-after-1024.png` · `p21-after-1440.png` · `p21-reduced-motion.png` · `p21-js-disabled.png` · `p21-cta-focus.png` · `p21-active-frame.png`, alongside the Phase 2 `hero-before-*.png` baselines.
+
+## Remaining weaknesses
+
+| # | Item | Status |
+|---|---|---|
+| R8 | Demo showed one job | ✅ **resolved** — queue added |
+| R9 | Mobile hero 1.22 screens | ✅ **resolved** — 0.99 screens |
+| **R11** | **768 px hero is 1.03 screens** | New. The stacked layout runs to `lg`, so a tablet gets the mobile stack at a larger type scale. Not a defect, but 768 is now the tallest relative hero |
+| R5 | LCP / FCP still not captured | Unchanged — environment limitation |
+| R6 | 4 images above the 200 kB ceiling | Unchanged — awaiting downscaling decision |
+| R10 | **Formal five-second test not run** | Unchanged. The internal review in §17 is not a substitute, and its conclusions were not re-run for 2.1 |
+| R1–R4, R7 | Pre-existing, out of scope | Unchanged |
+
+**"Infrastructure" is still asserted rather than evidenced.** Phase 2.1 improves how coordination *reads*; it adds no proof, because adding metrics is Phase 3's job and Phase 0 gates them. That weakness is unresolved by design.

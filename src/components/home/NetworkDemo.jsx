@@ -47,16 +47,32 @@ const SEQUENCE = [
   { status: 'delivered', label: 'Delivered', caption: 'Completed' },
 ]
 
-// The four kinds of movement the platform coordinates. Cycling the category
-// each pass is what shows breadth — one network, several kinds of job — without
-// listing services or implying any of them is separately bookable here.
-const CATEGORIES = ['Medical', 'Legal', 'Business', 'Parcel']
+// The four kinds of movement the platform coordinates.
+//
+// SPECIFIC, NOT CATEGORICAL. These were 'Medical / Legal / Business / Parcel' —
+// taxonomy labels rather than things. 'Business' in particular said nothing next
+// to three concrete nouns. Each now names an actual job.
+//
+// Wording is held to what the current service model supports: a business booking
+// a delivery is plainly true, where 'Scheduled business route' would assert a
+// scheduling product this repository cannot evidence.
+const CATEGORIES = [
+  'Medical specimen',
+  'Legal filing',
+  'Business delivery',
+  'Same-day parcel',
+]
+
+// Statuses for the two secondary rows. Fixed per slot, so they read as other
+// work in the system rather than as a second animation competing with the
+// primary journey. Both are real values from the model above.
+const SECONDARY_STATUSES = ['Assigned', 'Pending']
 
 // Synthetic endpoints. Deliberately generic place names, not addresses: no
 // street, no number, nothing that could be mistaken for a real pickup.
 const ROUTE_LABELS = { from: 'Downtown', to: 'North York' }
 
-const DEMO_LABEL = 'Network demonstration'
+const DEMO_LABEL = 'Product demonstration'
 
 // Cubic bezier for the route, in viewBox units. The marker position is computed
 // from these same control points rather than measured off the DOM, so there is
@@ -155,7 +171,7 @@ export function NetworkDemo() {
   return (
     <div
       ref={rootRef}
-      className="rounded-card border border-white/10 bg-white/[0.04] p-5 shadow-lift sm:p-6"
+      className="rounded-card border border-white/10 bg-white/[0.04] p-4 shadow-lift sm:p-6"
     >
       {/* THE HONESTY LABEL. Visible, adjacent to the visual, not a footnote.
           Phase 0 D4 makes this a condition of shipping a simulated network. */}
@@ -174,16 +190,16 @@ export function NetworkDemo() {
       <svg
         aria-hidden="true"
         focusable="false"
-        viewBox="0 0 400 240"
-        className="mt-4 block w-full"
+        viewBox="0 0 400 210"
+        className="mt-3 block w-full"
       >
         {/* Faint grid — a control-surface texture, not a street map. */}
         <g stroke="currentColor" className="text-white/[0.06]" strokeWidth="1">
-          {[40, 90, 140, 190].map((y) => (
+          {[45, 95, 145].map((y) => (
             <line key={y} x1="0" y1={y} x2="400" y2={y} />
           ))}
           {[80, 160, 240, 320].map((x) => (
-            <line key={x} x1={x} y1="0" x2={x} y2="230" />
+            <line key={x} x1={x} y1="0" x2={x} y2="205" />
           ))}
         </g>
 
@@ -240,47 +256,68 @@ export function NetworkDemo() {
         </g>
       </svg>
 
-      {/* PLACE NAMES LIVE IN HTML, NOT IN THE SVG. In-SVG <text> scales with the
-          viewBox, so a size that reads on desktop shrank to about 9px inside the
-          390px panel — under the design system's 12px floor and exactly the
-          "cramped map label" the brief rules out. As HTML they are ordinary
-          text-sm and identical at every width. */}
-      <div
-        aria-hidden="true"
-        className="mt-3 flex items-center gap-2 text-sm text-white/70"
-      >
-        <span>{ROUTE_LABELS.from}</span>
-        <span className="text-white/30">→</span>
-        <span>{ROUTE_LABELS.to}</span>
-      </div>
+      {/* THE DISPATCH LIST — one active job above two others in the queue.
+          This is what turns the panel from a tracking view into a coordination
+          view: a single animated journey says "we track a delivery", a journey
+          alongside other pending work says "several kinds of job run on one
+          system". The secondary rows are deliberately inert and muted so the
+          primary sequence remains the page's single orchestrated motion.
 
-      {/* Dispatch strip. aria-hidden for the same reason as the diagram — the
-          equivalent text follows. */}
-      <div
-        aria-hidden="true"
-        className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4"
-      >
-        <div className="flex items-center gap-2.5">
-          <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold text-white">
-            {category}
+          PLACE NAMES LIVE HERE, IN HTML, NOT IN THE SVG. In-SVG <text> scales
+          with the viewBox, so a size that read on desktop shrank to about 9px
+          inside the 390px panel — under the 12px floor, and exactly the
+          "cramped map label" the brief rules out.
+
+          aria-hidden for the same reason as the diagram: the equivalent text
+          follows once, below. */}
+      <div aria-hidden="true" className="mt-4 border-t border-white/10 pt-3">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+          <span className="text-sm font-semibold text-white">{category}</span>
+          <span className="rounded-full bg-brand-600 px-2.5 py-1 text-xs font-semibold text-white">
+            {current.label}
           </span>
-          <span className="text-sm text-white/70">{current.caption}</span>
         </div>
 
-        <span className="rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold text-white">
-          {current.label}
-        </span>
-      </div>
+        {/* The route stands alone. It previously carried the step caption too
+            ('Downtown → North York · Driver assigned'), which wrapped badly at
+            390 and restated the chip beside it — 'Driver assigned' next to a
+            chip reading 'Assigned'. The chip is the product's own vocabulary
+            and is the one that should survive; the captions are kept in the
+            data and surface in the screen-reader description below, where the
+            plain-English gloss is actually useful. */}
+        <div className="mt-1 flex items-center gap-1.5 text-sm text-white/70">
+          <span>{ROUTE_LABELS.from}</span>
+          <span aria-hidden="true" className="text-white/30">
+            →
+          </span>
+          <span>{ROUTE_LABELS.to}</span>
+        </div>
 
-      <div aria-hidden="true" className="mt-3 flex gap-1.5">
-        {SEQUENCE.map((s, i) => (
-          <span
-            key={s.status}
-            className={`h-1 flex-1 rounded-full transition-colors duration-base motion-reduce:transition-none ${
-              i <= step ? 'bg-brand-500' : 'bg-white/15'
-            }`}
-          />
-        ))}
+        <div className="mt-2.5 flex gap-1.5">
+          {SEQUENCE.map((s, i) => (
+            <span
+              key={s.status}
+              className={`h-1 flex-1 rounded-full transition-colors duration-base motion-reduce:transition-none ${
+                i <= step ? 'bg-brand-500' : 'bg-white/15'
+              }`}
+            />
+          ))}
+        </div>
+
+        {/* The queue. Categories are taken from the rotation after the active
+            one, so no job is ever listed twice and the set on screen changes as
+            the primary cycles — breadth without a second animation. */}
+        <ul className="mt-3 space-y-1.5 border-t border-white/10 pt-3">
+          {SECONDARY_STATUSES.map((status, i) => (
+            <li
+              key={status}
+              className="flex items-center justify-between gap-3 text-sm text-white/50"
+            >
+              <span>{CATEGORIES[(categoryIndex + i + 1) % CATEGORIES.length]}</span>
+              <span className="text-xs font-semibold text-white/40">{status}</span>
+            </li>
+          ))}
+        </ul>
       </div>
 
       {/* THE ACCESSIBLE EQUIVALENT. Static, complete, and announced once. No
@@ -288,9 +325,13 @@ export function NetworkDemo() {
           for as long as the page is open. */}
       <p className="sr-only">
         {DEMO_LABEL}, using sample data. It shows how a job moves through the
-        Druppr platform: {SEQUENCE.map((s) => s.label).join(', then ')}. Medical,
-        legal, business and parcel deliveries are all coordinated on the same
-        network. This is an illustration, not live customer activity.
+        Druppr platform:{' '}
+        {SEQUENCE.map((s) => `${s.label} — ${s.caption.toLowerCase()}`).join(
+          ', then ',
+        )}
+        . Other jobs wait in the queue alongside it: {CATEGORIES.join(', ')} are
+        all coordinated on the same system. This is an illustration, not live
+        customer activity.
       </p>
     </div>
   )
