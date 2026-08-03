@@ -3,10 +3,9 @@ import { getGoogleReviews } from '@/lib/google-reviews'
 import { BecomeADriver } from '@/components/home/BecomeADriver'
 import { Coverage } from '@/components/home/Coverage'
 import { HeroNetwork } from '@/components/home/HeroNetwork'
-import { HowItWorks } from '@/components/home/HowItWorks'
 import { OperationalProof } from '@/components/home/OperationalProof'
+import { PlatformShowcase } from '@/components/home/PlatformShowcase'
 import { Reviews } from '@/components/home/Reviews'
-import { Services } from '@/components/home/Services'
 import {
   LEGAL_VERTICAL,
   MEDICAL_VERTICAL,
@@ -55,14 +54,29 @@ export default async function Home() {
           three figures are founder-confirmed — see the provenance block in
           OperationalProof.jsx. Nothing else on the page moved. */}
       <OperationalProof />
+      {/* Phase 4: the claim, the evidence, then the product itself.
+          PlatformShowcase REPLACES home/Services.jsx and home/HowItWorks.jsx.
+          Both are retained on disk, unimported, as rollback targets — restoring
+          them is a two-line change here. They are removed in a later phase once
+          this one has settled.
+
+          Services was a catalogue in which 8 of 11 entries were not bookable
+          (Phase 0, D7). HowItWorks was the generic courier funnel — enter
+          addresses, see price, pay, track — which `HOMEPAGE.md` rules out
+          because every competitor prints it. The showcase replaces both with
+          the actual product.
+
+          CONSEQUENCE WORTH KNOWING: HowItWorks was the page's only brand-600
+          band. Purple now appears only on CTAs and status chips, which is
+          closer to what VISION.md asks for, but the page has lost a strong
+          colour beat. Reassess when the remaining sections are rebuilt. */}
+      <PlatformShowcase />
+      {/* Reviews moved below the showcase: product evidence outranks consumer
+          social proof, and this keeps the narrative claim → proof → product. */}
       {showReviews && <Reviews data={reviews} />}
-      <Services />
-      <HowItWorks />
-      {/* The two account-based verticals. They sit here, between HowItWorks and
-          WhyBrand, because that was the page's only place where two sections
-          shared a ground and the scroll went flat. Medical carries the tint
-          band and leads with its photograph; Legal reverses both. Copy for
-          each is constrained — see the block in VerticalSection.jsx. */}
+      {/* The two account-based verticals. Medical carries the tint band and
+          leads with its photograph; Legal reverses both. Copy for each is
+          constrained — see the block in VerticalSection.jsx. */}
       <VerticalSection {...MEDICAL_VERTICAL} imageSide="left" tinted />
       <VerticalSection {...LEGAL_VERTICAL} imageSide="right" />
       {/* Content passed explicitly — WhyBrand is shared with /medical and
