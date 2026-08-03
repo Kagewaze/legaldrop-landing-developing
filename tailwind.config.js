@@ -40,9 +40,17 @@ module.exports = {
       '9xl': ['8rem', { lineHeight: '1', letterSpacing: '-0.05em' }], // 128
     },
     extend: {
+      // `marquee` was removed in Phase 1: a repository-wide search found no
+      // consumer of `animate-marquee` or the `--marquee-duration` variable it
+      // depended on. It was Pocket-template residue.
+      //
+      // The remaining entries here are ALSO currently unused, and are
+      // deliberately left in place — Phase 1 was scoped to remove the confirmed
+      // marquee configuration only. The two animations the app actually uses,
+      // `animate-pulse` and `animate-spin`, are Tailwind built-ins and are not
+      // defined here, so nothing below is load-bearing for them.
       animation: {
         'fade-in': 'fade-in 0.5s linear forwards',
-        marquee: 'marquee var(--marquee-duration) linear infinite',
         'spin-slow': 'spin 4s linear infinite',
         'spin-slower': 'spin 6s linear infinite',
         'spin-reverse': 'spin-reverse 1s linear infinite',
@@ -159,11 +167,6 @@ module.exports = {
           },
           to: {
             opacity: '1',
-          },
-        },
-        marquee: {
-          '100%': {
-            transform: 'translateY(-50%)',
           },
         },
         'spin-reverse': {
