@@ -2,7 +2,7 @@ import { BRAND } from '@/lib/config'
 import { getGoogleReviews } from '@/lib/google-reviews'
 import { BecomeADriver } from '@/components/home/BecomeADriver'
 import { Coverage } from '@/components/home/Coverage'
-import { Hero } from '@/components/home/Hero'
+import { HeroNetwork } from '@/components/home/HeroNetwork'
 import { HowItWorks } from '@/components/home/HowItWorks'
 import { Reviews } from '@/components/home/Reviews'
 import { Services } from '@/components/home/Services'
@@ -45,7 +45,11 @@ export default async function Home() {
     // surface.page — a warm off-white, not #fff. Cards on this page are pure
     // white, so they sit ON the ground rather than dissolving into it.
     <div className="bg-surface-page">
-      <Hero />
+      {/* Phase 2 replaced home/Hero.jsx with HeroNetwork. The old component is
+          retained on disk, unimported, as the rollback target: restoring the
+          previous hero is a two-line change here. It is removed in a later
+          phase once this one has settled. */}
+      <HeroNetwork />
       {showReviews && <Reviews data={reviews} />}
       <Services />
       <HowItWorks />
