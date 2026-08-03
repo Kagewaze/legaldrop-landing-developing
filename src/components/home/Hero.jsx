@@ -183,18 +183,18 @@ export function Hero() {
             aria-label="Send a package — enter your pickup and dropoff addresses"
             className={`group block select-none ${CARD} ${CARD_FOCUS}`}
           >
-            <span className="block text-sm font-semibold tracking-label text-[#8d8695]">
+            <span className="block text-sm font-semibold tracking-label text-[#5f5868]">
               Get your price
             </span>
 
             <div className="mt-4 flex flex-col gap-2.5" aria-hidden="true">
               <div className={FIELD}>
                 <span className="h-[11px] w-[11px] flex-none rounded-full border-[2.5px] border-brand-600" />
-                <span className="text-base text-[#8d8695]">Pickup address</span>
+                <span className="text-base text-[#5f5868]">Pickup address</span>
               </div>
               <div className={FIELD}>
                 <span className="h-[11px] w-[11px] flex-none bg-brand-600" />
-                <span className="text-base text-[#8d8695]">Dropoff address</span>
+                <span className="text-base text-[#5f5868]">Dropoff address</span>
               </div>
             </div>
 
@@ -209,7 +209,7 @@ export function Hero() {
           </Link>
         ) : (
           <div className={CARD}>
-            <span className="block text-sm font-semibold tracking-label text-[#8d8695]">
+            <span className="block text-sm font-semibold tracking-label text-[#5f5868]">
               Get your price
             </span>
             <div className="mt-4 flex items-center gap-[18px]">
@@ -231,7 +231,11 @@ export function Hero() {
 function PriceFrom() {
   return (
     <div className="text-right">
-      <div className="text-xs font-semibold text-[#8d8695]">from</div>
+      {/* #5f5868, not #8d8695. At 12px the lighter tone measured 3.51:1 on the
+          white card — below the 4.5:1 floor. See docs/HOMEPAGE_PHASE_1_REPORT.md.
+          The $8.00 figure below is retired in Phase 2 per Phase 0 OQ-5; it is
+          left untouched here because Phase 1 changes no copy or positioning. */}
+      <div className="text-xs font-semibold text-[#5f5868]">from</div>
       <div className="text-2xl font-bold text-[#17131c]">$8.00</div>
     </div>
   )

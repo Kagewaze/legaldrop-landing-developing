@@ -69,8 +69,11 @@ const CTA =
 
 // Uppercased in CSS rather than typed in capitals, so the text a screen reader
 // receives is a normal phrase rather than a run of letters.
+// #5f5868, not #8d8695. Measured at 14px: 3.21:1 on surface-tint and 3.35:1 on
+// surface-page, both under the 4.5:1 floor. #5f5868 is the existing secondary
+// body tone and clears it on every ground this eyebrow sits on — no new token.
 const EYEBROW =
-  'block text-sm font-semibold uppercase tracking-label text-[#8d8695]'
+  'block text-sm font-semibold uppercase tracking-label text-[#5f5868]'
 
 export const MEDICAL_VERTICAL = {
   eyebrow: 'For clinics & labs',
