@@ -218,7 +218,7 @@ function ServiceRow({ service, featured = false }) {
     return (
       <Link
         href={service.route.href}
-        className={`${layout} rounded-2xl transition duration-base motion-reduce:transition-none hover:bg-[#17131c]/10 hover:shadow-lift`}
+        className={`${layout} rounded-2xl transition duration-base motion-reduce:transition-none hover:bg-[#17131c]/10 hover:shadow-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white`}
       >
         {body}
       </Link>

@@ -24,9 +24,12 @@ export function BecomeADriver() {
           </div>
         </div>
 
+        {/* White ring on a brand-600 ground — the header's inversion of the site
+            focus recipe, for the same reason: brand-600 on brand-600 is
+            invisible. */}
         <Link
           href={href}
-          className="rounded-control bg-white px-[30px] py-4 text-base font-semibold text-brand-600 transition-colors hover:bg-[#f2e9fa] hover:text-[#5d1f96]"
+          className="rounded-control bg-white px-[30px] py-4 text-base font-semibold text-brand-600 transition-colors hover:bg-[#f2e9fa] hover:text-[#5d1f96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-brand-600"
         >
           Start earning
         </Link>

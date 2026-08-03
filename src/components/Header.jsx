@@ -18,9 +18,27 @@ import { HeaderMobileNav } from '@/components/HeaderMobileNav'
 // the active state — the 2px underline does that on its own. The design's
 // LINK/ACTIVE pair used 600/700, but a one-step weight change between adjacent
 // nav items reads as a rendering inconsistency rather than as emphasis.
-const NAV_LINK = 'text-base font-semibold text-white'
-const NAV_LINK_ACTIVE =
-  'text-base font-semibold text-white border-b-2 border-white pb-[2px]'
+// FOCUS RING FOR THE PURPLE BAR. The site recipe is a brand-600 ring on a white
+// offset, which is invisible against brand-600 — so the header inverts it:
+// white ring, brand-600 offset. Same shape, same 2px weight, legible ground.
+const NAV_FOCUS =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-brand-600'
+
+// HIT AREA WITHOUT LAYOUT CHANGE. The nav links render at 26px tall, which
+// clears WCAG 2.5.8 Target Size (Minimum, AA — 24x24) but not the 44x44 comfort
+// target from platform guidance. The `after` overlay is a transparent 44px-tall
+// box centred on the link: it enlarges what a finger or pointer can hit without
+// moving the text or the active underline by a pixel.
+//
+// Padding was the obvious alternative and was rejected: the active state hangs a
+// border under the text, so any vertical padding drags the underline away from
+// the word it belongs to. The gap between nav items is 32px (gap-8), so the 4px
+// horizontal bleed below cannot overlap a neighbouring target.
+const NAV_HIT_AREA =
+  "relative after:absolute after:-left-1 after:-right-1 after:top-1/2 after:h-11 after:-translate-y-1/2 after:content-['']"
+
+const NAV_LINK = `text-base font-semibold text-white ${NAV_HIT_AREA} ${NAV_FOCUS}`
+const NAV_LINK_ACTIVE = `text-base font-semibold text-white border-b-2 border-white pb-[2px] ${NAV_HIT_AREA} ${NAV_FOCUS}`
 
 export function Header({ active }) {
   // Only shippable destinations render. Everything else is defined in
@@ -35,7 +53,7 @@ export function Header({ active }) {
       <div className="mx-auto flex h-[68px] max-w-[1200px] items-center justify-between gap-5 px-8">
         <Link
           href="/"
-          className="text-2xl font-bold text-white"
+          className={`text-2xl font-bold text-white ${NAV_HIT_AREA} ${NAV_FOCUS}`}
         >
           {BRAND.name}
         </Link>
@@ -63,7 +81,7 @@ export function Header({ active }) {
             {cta && (
               <Link
                 href={cta.href}
-                className="rounded-full bg-white px-[22px] py-[10px] text-base font-semibold text-brand-600 transition-colors hover:bg-[#f2e9fa] hover:text-[#5d1f96]"
+                className={`rounded-full bg-white px-[22px] py-[10px] text-base font-semibold text-brand-600 transition-colors hover:bg-[#f2e9fa] hover:text-[#5d1f96] ${NAV_FOCUS}`}
               >
                 {cta.label}
               </Link>

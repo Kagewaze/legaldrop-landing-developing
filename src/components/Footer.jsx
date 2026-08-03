@@ -36,7 +36,26 @@ import {
 // the tag.
 
 const SECTION_HEADING = 'text-sm font-semibold tracking-label text-white'
-const FOOTER_LINK = 'text-sm text-[#a49bad] transition-colors hover:text-white'
+
+// White ring on the ink ground, mirroring the header's inversion of the site
+// recipe. brand-600 on surface-ink is too close in value to read as a ring.
+const FOOTER_FOCUS =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-surface-ink'
+
+// TARGET SIZE. These links render at 22px tall — 2px under WCAG 2.5.8 Target
+// Size (Minimum, AA — 24x24). `min-h-[24px]` with the text centred clears the
+// criterion; `inline-flex` is what lets min-height apply to what is otherwise an
+// inline box.
+//
+// The 44x44 comfort target is NOT reachable here and is deliberately not
+// attempted: the link pitch is 32px (22px text + a 10px gap), so a 44px hit area
+// would overlap its neighbour and route taps to the wrong destination — a worse
+// outcome than a small target. The `after` overlay therefore expands to exactly
+// the 32px pitch, which is the largest non-overlapping area available.
+const FOOTER_HIT_AREA =
+  "relative inline-flex min-h-[24px] items-center after:absolute after:inset-x-0 after:top-1/2 after:h-8 after:-translate-y-1/2 after:content-['']"
+
+const FOOTER_LINK = `text-sm text-[#a49bad] transition-colors hover:text-white ${FOOTER_HIT_AREA} ${FOOTER_FOCUS}`
 
 export function Footer() {
   // Only shippable destinations render; a section whose every item is
@@ -65,9 +84,24 @@ export function Footer() {
         <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-10 px-8 pb-10 pt-14 sm:grid-cols-2 lg:grid-cols-3">
           {sections.map((section) => (
             <div key={section.id}>
-              <h2 className={SECTION_HEADING}>{section.title}</h2>
+              {/* The <h2> stays. It was audited in Phase 1 and is correct: these
+                  ARE section headings, and heading level follows document
+                  structure, not font size — the 14px rendering is a type
+                  decision, not a semantic one. See the note above on why the
+                  face is not font-display either.
 
-              <div
+                  What was missing is the landmark. Each group is now a labelled
+                  <nav>, so assistive technology can enumerate and jump to
+                  "Services" / "Company" / "Support" instead of meeting three
+                  unnamed link lists. aria-labelledby points at the existing
+                  heading, so the accessible name cannot drift from the visible
+                  one. */}
+              <h2 id={`footer-${section.id}`} className={SECTION_HEADING}>
+                {section.title}
+              </h2>
+
+              <nav
+                aria-labelledby={`footer-${section.id}`}
                 className={clsx(
                   'mt-4',
                   section.columns === 2
@@ -80,7 +114,7 @@ export function Footer() {
                     {item.label}
                   </Link>
                 ))}
-              </div>
+              </nav>
 
               {/* leading-[1.8] below is retained deliberately — the sm token's
                   1.55 is body-copy leading, and this is a stacked contact block
@@ -102,7 +136,7 @@ export function Footer() {
           <div className="flex flex-wrap items-center gap-5">
             <Link
               href="/"
-              className="text-xl font-bold text-white"
+              className={`text-xl font-bold text-white ${FOOTER_FOCUS}`}
             >
               {BRAND.name}
             </Link>

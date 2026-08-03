@@ -64,7 +64,7 @@ export function Reviews({ data }) {
           href={GOOGLE_PLACE_URL}
           target="_blank"
           rel="noreferrer"
-          className="text-base font-semibold text-brand-600 transition-colors hover:text-[#5d1f96]"
+          className="rounded-control text-base font-semibold text-brand-600 transition-colors hover:text-[#5d1f96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-page"
         >
           See all reviews
         </a>
@@ -95,7 +95,7 @@ export function Reviews({ data }) {
             )}
 
             {review.relativeTime && (
-              <p className="mt-3 text-sm text-[#8d8695]">
+              <p className="mt-3 text-sm text-[#5f5868]">
                 {review.relativeTime}
               </p>
             )}
@@ -107,7 +107,7 @@ export function Reviews({ data }) {
           expectation: this is not a curated wall of the best reviews — the API
           returns up to five and Google decides which, with no way to configure
           the selection. */}
-      <p className="mt-3.5 text-sm text-[#8d8695]">
+      <p className="mt-3.5 text-sm text-[#5f5868]">
         Reviews from Google, based on {totalCount}{' '}
         {totalCount === 1 ? 'review' : 'reviews'}. Google selects which reviews
         are shown.
