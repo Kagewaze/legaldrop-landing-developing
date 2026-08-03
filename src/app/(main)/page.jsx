@@ -4,6 +4,7 @@ import { BecomeADriver } from '@/components/home/BecomeADriver'
 import { Coverage } from '@/components/home/Coverage'
 import { HeroNetwork } from '@/components/home/HeroNetwork'
 import { HowItWorks } from '@/components/home/HowItWorks'
+import { OperationalProof } from '@/components/home/OperationalProof'
 import { Reviews } from '@/components/home/Reviews'
 import { Services } from '@/components/home/Services'
 import {
@@ -50,6 +51,10 @@ export default async function Home() {
           previous hero is a two-line change here. It is removed in a later
           phase once this one has settled. */}
       <HeroNetwork />
+      {/* Immediately after the hero: the claim, then the evidence for it. All
+          three figures are founder-confirmed — see the provenance block in
+          OperationalProof.jsx. Nothing else on the page moved. */}
+      <OperationalProof />
       {showReviews && <Reviews data={reviews} />}
       <Services />
       <HowItWorks />
