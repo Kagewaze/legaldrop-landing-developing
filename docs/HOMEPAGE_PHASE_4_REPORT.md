@@ -329,3 +329,191 @@ Section height: 390 **1,693 px (2.01 screens)** · 768 1,576 · 1024 1,018 · 14
 ## 28. Phase 5
 
 **Phase 5 has not begun.** No regulated-vertical redesign, no trust and compliance section, no consumer booking form, no address inputs, no autocomplete, no pricing, no address handoff, no reviews or partner movement, no chain-of-custody artifact, no integrations, no insurance/TDG/PHIPA/security/SLA claims, no case studies, no customer logos, no testimonials, no driver recruitment, no footer restructuring, and no broader motion system.
+
+---
+
+# Phase 4.1 — Claim Hygiene
+
+> A narrowly scoped factual-accuracy correction required by the Trust Philosophy. Not a copy redesign. **Phase 5 has not begun.**
+
+## Files modified
+
+| File | Change |
+|---|---|
+| `src/components/home/WhyBrand.jsx` | Two `HOME_REASONS` entries corrected |
+| `src/components/home/VerticalSection.jsx` | `LEGAL_VERTICAL.lead` — drop-off code removed |
+| `src/components/home/PlatformShowcase.jsx` | ETA field relabelled |
+| `src/components/home/NetworkDemo.jsx` | Two contrast corrections (see *Self-reported measurement failure*) |
+
+**Blast radius verified before editing.** `HOME_REASONS` and `VerticalSection` are imported **only** by `src/app/(main)/page.jsx`. `/medical` and `/legal` import the `WhyBrand` *component* but pass their own reasons. **These edits change the homepage only** — confirmed by grep and by regression-testing both routes.
+
+## Claims removed and replacement wording
+
+### 1. Pickup-time claim — removed
+
+| | |
+|---|---|
+| **Was** | Same-day delivery — *"Most jobs collected within the hour."* |
+| **Now** | Same-day delivery — **"Request and track a delivery through one platform."** |
+
+**Why the old claim went:** it asserts measured pickup performance. Phase 0 (D1) prohibits publishing pickup-time metrics until they can be computed from operational data, and no such figure exists.
+
+**Not replaced with another number.** "Typically within 60 minutes", "usually collected quickly", "rapid pickup" and similar reproduce the same defect in softer words.
+
+**Evidence for the replacement** — every verb maps to a shipped surface:
+
+| Verb | Evidence |
+|---|---|
+| Request | `src/app/send/page.jsx` + `send/details` + `send/pay` — a complete booking flow |
+| Track | `src/app/track/[trackingCode]/` and `track-partner/[trackingToken]/` |
+| One platform | Both run on the same order — `buildOrderPayload.js` creates it, the tracking code retrieves it |
+
+### ⚠️ "On-demand and scheduled delivery options" was REJECTED
+
+The brief permitted this wording *only if* scheduled delivery could be verified. **It cannot.** The send flow books immediately: there is no date or time picker in `send/page.jsx`, and no scheduling field in `send-flow.js:21–36` or `buildOrderPayload.js`. "Standing routes" appears **only in marketing copy** (`contact-us`, the medical vertical lead) and never in product code. Publishing it would have created a new unsupported claim while removing one.
+
+The narrower factual statement was used instead, adapted only to avoid saying "same-day" twice under a card already titled *Same-day delivery*.
+
+### 2. Drop-off-code claim — removed, two places
+
+**(a) `WhyBrand.jsx` — HOME_REASONS**
+
+| | |
+|---|---|
+| **Was** | Confirmed delivery — *"Confirmed by drop-off code and tracked live."* |
+| **Now** | **Recorded delivery** — **"Timestamped status from request through completion."** |
+
+**The title changed too, deliberately.** "Confirmed" implies a confirmation mechanism, and the only one we could name is the blocked drop-off code. "Recorded" is exactly what the product produces, and it matches the hero's own wording.
+
+**(b) `VerticalSection.jsx` — LEGAL_VERTICAL lead**
+
+| | |
+|---|---|
+| **Was** | *"… Every job carries a timestamped trail **and a drop-off code**, on your firm's account."* |
+| **Now** | *"… Every job carries a timestamped trail, on your firm's account."* |
+
+The verified half stays; the unverifiable half goes.
+
+**Evidence for the replacements:**
+
+| Field | Source |
+|---|---|
+| Order Placed (`createdAt`) | `track/[trackingCode]/page.jsx:152` |
+| On Route To Pickup | `:156` |
+| Package Picked Up | `:163` |
+| Status reaching `delivered` | `LiveTracking.jsx:14–23` |
+
+**Why the old claim went:** the drop-off code is **not rendered anywhere in this repository** — it exists only as an icon (`icons.jsx:307`) and in marketing copy. Phase 0 blocks it pending five founder confirmations.
+
+**No substitute proof mechanism was introduced** — no secure handoff code, recipient PIN, verification code, custody confirmation, tamper-proof claim or captured signature. No evidentiary weight is implied.
+
+### 3. ETA presentation — corrected, not removed
+
+| | |
+|---|---|
+| **Was** | `Estimated arrival` — 18 min away · 6.4 km |
+| **Now** | **`Sample ETA`** — 18 min away · 6.4 km |
+
+The field represents a **real product capability** (`LiveTracking.jsx:50–62` renders `durationText` + `distanceText`), so per the brief it was corrected rather than removed. An unlabelled time beside a route reads as a normal Druppr delivery time; the section-level "Sample data" chip is not enough at the point of the number itself.
+
+The visible **Product demonstration** and **Sample data** labels are retained.
+
+## Repository-wide homepage claim sweep
+
+| Claim | Location | Classification |
+|---|---|---|
+| "Most jobs collected within the hour" | `WhyBrand` HOME_REASONS | **Unsupported — removed** |
+| "Confirmed by drop-off code" | `WhyBrand` HOME_REASONS | **Unsupported — removed** |
+| "and a drop-off code" | `VerticalSection` legal lead | **Unsupported — removed** |
+| "Estimated arrival" (unlabelled) | `PlatformShowcase` | **Clearly labelled product demonstration** (corrected to Sample ETA) |
+| **"TDG-certified drivers"** + "Trained for medical and regulated goods" | `WhyBrand` HOME_REASONS | ⚠️ **Requires professional review** — Phase 0 D10, reviewer not yet assigned. **Left in place**: not named for removal in this brief, and it is a specific factual claim the founder plus a compliance advisor can confirm |
+| **"moved by TDG-certified drivers"** | `VerticalSection` medical lead | ⚠️ **Requires professional review** — same |
+| "drivers who must complete confidentiality training" | `VerticalSection` legal lead | ⚠️ **Requires professional review** — Phase 0 D10 lists confidentiality training as founder-approvable operational fact, not yet approved |
+| "Live tracking — A map link for you and your recipient" | `WhyBrand` | **Verified** — `TrackingMap`, `PartnerTrackingMap`, shared tracking link |
+| "50+ / 5 / 5" + "Accurate as of August 2026" | `OperationalProof` | **Already approved** — founder-confirmed, Phase 3 |
+| Hero: "dispatched, tracked and recorded" | `HeroNetwork` | **Verified** — Phase 2, deliberately not "evidenced" |
+| Showcase frames, statuses, fields | `PlatformShowcase` | **Verified** — every field traced to file and line, Phase 4 §2 |
+| Network demo statuses and queue | `NetworkDemo` | **Clearly labelled product demonstration** |
+| "Now serving Toronto and the GTA" + neighbourhoods | `Coverage` | **Verified** — factual service area |
+| "get paid weekly", "once you are certified" | `BecomeADriver` | ⚠️ **Requires confirmation** — driver-facing operational claims. Phase 0 D9 removes this section entirely in a later phase; **left in place**, out of scope here |
+| "Drop-off code confirmation" | `/legal` page (own copy) | **Outside the homepage** — still present, needs its own pass |
+| "live tracking and drop-off code confirmation" | `/medical` page (own copy) | **Outside the homepage** — still present, needs its own pass |
+
+**No insurance, PHIPA, HIPAA, SLA, security, signature, seal, affidavit, sworn-service, "real-time", customer-scale or fleet-size claim appears anywhere on the homepage.** Verified by grep across every homepage-rendered component.
+
+## Shared-route impact
+
+**None.** `HOME_REASONS` and `VerticalSection` are homepage-only. Confirmed by rendered-text sweep after the change:
+
+| Route | "within the hour" | "drop-off code" |
+|---|---|---|
+| `/` | ✅ absent | ✅ absent |
+| `/medical` | ✅ absent | ⚠️ **present** (its own copy, out of scope) |
+| `/legal` | ✅ absent | ⚠️ **present** (its own copy, out of scope) |
+| `/send`, `/track/*`, `/track-partner/*` | ✅ absent | ✅ absent |
+
+⚠️ **The homepage legal lead now diverges from `/legal`**, which still says "Drop-off code confirmation" (`legal/page.jsx:89`). Deliberate and temporary: the homepage must be accurate now; `/legal` needs its own claim pass. **Recorded as required follow-up.**
+
+## ⚠️ Self-reported measurement failure
+
+The claim sweep surfaced **three real WCAG AA contrast failures in the hero** that earlier phases reported as passing:
+
+| Element | Was | Measured |
+|---|---|---|
+| Route arrow `→` (14 px, `text-white/30`) | reported passing | **2.70:1** ❌ |
+| Queue status "Assigned" (12 px, `text-white/40`) | reported passing | **3.82:1** ❌ |
+| Queue status "Pending" (12 px, `text-white/40`) | reported passing | **3.82:1** ❌ |
+
+**Cause: my Phase 2.1 contrast probe compared the raw `rgba()` colour without compositing its alpha over the ground.** `rgba(255,255,255,0.3)` was read as pure white and scored 18:1. This is the same flaw caught and corrected in Phase 3 — but the Phase 2.1 result was never re-measured with the corrected method, so **the Phase 2.1 report's "0 contrast failures" was wrong for these three elements.**
+
+**Corrected here**, both to `text-white/50` (**5.26:1**), which still reads as the quietest element in its row. Strictly this is outside a claim-hygiene brief; it is included because the failures are real, live, trivially fixable, and hidden by my own faulty measurement.
+
+**Re-measured with alpha compositing: 0 contrast failures on the homepage.**
+
+## Bundle measurements **[measured]**
+
+| Metric | Phase 4 | Phase 4.1 | Δ |
+|---|---:|---:|---:|
+| `/` route size | 2.86 kB | **2.86 kB** | **0** |
+| **`/` First Load JS** | 102 kB | **102 kB** | **0** |
+| **Shared JS** | 87.2 kB | **87.2 kB** | **0** |
+| Route type | `○ (Static)` | **`○ (Static)`** | unchanged |
+| Client islands | 2 | **2** | **0 added** |
+
+**Zero client-side JavaScript added.**
+
+## Accessibility results **[measured]**
+
+| Check | Result |
+|---|---|
+| Contrast failures on `/` | **0** (was 3, undetected) |
+| Interactive elements without focus treatment | **0** |
+| `<h1>` count | 1 |
+| Heading order | `H1 H2 H2 H2 H2 H2` — no skips |
+| Maps / Places on `/` | **0 / 0** |
+| CLS | **0.0009** — no regression |
+
+## Regression results **[measured]**
+
+| Route | HTTP | `<h1>` | Console errors |
+|---|---|---|---|
+| `/` | 200 | 1 | **0** |
+| `/medical` | 200 | 1 | **0** |
+| `/legal` | 200 | 1 | **0** |
+| `/send` | 200 | 1 | **0** |
+| `/track/[code]` | 200 | 1 | **0** |
+| `/track-partner/[token]` | 200 | 1 | **0** |
+
+**JavaScript disabled:** hero, proof, showcase, "Sample ETA" and "Recorded delivery" all render; no banned phrase present. **Reduced motion:** content identical across 2.2 s, complete.
+
+## Remaining claims requiring professional review
+
+| # | Claim | Where | Owner |
+|---|---|---|---|
+| **1** | **TDG-certified drivers** | Homepage `WhyBrand` + medical vertical lead | Founder + compliance advisor (Phase 0 D10) |
+| **2** | **Confidentiality training** | Homepage legal vertical lead | Founder (operational fact, D10) |
+| **3** | Driver "paid weekly" / "once you are certified" | Homepage `BecomeADriver` | Founder — section slated for removal (D9) |
+| **4** | **Drop-off code** on `/medical` and `/legal` | Those pages' own copy | Founder — needs its own claim pass |
+| **5** | Insurance, PHIPA, security, SLA | Not on the homepage | Unchanged from Phase 0 |
+
+**Items 1–3 are live on the homepage today and are not resolved by this pass.** They were not named for removal in this brief, and each is a specific factual claim a founder or advisor can confirm rather than an unverifiable mechanism. They should be closed before the homepage is considered claim-clean.

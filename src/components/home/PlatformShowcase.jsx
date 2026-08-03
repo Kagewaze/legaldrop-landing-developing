@@ -214,7 +214,13 @@ export function PlatformShowcase() {
               <dl className="mt-2 flex flex-col">
                 <Field label="Route" value={`${DEMO.pickup} → ${DEMO.dropoff}`} />
                 <Field label="Distance" value={DEMO.distanceKm} />
-                <Field label="Estimated arrival" value={DEMO.eta} />
+                {/* "Sample ETA", not "Estimated arrival". The field is a real
+                    product capability (LiveTracking.jsx:50-62 renders
+                    durationText + distanceText), so it stays — but an unlabelled
+                    time next to a route reads as a normal Druppr delivery time,
+                    and this is one synthetic trip. The section-level "Sample
+                    data" chip is not enough at the point of the number itself. */}
+                <Field label="Sample ETA" value={DEMO.eta} />
               </dl>
             </div>
             <p className="mt-auto border-t border-[#eeebf1] px-5 py-3 text-sm text-[#5f5868]">

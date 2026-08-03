@@ -287,7 +287,12 @@ export function NetworkDemo() {
             plain-English gloss is actually useful. */}
         <div className="mt-1 flex items-center gap-1.5 text-sm text-white/70">
           <span>{ROUTE_LABELS.from}</span>
-          <span aria-hidden="true" className="text-white/30">
+          {/* white/50, not white/30. At 30% this composites to 2.70:1 on the
+              ink ground — an AA failure that Phase 2.1 reported as passing
+              because that probe compared the raw rgba() colour without
+              compositing its alpha. 50% measures 5.26:1 and still reads as the
+              quietest element in the row. */}
+          <span aria-hidden="true" className="text-white/50">
             →
           </span>
           <span>{ROUTE_LABELS.to}</span>
@@ -314,7 +319,9 @@ export function NetworkDemo() {
               className="flex items-center justify-between gap-3 text-sm text-white/50"
             >
               <span>{CATEGORIES[(categoryIndex + i + 1) % CATEGORIES.length]}</span>
-              <span className="text-xs font-semibold text-white/40">{status}</span>
+              {/* white/50, not white/40 — 40% composites to 3.82:1 at 12px on
+                  the ink ground. Same measurement flaw as the arrow above. */}
+              <span className="text-xs font-semibold text-white/50">{status}</span>
             </li>
           ))}
         </ul>

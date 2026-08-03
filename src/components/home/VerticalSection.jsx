@@ -102,7 +102,19 @@ export const LEGAL_VERTICAL = {
   // outcome: "Served documents delivered to the address you provide, with a
   // timestamped record of the attempt returned to your firm." The operative
   // word is "attempt". So this lead names the run, not a completed service.
-  lead: 'Filings, confidential files and process-serving runs, moved by drivers who must complete confidentiality training. Every job carries a timestamped trail and a drop-off code, on your firm’s account.',
+  // PHASE 4.1: "and a drop-off code" was removed from the end of this lead.
+  //
+  // The drop-off code is not rendered anywhere in this repository and is
+  // blocked by Phase 0 pending founder verification. The timestamped trail
+  // beside it IS real — createdAt, onRouteToPickup and packagePickedUp are
+  // rendered by both tracking surfaces — so the verified half stays and the
+  // unverifiable half goes.
+  //
+  // ⚠️ THIS NOW DIVERGES FROM /legal, which still carries the claim in its own
+  // copy (legal/page.jsx:89 'Drop-off code confirmation'). That page is outside
+  // this phase's scope. The divergence is deliberate and temporary: the
+  // homepage must be accurate now, and /legal needs its own claim pass.
+  lead: 'Filings, confidential files and process-serving runs, moved by drivers who must complete confidentiality training. Every job carries a timestamped trail, on your firm’s account.',
   cta: 'See legal delivery',
   href: ROUTES.legal.href,
   image: legalDocument,

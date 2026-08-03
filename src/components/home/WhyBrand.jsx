@@ -17,8 +17,28 @@ import {
 
 export const HOME_REASONS = [
   {
+    // WAS: "Most jobs collected within the hour."
+    //
+    // Removed in Phase 4.1 as an unverified performance claim. It asserted
+    // measured pickup performance, and Phase 0 (D1) prohibits publishing
+    // pickup-time metrics until they can be computed from operational data.
+    // No such figure exists.
+    //
+    // NOT replaced with another number. "Typically within 60 minutes",
+    // "usually collected quickly", "rapid pickup" and the like reproduce the
+    // same defect in softer words.
+    //
+    // The replacement is a capability statement, and every verb in it maps to
+    // a shipped surface: request (the /send flow), track (the /track and
+    // /track-partner pages), one platform (both run on the same order).
+    //
+    // "On-demand and scheduled delivery options" was the other permitted
+    // wording and was REJECTED: scheduled delivery cannot be verified in this
+    // repository. The send flow books immediately — there is no date or time
+    // picker, and no scheduling field in send-flow.js or buildOrderPayload.js.
+    // "Standing routes" appears only in marketing copy, never in product code.
     title: 'Same-day delivery',
-    description: 'Most jobs collected within the hour.',
+    description: 'Request and track a delivery through one platform.',
     icon: <SameDayDelivery className="h-5 w-5" />,
   },
   {
@@ -32,13 +52,34 @@ export const HOME_REASONS = [
     icon: <TdgCertified className="h-5 w-5" />,
   },
   {
-    // CORRECTED. This card read "Signature on delivery — Proof and photo on
-    // every drop-off." Neither is true: the flow confirms a handover with a
-    // drop-off code, and it captures no photo. It was the same claim the
-    // medical and legal pages are written to avoid, sitting on the site's
-    // highest-traffic page. Describe the confirmation that actually exists.
-    title: 'Confirmed delivery',
-    description: 'Confirmed by drop-off code and tracked live.',
+    // CORRECTED TWICE. History matters here, because the card has drifted
+    // toward an overclaim on each pass.
+    //
+    // Originally: "Signature on delivery — Proof and photo on every drop-off."
+    // Neither was true: no signature is captured and no photo is taken.
+    //
+    // Then: "Confirmed delivery — Confirmed by drop-off code and tracked live."
+    // That replaced one unverifiable proof mechanism with another. The drop-off
+    // code is NOT rendered anywhere in this repository — it exists only as an
+    // icon (icons.jsx:307) and in marketing copy — and Phase 0 blocks it
+    // pending five founder confirmations about where it is generated, who
+    // receives it, how it is validated, whether it is live, and what is
+    // retained.
+    //
+    // NOW: only what the product demonstrably produces. Every tracking surface
+    // renders a timestamp trail — Order Placed (createdAt), On Route To Pickup,
+    // Package Picked Up — and a status that reaches `delivered`. See
+    // track/[trackingCode]/page.jsx:149-163 and LiveTracking.jsx:14-23.
+    //
+    // The title moved from "Confirmed" to "Recorded" deliberately: "confirmed"
+    // implies a confirmation mechanism, and the only one we could name is the
+    // blocked drop-off code. "Recorded" is exactly what happens, and it matches
+    // the hero's own wording.
+    //
+    // Do NOT restore a code, PIN, signature, seal or custody claim here without
+    // independent verification and approval.
+    title: 'Recorded delivery',
+    description: 'Timestamped status from request through completion.',
     icon: <ConfirmedDelivery className="h-5 w-5" />,
   },
 ]
