@@ -8,7 +8,7 @@ import axios from "axios"
 import { Layout } from '@/components/Layout'
 import { API_BASE_URL } from '@/lib/config'
 import {
-  PARTNER_URL,
+  PARTNER_SIGNUP_URL,
   ROUTES,
   SERVICE_AREA,
   SUPPORT_EMAIL,
@@ -57,7 +57,7 @@ const OTHER_WAYS = [
     description: 'Get a price and book a driver online.',
   },
   {
-    href: PARTNER_URL,
+    href: PARTNER_SIGNUP_URL,
     live: true,
     external: true,
     label: 'Set up a business account',
@@ -173,7 +173,7 @@ export default function ContactUs() {
                   <ul className="mt-4 space-y-4">
                     {otherWays.map((way) => (
                       <li key={way.href}>
-                        {/* PARTNER_URL is a different origin, so it is a plain
+                        {/* PARTNER_SIGNUP_URL is a different origin, so it is a plain
                             anchor — next/link is for in-app routes. */}
                         {way.external ? (
                           <a

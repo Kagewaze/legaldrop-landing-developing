@@ -62,9 +62,35 @@ export const ROUTES = {
 // that is where the platform actually serves; see BRAND in src/lib/config.js on
 // why the two names coexist.
 //
-// Kept here so the marketing pages do not each re-type it. Every B2B call to
-// action on /medical and /legal points at this single value.
+// Kept here so the marketing pages do not each re-type it.
 export const PARTNER_URL = 'https://partner.legaldrop.ca'
+
+// ── PHASE 5 CTA DESTINATION AUDIT ───────────────────────────────────────────
+//
+// Every B2B call to action used to point at PARTNER_URL itself. Verified by
+// loading it: the bare origin REDIRECTS TO /login, titled "Login - LegalDrop",
+// which renders an email/password form. So a clinic clicking "Set up your
+// clinic account" arrived at a password field and had to find the small "Sign
+// up" link underneath to do the thing the button had just offered.
+//
+// /signup is a real, self-serve account-creation form — verified, HTTP 200,
+// titled "Sign up - LegalDrop": first name, last name, work email, contact
+// phone, password, confirm password, "Create account". So the LABELS were
+// accurate; only the destination was wrong, and the fix is to send
+// account-creation intent to the page that creates accounts rather than to
+// reword the buttons.
+//
+// Use PARTNER_SIGNUP_URL for "set up / register / create an account" CTAs, and
+// PARTNER_URL where the intent is simply "go to the platform".
+//
+// ⚠️ The signup page describes itself as "Set up company access to schedule
+// deliveries and monitor order statuses in real time." That is the partner
+// platform's own copy on a different origin, and it is NOT imported into this
+// site's marketing copy: Phases 4.2 and 4.3 removed scheduling claims from
+// these pages for want of evidence in THIS repository. If the portal genuinely
+// schedules, that is evidence a founder could produce to restore those claims —
+// but it is confirmed by the founder, not by borrowing another surface's words.
+export const PARTNER_SIGNUP_URL = 'https://partner.legaldrop.ca/signup'
 
 // --- Header -----------------------------------------------------------------
 

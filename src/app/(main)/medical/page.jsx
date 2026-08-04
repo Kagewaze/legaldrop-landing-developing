@@ -1,5 +1,5 @@
 import { BRAND } from '@/lib/config'
-import { PARTNER_URL } from '@/lib/navigation'
+import { PARTNER_SIGNUP_URL } from '@/lib/navigation'
 import {
   AuditableRecord,
   RequestRide,
@@ -46,8 +46,21 @@ import specimen from '@/images/medical-specimen.jpg'
 // or a chain-of-custody mechanism that this business cannot evidence on
 // request.
 
+// PHASE 5: was 'Medical courier'.
+//
+// VISION.md → Brand Positioning is unconditional: "Never let Druppr be
+// described, internally or externally, as a courier or a delivery app." This
+// page's own title and h1 were doing exactly that, and the homepage section
+// that links here now reads "Medical logistics with the delivery in view" — so
+// the destination was also contradicting its own entry point.
+//
+// ⚠️ SEO TRADE-OFF, STATED RATHER THAN HIDDEN: "medical courier" is the higher
+// -volume search term and this change gives it up in the <title>. That is the
+// cost of the positioning rule, and VISION.md governs on principle. If organic
+// traffic for this page is later shown to depend on the term, the answer is a
+// deliberate, measured decision by the founder — not a quiet revert here.
 export const metadata = {
-  title: 'Medical courier',
+  title: 'Medical logistics',
 }
 
 // Rendered in the dark strip under the hero. Each is a standing capability of
@@ -222,7 +235,7 @@ function Hero() {
       <div className="mx-auto max-w-[1200px] px-8 py-16 sm:py-24">
         <div className="max-w-[720px]">
           <h1 className="font-display text-4xl font-extrabold text-[#17131c] sm:text-5xl">
-            Medical courier for GTA clinics and labs
+            Medical logistics for GTA clinics and labs
           </h1>
           {/* PHASE 4.2: "handled by certified drivers" removed — driver
               certification is future operational work, not a present fact.
@@ -293,7 +306,7 @@ function FinalCta() {
         </div>
 
         <a
-          href={PARTNER_URL}
+          href={PARTNER_SIGNUP_URL}
           className="rounded-control bg-white px-[30px] py-4 text-base font-semibold text-brand-600 transition-colors hover:bg-[#f2e9fa] hover:text-[#5d1f96]"
         >
           Get started
@@ -303,7 +316,7 @@ function FinalCta() {
   )
 }
 
-// PARTNER_URL is a different origin, so these are plain anchors — next/link is
+// PARTNER_SIGNUP_URL is a different origin, so these are plain anchors — next/link
 // for in-app routes. Same tab: opening an account is the continuation of this
 // page's journey, not a detour from it.
 //
@@ -312,7 +325,7 @@ function FinalCta() {
 function PartnerCta({ children, className = '' }) {
   return (
     <a
-      href={PARTNER_URL}
+      href={PARTNER_SIGNUP_URL}
       className={`inline-block rounded-control bg-brand-600 px-[30px] py-4 text-base font-semibold text-white transition-colors hover:bg-brand-700 ${className}`}
     >
       {children}

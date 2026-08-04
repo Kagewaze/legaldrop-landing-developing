@@ -1,6 +1,6 @@
 import Image from 'next/image'
 
-import { PARTNER_URL } from '@/lib/navigation'
+import { PARTNER_SIGNUP_URL } from '@/lib/navigation'
 
 // The service panels shared by /medical ("What we move") and /legal, where the
 // section is the page hero.
@@ -107,7 +107,7 @@ export function ServicePanels({
           next/link, same tab, as everywhere else on these two pages. */}
       {cta && (
         <div className="mt-8">
-          <a href={PARTNER_URL} className={ctaClassName}>
+          <a href={PARTNER_SIGNUP_URL} className={ctaClassName}>
             {cta}
           </a>
         </div>

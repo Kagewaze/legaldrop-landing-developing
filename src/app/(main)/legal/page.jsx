@@ -1,5 +1,5 @@
 import { BRAND } from '@/lib/config'
-import { PARTNER_URL } from '@/lib/navigation'
+import { PARTNER_SIGNUP_URL } from '@/lib/navigation'
 import {
   AuditableRecord,
   LiveTracking,
@@ -220,11 +220,19 @@ export default function LegalPage() {
         //     buyer relying on our proof in a proceeding. Phase 0 D10 lists
         //     proof-of-delivery evidentiary weight as BLOCKED.
         //
-        // The replacement is the wording approved for the homepage legal lead
-        // (VerticalSection.jsx LEGAL_VERTICAL), so the two surfaces now say the
-        // same true thing. It describes the workflow and the record, and claims
-        // no sworn service, admissibility, signature, affidavit or custody.
-        lede="Filings, confidential files and process-serving runs coordinated through a tracked delivery workflow, with timestamped status from request through completion."
+        // PHASE 4.2 replaced it with the wording approved for the homepage
+        // legal lead. PHASE 5 moved it off that wording again, deliberately:
+        // once the homepage section was rebuilt around the same sentence, this
+        // page opened with a near-verbatim copy of the paragraph the visitor
+        // had just read one click earlier. A destination page that repeats its
+        // entry point tells the reader they have arrived nowhere.
+        //
+        // So the homepage names the WORKFLOW and this page names the RECORD and
+        // how it is retrieved — the detail the destination has room for and the
+        // homepage does not. Both remain within the same claim boundary: a
+        // timestamped record retrievable by tracking code, and no sworn
+        // service, admissibility, signature, affidavit or custody.
+        lede="Filings, confidential files and process-serving runs, each leaving a timestamped record your firm can retrieve from its tracking code."
         panels={SERVICES}
         cta="Register your firm"
         headingLevel="h1"
@@ -288,7 +296,7 @@ function FinalCta() {
         </div>
 
         <a
-          href={PARTNER_URL}
+          href={PARTNER_SIGNUP_URL}
           className="rounded-control bg-white px-[30px] py-4 text-base font-semibold text-brand-600 transition-colors hover:bg-[#f2e9fa] hover:text-[#5d1f96]"
         >
           Get started
@@ -303,6 +311,6 @@ function FinalCta() {
 // plain anchor at its own call site: FinalCta above, and the per-panel CTA
 // inside ServicePanels, which takes the label as a prop.
 //
-// PARTNER_URL is a different origin, so these are anchors rather than
+// PARTNER_SIGNUP_URL is a different origin, so these are anchors rather than
 // next/link, and they open in the same tab: registering a firm is the
 // continuation of this page's journey, not a detour from it.
