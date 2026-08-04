@@ -1,25 +1,36 @@
-import { BRAND } from '@/lib/config'
 import { getGoogleReviews } from '@/lib/google-reviews'
-import { Coverage } from '@/components/home/Coverage'
 import { HeroNetwork } from '@/components/home/HeroNetwork'
 import { OperationalProof } from '@/components/home/OperationalProof'
 import { PlatformShowcase } from '@/components/home/PlatformShowcase'
 import { Reviews } from '@/components/home/Reviews'
+import { TrustAndAccountability } from '@/components/home/TrustAndAccountability'
 import {
   LEGAL_VERTICAL,
   MEDICAL_VERTICAL,
   VerticalSection,
 } from '@/components/home/VerticalSection'
-import { HOME_REASONS, WhyBrand } from '@/components/home/WhyBrand'
-import baystreet from '@/images/home-coverage-baystreet.jpg'
 
-// Coverage is shared with /medical and /legal, which show the band without a
-// photograph. Importing the image here rather than inside the component keeps
-// it out of those two pages entirely.
-const COVERAGE_IMAGE = {
-  src: baystreet,
-  alt: 'Bay Street in downtown Toronto at night, with traffic stopped at the lights and pedestrians crossing.',
-}
+// PHASE 6 removed four imports from this file: Coverage, WhyBrand,
+// HOME_REASONS, BRAND, and the Bay Street photograph with its COVERAGE_IMAGE
+// wrapper. Only the homepage's CALL SITES went.
+//
+// ⚠️ home/WhyBrand.jsx AND home/Coverage.jsx ARE STILL LIVE COMPONENTS. Both
+// /medical and /legal render each of them, so neither file was touched and
+// neither may be deleted:
+//
+//   WhyBrand   /medical passes CLINIC_REASONS, /legal passes RECORD_REASONS.
+//              It holds no copy of its own, which is why removing the home
+//              page's HOME_REASONS does not affect either page.
+//   Coverage   both call it with NO image, taking its early-return branch.
+//              That branch exists precisely so those two pages ship one child
+//              on the section rather than an array — read Coverage.jsx:48
+//              before touching it. The image branch is now unused, and it is
+//              left in place rather than pruned because removing it would mean
+//              restructuring the component both B2B pages depend on.
+//
+// HOME_REASONS itself is now unused. It is retained in WhyBrand.jsx as the
+// rollback content, alongside the claim history recorded against each card
+// across Phases 4.1-4.2 — deleting it would delete that record.
 
 // Home page, rebuilt from the Druppr landing design.
 //
@@ -73,10 +84,10 @@ export default async function Home() {
       {/* Reviews moved below the showcase: product evidence outranks consumer
           social proof, and this keeps the narrative claim → proof → product. */}
       {showReviews && <Reviews data={reviews} />}
-      {/* The two account-based verticals. Medical carries the tint band and
-          leads with its photograph; Legal reverses both. Copy for each is
-          constrained — see the block in VerticalSection.jsx. */}
-      {/* PHASE 5: the tint moved from medical to legal.
+      {/* The two account-based verticals. Copy for each is constrained — see
+          the block in VerticalSection.jsx.
+
+          PHASE 5: the tint moved from medical to legal.
 
           Medical carried it before, which was fine while it led with a
           photograph. Now that both verticals lead with a white product frame,
@@ -86,13 +97,25 @@ export default async function Home() {
           Places API returns data, so that separation cannot be relied on.
 
           Alternating from here down: tint (showcase) → page (medical) → tint
-          (legal) → page (Why Druppr) → tint (Coverage). */}
+          (legal) → page (trust). */}
       <VerticalSection {...MEDICAL_VERTICAL} frameSide="left" />
       <VerticalSection {...LEGAL_VERTICAL} frameSide="right" tinted />
-      {/* Content passed explicitly — WhyBrand is shared with /medical and
-          /legal and holds no copy of its own. */}
-      <WhyBrand heading={`Why ${BRAND.name}`} reasons={HOME_REASONS} />
-      <Coverage image={COVERAGE_IMAGE} />
+      {/* PHASE 6: this replaces BOTH the homepage's `Why Druppr` grid and its
+          Coverage band.
+
+          Why Druppr was four table-stakes cards — same-day, live tracking,
+          vehicle options, recorded delivery — which `HOMEPAGE.md` rules out by
+          name, and which by Phase 5 were largely restating what the Platform
+          Showcase and the two vertical frames now show directly. Coverage
+          carried a service-area line, an eight-neighbourhood list that
+          `HOMEPAGE.md` calls "the single strongest small-business signal
+          available", and a 377 kB photograph.
+
+          What replaces them is smaller and says more: three pillars that each
+          name a capability the tracking surfaces render, and one service-area
+          line. The closing dual CTA lives inside it, so the page ends on an
+          action rather than on a photograph. */}
+      <TrustAndAccountability />
       {/* PHASE 4.2: BecomeADriver removed from the homepage.
 
           Phase 0 (D9) already approved taking driver recruitment off the
