@@ -197,9 +197,16 @@ function LegalFrame() {
           </li>
         ))}
       </ol>
+      {/* PHASE 6.1: "— on one link your firm and the recipient both read" was
+          removed. Same two errors the PlatformShowcase caption carried: there
+          are two tracking routes with different identifiers and different
+          payloads, not one link, and nothing in this repository delivers a link
+          to a recipient. What remains is retrieval by code, which the tracking
+          page proves, and shareability, which follows from both routes being
+          public with no login. */}
       <FrameNote>
-        Every job leaves this trail, retrievable from its tracking code — on one
-        link your firm and the recipient both read.
+        Every job leaves this trail, retrievable from its tracking code and
+        shareable with whoever needs to see it.
       </FrameNote>
     </div>
   )

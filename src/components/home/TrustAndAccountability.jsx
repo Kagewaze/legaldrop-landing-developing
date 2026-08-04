@@ -59,15 +59,21 @@ const PILLARS = [
     // the payment step — send/pay/page.jsx:510 prints it and :515 links to
     // /track/{code}.
     //
-    // ⚠️ WORDED AS "ANYONE YOU SHARE IT WITH", NOT "THE RECIPIENT", AND THE
-    // DIFFERENCE IS EVIDENCE. The order payload requires a recipient name plus
-    // a phone or an email (send-flow.js:47–61), but NOTHING in this repository
-    // sends that recipient a tracking link — there is no notification code
-    // here at all. The link being public and shareable is verifiable; the
-    // product delivering it to the recipient is not. So the copy claims the
-    // first and not the second.
-    title: 'One link, no login',
-    body: 'Tracking opens from the link alone, so anyone you share it with can follow the same job.',
+    // ⚠️ NOT "THE RECIPIENT", AND THE DIFFERENCE IS EVIDENCE. The order payload
+    // requires a recipient name plus a phone or an email (send-flow.js:47–61),
+    // but NOTHING in this repository sends that recipient a tracking link —
+    // there is no notification code here at all. The link being public and
+    // shareable is verifiable; the product delivering it is not.
+    //
+    // PHASE 6.1 ALSO NARROWED THE LABEL. It read "One link, no login", which
+    // was true of the no-login half and misleading on the other: there are TWO
+    // tracking routes with two different identifiers and two different
+    // payloads, so "one link" could be read as one identical URL that every
+    // party opens. It is not. The label now names the property that is
+    // actually verified — no account is involved — and the body says the
+    // sharing is something the holder does, not something the product does.
+    title: 'Tracking access without an account',
+    body: 'Open the delivery from its tracking link and share that access with the people who need status visibility.',
   },
   {
     // VERIFIED: track/[trackingCode]/page.jsx:149–163 renders Order Placed

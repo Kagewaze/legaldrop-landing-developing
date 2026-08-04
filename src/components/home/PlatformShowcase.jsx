@@ -223,9 +223,35 @@ export function PlatformShowcase() {
                 <Field label="Sample ETA" value={DEMO.eta} />
               </dl>
             </div>
+            {/* PHASE 6.1. Was: "The sender, the business and the recipient
+                follow the same job on one shared tracking link."
+
+                That sentence was wrong twice, and the Phase 6 report flagged it
+                before this pass corrected it:
+
+                  "one shared tracking link"  THERE ARE TWO LINKS, not one, and
+                    they are not interchangeable. /track/[trackingCode] hits
+                    /public/track/{code}; /track-partner/[trackingToken] hits
+                    /public/track-partner/{token}. Different routes, different
+                    identifiers, different payloads — the partner view also
+                    renders Route Distance, the sender's name, the pickup
+                    address and a numbered receivers list, none of which the
+                    code-based view shows.
+                  "the recipient"            NOTHING IN THIS REPOSITORY SENDS A
+                    LINK TO ANYONE. There is no email, SMS, notification or
+                    webhook code here at all. The sender is shown the code on
+                    the payment step (send/pay/page.jsx) and can share it; the
+                    recipient receiving it is not evidenced. Do not infer a
+                    notification from the fact that a recipient phone or email
+                    is collected — that is a backend requirement on POST /order.
+
+                What is verified is that BOTH routes are public — no session, no
+                cookie, no Authorization header, no middleware — so status is
+                reachable by whoever holds the relevant link. That, and only
+                that, is what this now says. */}
             <p className="mt-auto border-t border-[#eeebf1] px-5 py-3 text-sm text-[#5f5868]">
-              The sender, the business and the recipient follow the same job on
-              one shared tracking link.
+              Tracking views keep the delivery status accessible to the people
+              who have the relevant link.
             </p>
           </div>
 

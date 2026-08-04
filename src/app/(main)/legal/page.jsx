@@ -76,14 +76,24 @@ export const metadata = {
 //     undefined reality." Not softened to "protected", "covered" or "liability
 //     protected".
 //
-// Both are RESTORABLE the day the evidence exists. 'Shared tracking link' is
-// the replacement because it is the one verified facet the record cards below
-// do not carry: track/[trackingCode] and track-partner/[trackingToken] serve
-// the same job to the firm and to the recipient.
+// Both are RESTORABLE the day the evidence exists. 'Shareable tracking link'
+// is the replacement because it is the one verified facet the record cards
+// below do not carry.
+//
+// PHASE 6.1 corrected this note and the chip. Both said "Shared tracking link"
+// and claimed the two routes "serve the same job to the firm and to the
+// recipient". Neither holds. track/[trackingCode] and
+// track-partner/[trackingToken] are DIFFERENT routes with DIFFERENT
+// identifiers and DIFFERENT payloads — the partner view also renders route
+// distance, the sender's name, the pickup address and a receivers list. And
+// nothing in this repository sends a link to a recipient; there is no
+// notification code here at all. Verified: both routes are public with no
+// login, so a holder can share access. That is what "shareable" claims, and it
+// is all it claims.
 const CREDENTIALS = [
   'Delivery record',
   'Timestamped status',
-  'Shared tracking link',
+  'Shareable tracking link',
 ]
 
 // Rendered by the shared ServicePanels grid. Descriptions are unchanged from the

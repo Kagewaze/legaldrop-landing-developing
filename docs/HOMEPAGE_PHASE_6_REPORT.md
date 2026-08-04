@@ -96,6 +96,11 @@ Both are replaced by one section, `home/TrustAndAccountability.jsx`.
 
 ## 7. Final trust-section copy
 
+> ⚠️ **Pillar 1 below was superseded by Phase 6.1** — see that section at the
+> foot of this document. It now reads **"Tracking access without an account /
+> Open the delivery from its tracking link and share that access with the people
+> who need status visibility."** The copy shown here is what Phase 6 shipped.
+
 > **ACCOUNTABILITY BUILT IN**
 >
 > **Know where the delivery stands**
@@ -381,7 +386,7 @@ regression of exactly the kind this protocol exists to prevent.
 | # | Item | Status |
 |---|---|---|
 | **W11** | **`/` is 7.27 mobile screens.** E1 (≤ 5) still unmet at 390, though met at 1024 and 1440. Closing it further means cutting evidence, not padding | Improved from 7.69 |
-| **W12** | `PlatformShowcase` frame 2's caption is the loosest phrasing of the shared-link fact on the site (§2). Not edited — `PlatformShowcase` is audit-only this phase | New, flagged |
+| **W12** | `PlatformShowcase` frame 2's caption is the loosest phrasing of the shared-link fact on the site (§2). Not edited — `PlatformShowcase` is audit-only this phase | ✅ **CLOSED by Phase 6.1**, along with three further statements the sweep found with it |
 | W10 | Both vertical frames still use synthetic values, labelled "Sample" | Unchanged |
 | W6 | Insurance, PHIPA, security, SLA, TDG — excluded, unreviewed | Unchanged |
 | — | `/privacy-policy` security-controls sentence | Unchanged — privacy counsel |
@@ -421,3 +426,248 @@ TDG, PHIPA, security or SLA claims, no privacy-policy edits, no customer or
 partner logos, no case studies or testimonials, no reviews or partner movement,
 no chain-of-custody artifact, no integrations, no driver recruitment, no footer
 restructuring, no five-second testing and no broader motion system.
+
+---
+
+# Phase 6.1 — Tracking-Link Wording Alignment
+
+> Corrects the statement Phase 6 flagged as **W12** and three others the sweep
+> found alongside it. **Phase 7 has not begun.**
+>
+> **[measured]** from a production build. Nothing estimated.
+
+## 1. Preflight **[measured]**
+
+| Check | Result |
+|---|---|
+| Branch | `homepage-redesign` |
+| Working tree | clean |
+| Phase 6 commits `7824607` `41f385c` `269eaa3` | all present |
+| Lint | ✅ no warnings or errors |
+| Production build | ✅ compiled successfully |
+
+## 2. Tracking routes inspected **[measured]**
+
+### `/track/[trackingCode]`
+
+Fetches `${API_BASE_URL}/public/track/{code}` with `cache: 'no-store'`.
+Renders: **Tracking Code · Category · Vehicle · Order Placed · On Route To
+Pickup · Package Picked Up**, plus live status, driver location and ETA through
+`LiveTracking` (6 s poll, terminal-status allowlist), and a driver **initial**
+only.
+
+### `/track-partner/[trackingToken]`
+
+Fetches `${API_BASE_URL}/public/track-partner/{token}` with `cache: 'no-store'`.
+Renders everything above **plus Route Distance, the Sender's name, the Pickup
+Address and a numbered receivers list.**
+
+**The two views are not equivalent.** The partner view exposes strictly more,
+including sender identity and the pickup address.
+
+## 3. Same or different identifiers
+
+**Different.** Two routes, two endpoints, two parameters:
+
+| | Route | Endpoint | Param |
+|---|---|---|---|
+| Consumer | `/track/[trackingCode]` | `/public/track/{code}` | `trackingCode` |
+| Partner | `/track-partner/[trackingToken]` | `/public/track-partner/{token}` | `trackingToken` |
+
+Both describe the same underlying delivery — the partner payload carries a
+`trackingCode` field, rendered with a `trackingCode ?? trackingToken` fallback —
+but **they are reached by different URLs holding different identifiers.**
+
+The partner token is **never generated, displayed or linked anywhere in this
+repository.** It only ever arrives in the URL.
+
+## 4. Login requirements
+
+**Neither route requires a login.** No session, cookie, `Authorization` header,
+auth redirect or guard exists in either route, and **there is no middleware file
+in the project at all**. Both endpoints are named `/public/…`. Anyone holding a
+valid identifier can open the corresponding view.
+
+## 5. Notification behaviour
+
+**None found in this repository.** A search for `mailto:`, `sms:`, `nodemailer`,
+`twilio`, `sendgrid`, `notify`, `notification`, `sendEmail`, `sendSms` and
+`webhook` across `src/` returns exactly one hit: the support `mailto:` on
+`/contact-us`. **There is no email, SMS, push or webhook code here.**
+
+| Party | How they get a link, in this repository |
+|---|---|
+| **Sender** | Shown the code on the payment step — `send/pay/page.jsx` prints it under "TRACKING CODE" and links to `/track/{code}` |
+| **Recipient** | **Nothing.** No code path sends them anything |
+| **Business** | **Nothing.** The partner token is never produced here |
+
+**Link delivery outside this repository is unknown.** The backend may or may not
+send anything; there is no evidence either way, and **absence of evidence was
+not treated as evidence of absence — it was treated as grounds for not
+claiming it.**
+
+⚠️ Per the brief: notification behaviour was **not** inferred from the presence
+of recipient contact fields. `send-flow.js:44–46` documents why they are
+collected — *"POST /order needs a name and phone for both ends, and at least one
+of receiverPhone / receiverEmail"* — a backend payload requirement, not a
+notification feature.
+
+## 6. Wording removed and replaced
+
+The sweep found **four** rendered statements, not one.
+
+### 6.1 `PlatformShowcase` frame 2 caption — the flagged statement
+
+| | |
+|---|---|
+| **Was** | "The sender, the business and the recipient follow the same job on **one shared tracking link**." |
+| **Now** | **"Tracking views keep the delivery status accessible to the people who have the relevant link."** |
+
+Wrong twice: there are **two** links, not one, and they are not interchangeable;
+and **nothing sends a link to the recipient.**
+
+### 6.2 `TrustAndAccountability` pillar 1 — label and body
+
+| | |
+|---|---|
+| **Was** | **One link, no login** — "Tracking opens from the link alone, so anyone you share it with can follow the same job." |
+| **Now** | **Tracking access without an account** — **"Open the delivery from its tracking link and share that access with the people who need status visibility."** |
+
+The no-login half was already verified. **"One link" was not**: with two routes
+carrying two identifiers and two payloads, it could be read as one identical URL
+every party opens. The label now names the property that *is* verified, and the
+body makes sharing something the holder does rather than something the product
+does.
+
+### 6.3 `VerticalSection` legal frame note
+
+| | |
+|---|---|
+| **Was** | "Every job leaves this trail, retrievable from its tracking code — **on one link your firm and the recipient both read**." |
+| **Now** | **"Every job leaves this trail, retrievable from its tracking code and shareable with whoever needs to see it."** |
+
+The same two errors, in copy written during Phase 5.
+
+### 6.4 `/medical` and `/legal` credential chip
+
+| | |
+|---|---|
+| **Was** | `Shared tracking link` |
+| **Now** | **`Shareable tracking link`** |
+
+One word. *Shared* asserts a distribution that was never evidenced; *shareable*
+states the capability that follows from a public, login-free URL.
+
+The rationale comments above both chips were corrected too — each claimed the
+two routes *"serve the same job to the sender, the business and the recipient"*.
+A comment that states a removed claim as fact is how the claim returns.
+
+## 7. Files modified
+
+| File | Change |
+|---|---|
+| `src/components/home/PlatformShowcase.jsx` | frame 2 caption |
+| `src/components/home/TrustAndAccountability.jsx` | pillar 1 label + body |
+| `src/components/home/VerticalSection.jsx` | legal frame note |
+| `src/app/(main)/medical/page.jsx` | chip + rationale comment |
+| `src/app/(main)/legal/page.jsx` | chip + rationale comment |
+
+No route, endpoint, identifier, API or architecture was touched. No notification
+was added. No client JavaScript was added.
+
+## 8. Site-wide consistency sweep **[measured]**
+
+Rendered text of `/`, `/medical`, `/legal`, `/contact-us`. Extractor validated
+against **6 positive controls** before any negative result was trusted.
+
+| Statement | Where | Classification |
+|---|---|---|
+| "Tracking views keep the delivery status accessible to the people who have the relevant link." | Platform Showcase | **corrected** — exact and verified |
+| "Tracking access without an account" / "Open the delivery from its tracking link and share that access…" | Trust and Accountability | **corrected** — exact and verified |
+| "…retrievable from its tracking code and shareable with whoever needs to see it." | legal vertical frame | **corrected** — exact and verified |
+| `Shareable tracking link` | `/medical`, `/legal` chips | **corrected** — exact and verified |
+| "Specimens, filings, business deliveries and parcels — dispatched, tracked and recorded on one platform." | homepage hero | **exact and verified** — "one platform", not one link; no tracking-link claim |
+| "with route and status visibility from pickup through completion" | medical vertical | **exact and verified** — no link claim |
+| "Follow the job from pickup through completion." | `/legal` record card | **exact and verified** |
+| "Every job's record is retrievable from its tracking code." | `/legal` record card | **exact and verified** |
+| "A record you can return to" / "Delivery information can be retrieved using its tracking code." | Trust and Accountability | **exact and verified** |
+| `/contact-us` | — | no tracking-link statement present |
+| `/track/*`, `/track-partner/*` | product surfaces | no marketing claim; they *are* the artifact |
+
+**Zero statements remain in the "implies automatic notification", "implies one
+identical URL" or "implies a portal or account" categories.**
+
+Removed-wording check across all four routes — *one shared tracking link*,
+*Shared tracking link*, *the same job on*, *One link, no login*, *anyone you
+share it with*, *the recipient both read*, *sender, the business and the
+recipient*: **zero hits.**
+
+## 9. Bundle measurements **[measured]**
+
+| Metric | Phase 6 | Phase 6.1 | Δ |
+|---|---:|---:|---:|
+| `/` route type | `○ (Static)` | **`○ (Static)`** | unchanged |
+| `/` route size | 1.98 kB | **1.98 kB** | **0** |
+| **`/` First Load JS** | 96 kB | **96 kB** | **0** |
+| **Shared JS** | 87.2 kB | **87.2 kB** | **0** |
+| `/medical` | 952 B · 93.2 kB | **952 B · 93.2 kB** | **0** |
+| `/legal` | 1.13 kB · 93.4 kB | **1.13 kB · 93.4 kB** | **0** |
+| Client islands on `/` | 1 | **1** | **0** |
+
+A copy-only change; nothing moved.
+
+## 10. Maps and Places **[measured]**
+
+`/` **0 / 0**. `/medical`, `/legal`, `/contact-us` 0 / 0. `/send` 6 Maps
+(expected). Both tracking routes 0 / 0.
+
+## 11. Accessibility results **[measured]**
+
+| Check | `/` | `/medical` | `/legal` | `/contact-us` |
+|---|---|---|---|---|
+| `<h1>` count | 1 | 1 | 1 | 1 |
+| Heading order | `H1 H2×5 H3×3 H2×3` | `H1 H2 H3 H3 H2×4` | `H1 H2×7` | `H1 H2×4` |
+| Heading skips | none | none | none | none |
+| **Contrast (off-image)** | **0** | **0** | **0** | **0** |
+| **Focus treatment missing** | **0 / 19** | **0 / 16** | **0 / 15** | **0 / 21** |
+| Text below 12 px | 0 | 0 | 0 | 0 |
+| Horizontal overflow | none | none | none | none |
+| Visible clipping at 200 % zoom | **0** | 0 | 0 | 0 |
+
+All identical to Phase 6. `/medical`'s 4 raw contrast entries remain the known
+white-on-photograph artifact (pixel-sampled 9.52–17.26:1 in Phase 5); `sr-only`
+elements were excluded before reporting clipping.
+
+**CLS [measured], three isolated contexts:** `0.0001 · 0.0001 · 0.0001` —
+unchanged.
+
+**Keyboard:** first 12 stops on `/`, `/medical`, `/legal` all show a visible
+indicator; no trap.
+
+**JavaScript disabled:** the new wording renders on all three routes —
+`/` 3,620 chars, `/medical` 1,331, `/legal` 1,428 — verified per string, not by
+length alone. **Reduced motion:** content identical across 2.5 s on all three.
+
+## 12. Regression results **[measured]**
+
+| Route | HTTP | `<h1>` | Console errors | Maps |
+|---|---|---|---|---|
+| `/` | 200 | 1 | **0** | 0 |
+| `/medical` | 200 | 1 | **0** | 0 |
+| `/legal` | 200 | 1 | **0** | 0 |
+| `/contact-us` | 200 | 1 | **0** | 0 |
+| `/send` | 200 | 1 | **0** | 6 (expected) |
+| `/track/[code]` | 200 | 1 | **0** | 0 |
+| `/track-partner/[token]` | 200 | 1 | **0** | 0 |
+
+## 13. Weakness closed
+
+**W12 is closed.** The Phase 6 report flagged the Platform Showcase caption as
+"the loosest phrasing of the shared-link fact on the site". It, and three
+statements the sweep found with it, now describe one architecture consistently:
+two public tracking views, reached by different links, neither requiring an
+account, neither distributed by the product.
+
+**Phase 7 has not begun.** No homepage booking form, Places integration, price
+estimation, address handoff, reviews motion, partner motion, integrations or
+broader motion work.

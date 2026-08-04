@@ -87,10 +87,19 @@ export const metadata = {
 // surfaces render.
 //
 // The replacement chip is the one tracking facet the WhyBrand cards below do
-// not already carry: the link is SHARED. track/[trackingCode] and
-// track-partner/[trackingToken] serve the same job to the sender, the business
-// and the recipient.
-const CREDENTIALS = ['Live tracking', 'Timestamped status', 'Shared tracking link']
+// not already carry: the link is SHAREABLE.
+//
+// PHASE 6.1 corrected both the chip and this note. They read "the link is
+// SHARED" and said the two routes "serve the same job to the sender, the
+// business and the recipient". Neither holds. track/[trackingCode] and
+// track-partner/[trackingToken] are DIFFERENT routes with DIFFERENT
+// identifiers and DIFFERENT payloads — the partner view also renders route
+// distance, the sender's name, the pickup address and a receivers list. And
+// nothing in this repository sends a link to a recipient; there is no
+// notification code here at all. What is verified is that both routes are
+// public with no login, so a holder can share access. "Shareable" says that;
+// "shared" asserted a distribution that was never evidenced.
+const CREDENTIALS = ['Live tracking', 'Timestamped status', 'Shareable tracking link']
 
 // Rendered by the shared ServicePanels grid. Descriptions are unchanged from the
 // card grid this replaced — see the constraints block above before touching a
