@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
 import { ROUTES } from '@/lib/navigation'
+import { HeroAddressEntry } from '@/components/home/HeroAddressEntry'
 import { NetworkDemo } from '@/components/home/NetworkDemo'
 
 // Home hero: the proposition beside a demonstration of the platform working.
@@ -95,12 +96,37 @@ export function HeroNetwork() {
               tracked and recorded on one platform.
             </p>
 
-            {/* Primary keeps its full-width filled treatment while stacked.
-                Secondary drops its border below sm and reads as a text action —
-                lighter, shorter, and no longer a second box competing for the
-                same weight. It keeps min-h-11 so the target stays valid, and its
-                focus ring is unchanged. */}
-            <div className="mt-6 flex flex-col items-start gap-1 sm:mt-8 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3.5">
+            {/* PHASE 7. The primary "Book a delivery" button became a working
+                pickup / drop-off entry; "Talk to our team" moved inside the
+                form so the two actions still sit on one row. HeroNetwork stays
+                a SERVER component — HeroAddressEntry is the only client island
+                added, and NetworkDemo keeps its own separate boundary.
+
+                ⚠️ NO-JAVASCRIPT FALLBACK, AND WHY IT IS BUILT THIS WAY.
+
+                A client component still server-renders, so without this the
+                page would ship two address inputs that look usable and do
+                nothing. The <noscript> block below carries a <style> that hides
+                the form and reveals the plain link pair instead — CSS the
+                browser applies only when scripting is off, so it costs nothing
+                and needs no JavaScript to take effect.
+
+                The alternative — rendering a button on the server and swapping
+                to the form on mount — was rejected: the swap is a ~150px height
+                change at hydration, i.e. a CLS regression on the largest
+                element of the first screen. */}
+            <div data-hero-entry>
+              <HeroAddressEntry />
+            </div>
+
+            <noscript>
+              <style>{`[data-hero-entry]{display:none!important}[data-hero-nojs]{display:flex!important}`}</style>
+            </noscript>
+
+            <div
+              data-hero-nojs
+              className="mt-6 hidden flex-col items-start gap-1 sm:mt-8 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3.5"
+            >
               <Link
                 href={ROUTES.send.href}
                 className={`${CTA_PRIMARY} w-full sm:w-auto`}
