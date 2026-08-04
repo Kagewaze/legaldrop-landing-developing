@@ -263,7 +263,7 @@ function AddressField({
     <div className="relative">
       <label
         htmlFor={id}
-        className="mb-1.5 block text-sm font-semibold text-white"
+        className="mb-1 block text-sm font-semibold text-white sm:mb-1.5"
       >
         {label}
       </label>
@@ -488,8 +488,8 @@ export function HeroAddressEntry() {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="mt-6 sm:mt-8">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <form onSubmit={handleSubmit} noValidate className="mt-4 sm:mt-8">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
         <AddressField
           id={`${baseId}-pickup`}
           label="Pickup location"
@@ -524,7 +524,7 @@ export function HeroAddressEntry() {
         />
       </div>
 
-      <div className="mt-5 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
+      <div className="mt-4 flex flex-col items-start gap-2 sm:mt-5 sm:flex-row sm:items-center sm:gap-3.5">
         {/* Disabled until BOTH fields hold a geocoded place. aria-disabled
             rather than the disabled attribute alone would leave it focusable
             with no action; the real attribute is used, and the reason is in the
@@ -532,7 +532,7 @@ export function HeroAddressEntry() {
         <button
           type="submit"
           disabled={!ready}
-          className="inline-flex min-h-11 w-full items-center justify-center rounded-control bg-brand-600 px-[30px] py-4 text-base font-semibold text-white transition-colors motion-reduce:transition-none hover:bg-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:bg-white/25 disabled:text-white/70 sm:w-auto"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-control bg-brand-600 px-[30px] py-3 text-base sm:py-4 font-semibold text-white transition-colors motion-reduce:transition-none hover:bg-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:bg-white/25 disabled:text-white/70 sm:w-auto"
         >
           Continue to booking
         </button>
@@ -545,10 +545,15 @@ export function HeroAddressEntry() {
         </Link>
       </div>
 
-      <p className="mt-3 text-sm text-white/70">
+      <p className="mt-2 text-sm text-white/70 sm:mt-3">
         {ready
-          ? 'Both addresses set. Continue to choose a vehicle.'
-          : 'Choose a suggestion for each address to continue.'}
+          // PHASE 7.1: both helper strings are kept to ONE line at 390. The
+          // ready message previously wrapped to two, so selecting the second
+          // address nudged the whole network panel down by ~21px — a layout
+          // shift caused by the user succeeding, which is the worst moment to
+          // move the page.
+          ? 'Ready — continue to choose a vehicle.'
+          : 'Choose a suggestion for each address.'}
       </p>
 
       {/* ESCAPE HATCH. Shown only when address lookup is degraded — a missing

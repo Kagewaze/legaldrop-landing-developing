@@ -67,12 +67,12 @@ export function HeroNetwork() {
           is measured against the first viewport rather than against its
           neighbours — 48px of symmetric padding is 48px of proposition pushed
           below the fold. Full rhythm returns from sm. */}
-      <div className="mx-auto max-w-[1200px] px-8 py-10 sm:py-20 lg:py-24">
+      <div className="mx-auto max-w-[1200px] px-8 py-7 sm:py-20 lg:py-24">
         {/* The visual is capped rather than given a free 1fr: the proposition
             has to stay the larger thing on the screen. A 520px ceiling holds
             the demo at roughly 45% of the column at 1440 and stops it growing
             into a billboard on wide displays. */}
-        <div className="grid grid-cols-1 items-center gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,520px)] lg:gap-14">
+        <div className="grid grid-cols-1 items-center gap-5 sm:gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,520px)] lg:gap-14">
           <div>
             <h1 className="text-balance font-display text-3xl font-extrabold text-white sm:text-5xl lg:text-6xl">
               Same-day logistics infrastructure for the GTA
@@ -91,7 +91,7 @@ export function HeroNetwork() {
                 18px setting runs to four lines and costs ~35px of the first
                 viewport. 16px holds it to three lines and stays a full step
                 above body minimum. The measure is unchanged. */}
-            <p className="mt-4 max-w-[560px] text-base text-white/85 sm:mt-5 sm:text-lg">
+            <p className="mt-3.5 max-w-[560px] text-base text-white/85 sm:mt-5 sm:text-lg">
               Specimens, filings, business deliveries and parcels — dispatched,
               tracked and recorded on one platform.
             </p>
@@ -142,7 +142,20 @@ export function HeroNetwork() {
             </div>
           </div>
 
-          <NetworkDemo />
+          {/* PHASE 7.1 — WIDTH CAP IN THE SINGLE-COLUMN RANGE.
+              Between sm and lg the hero stacks, so the demo took the full 1200px
+              column: at 768 that made the panel 656px wide, and since the route
+              diagram keeps a 400x210 ratio its height followed to ~344px. The
+              hero ran 1194px, 1.41 viewports, and the panel read as a billboard
+              under the proposition rather than as its companion.
+
+              520px is not a new number — it is exactly the ceiling the lg grid
+              already gives this column (minmax(0,520px)), so capping below lg
+              makes the two ranges agree instead of introducing a second rule.
+              At lg and above nothing changes. */}
+          <div className="max-w-[520px] lg:max-w-none">
+            <NetworkDemo />
+          </div>
         </div>
       </div>
     </section>

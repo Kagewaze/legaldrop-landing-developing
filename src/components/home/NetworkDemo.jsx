@@ -171,7 +171,7 @@ export function NetworkDemo() {
   return (
     <div
       ref={rootRef}
-      className="rounded-card border border-white/10 bg-white/[0.04] p-4 shadow-lift sm:p-6"
+      className="rounded-card border border-white/10 bg-white/[0.04] p-3 shadow-lift sm:p-6"
     >
       {/* THE HONESTY LABEL. Visible, adjacent to the visual, not a footnote.
           Phase 0 D4 makes this a condition of shipping a simulated network. */}
@@ -187,12 +187,25 @@ export function NetworkDemo() {
       {/* Decorative: the whole diagram is hidden from assistive technology and
           its meaning is supplied as text below instead. A screen reader gets a
           stable sentence, not a stream of changing coordinates. */}
-      <svg
-        aria-hidden="true"
-        focusable="false"
-        viewBox="0 0 400 210"
-        className="mt-3 block w-full"
-      >
+      {/* PHASE 7.1 — MOBILE CROP OF THE DIAGRAM'S DEAD BAND.
+          The route occupies viewBox Y 68–188 (P3 to P0) and the marker sits at
+          Y 120; above Y 45 there is nothing but one grid line. On a phone that
+          empty top band cost ~42px of the first viewport while showing nothing,
+          so the wrapper clips it and the negative margin pulls the drawing up
+          into the clip. Below sm only: from sm the margin resets and the
+          diagram is untouched, which is why 1024 and 1440 are unaffected.
+
+          A wrapper crop rather than a second viewBox because viewBox is an
+          attribute, not a class — changing it responsively would need
+          JavaScript, and this phase adds none. NOTHING OF THE ROUTE IS LOST:
+          the crop stops well above P3. */}
+      <div className="mt-2.5 overflow-hidden sm:mt-3">
+        <svg
+          aria-hidden="true"
+          focusable="false"
+          viewBox="0 0 400 210"
+          className="-mt-[42px] block w-full sm:mt-0"
+        >
         {/* Faint grid — a control-surface texture, not a street map. */}
         <g stroke="currentColor" className="text-white/[0.06]" strokeWidth="1">
           {[45, 95, 145].map((y) => (
@@ -254,7 +267,8 @@ export function NetworkDemo() {
           <circle cx="200" cy="120" r="11" className="fill-brand-600" />
           <circle cx="200" cy="120" r="4" className="fill-white" />
         </g>
-      </svg>
+        </svg>
+      </div>
 
       {/* THE DISPATCH LIST — one active job above two others in the queue.
           This is what turns the panel from a tracking view into a coordination
@@ -270,7 +284,7 @@ export function NetworkDemo() {
 
           aria-hidden for the same reason as the diagram: the equivalent text
           follows once, below. */}
-      <div aria-hidden="true" className="mt-4 border-t border-white/10 pt-3">
+      <div aria-hidden="true" className="mt-3 border-t border-white/10 pt-2.5 sm:mt-4 sm:pt-3">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
           <span className="text-sm font-semibold text-white">{category}</span>
           <span className="rounded-full bg-brand-600 px-2.5 py-1 text-xs font-semibold text-white">
@@ -298,7 +312,7 @@ export function NetworkDemo() {
           <span>{ROUTE_LABELS.to}</span>
         </div>
 
-        <div className="mt-2.5 flex gap-1.5">
+        <div className="mt-2 flex gap-1.5 sm:mt-2.5">
           {SEQUENCE.map((s, i) => (
             <span
               key={s.status}
@@ -312,11 +326,19 @@ export function NetworkDemo() {
         {/* The queue. Categories are taken from the rotation after the active
             one, so no job is ever listed twice and the set on screen changes as
             the primary cycles — breadth without a second animation. */}
-        <ul className="mt-3 space-y-1.5 border-t border-white/10 pt-3">
+        {/* PHASE 7.1: below sm only the FIRST queue row renders. The point of
+            this list is that other jobs exist in the system alongside the
+            active one — one row carries that, two only repeat it, and on a
+            phone the second row costs ~26px of the first viewport. From sm the
+            full queue returns. The row set still rotates with the primary, so
+            the queue is never stale. */}
+        <ul className="mt-2.5 space-y-1.5 border-t border-white/10 pt-2.5 sm:mt-3 sm:pt-3">
           {SECONDARY_STATUSES.map((status, i) => (
             <li
               key={status}
-              className="flex items-center justify-between gap-3 text-sm text-white/50"
+              className={`items-center justify-between gap-3 text-sm text-white/50 ${
+                i === 0 ? 'flex' : 'hidden sm:flex'
+              }`}
             >
               <span>{CATEGORIES[(categoryIndex + i + 1) % CATEGORIES.length]}</span>
               {/* white/50, not white/40 — 40% composites to 3.82:1 at 12px on
