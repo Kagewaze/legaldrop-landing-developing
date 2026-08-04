@@ -178,14 +178,14 @@ export default function ContactUs() {
                         {way.external ? (
                           <a
                             href={way.href}
-                            className="text-base font-semibold text-brand-600 transition-colors hover:text-brand-700"
+                            className="rounded-control text-base font-semibold text-brand-600 transition-colors hover:text-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
                           >
                             {way.label}
                           </a>
                         ) : (
                           <Link
                             href={way.href}
-                            className="text-base font-semibold text-brand-600 transition-colors hover:text-brand-700"
+                            className="rounded-control text-base font-semibold text-brand-600 transition-colors hover:text-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
                           >
                             {way.label}
                           </Link>
