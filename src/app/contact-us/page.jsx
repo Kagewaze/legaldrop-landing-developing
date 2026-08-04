@@ -199,7 +199,19 @@ export default function ContactUs() {
                 </div>
               )}
 
-              <p className="mt-6 text-sm text-[#8d8695]">{SERVICE_AREA}</p>
+              {/* #5f5868, not #8d8695. At 14px on this section's opaque white
+                  ground the lighter tone measures 3.51:1, under the 4.5:1
+                  floor; #5f5868 measures 6.81:1. Neither colour carries alpha
+                  and the ground is #ffffff, so there is nothing to composite —
+                  the pair is the measurement.
+
+                  This is the same token failure Phase 0 recorded as A1/A2 and
+                  Phase 1 remediated on the homepage and the two B2B pages.
+                  /contact-us was missed then and was never re-audited until the
+                  Phase 4.3 sweep, which was the first pass to look at this
+                  route at all. No new token: #5f5868 is the existing secondary
+                  body tone already used across the site. */}
+              <p className="mt-6 text-sm text-[#5f5868]">{SERVICE_AREA}</p>
             </div>
 
             <div className="lg:col-span-7">
