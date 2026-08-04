@@ -76,8 +76,19 @@ export default async function Home() {
       {/* The two account-based verticals. Medical carries the tint band and
           leads with its photograph; Legal reverses both. Copy for each is
           constrained — see the block in VerticalSection.jsx. */}
-      <VerticalSection {...MEDICAL_VERTICAL} imageSide="left" tinted />
-      <VerticalSection {...LEGAL_VERTICAL} imageSide="right" />
+      {/* PHASE 5: the tint moved from medical to legal.
+
+          Medical carried it before, which was fine while it led with a
+          photograph. Now that both verticals lead with a white product frame,
+          a tinted medical section sat directly under the tinted PlatformShowcase
+          and the two bands merged into one long tint containing four white
+          cards — no seam, no rhythm. Reviews sits between them only when the
+          Places API returns data, so that separation cannot be relied on.
+
+          Alternating from here down: tint (showcase) → page (medical) → tint
+          (legal) → page (Why Druppr) → tint (Coverage). */}
+      <VerticalSection {...MEDICAL_VERTICAL} frameSide="left" />
+      <VerticalSection {...LEGAL_VERTICAL} frameSide="right" tinted />
       {/* Content passed explicitly — WhyBrand is shared with /medical and
           /legal and holds no copy of its own. */}
       <WhyBrand heading={`Why ${BRAND.name}`} reasons={HOME_REASONS} />
