@@ -1,9 +1,9 @@
 import { BRAND } from '@/lib/config'
 import { PARTNER_URL } from '@/lib/navigation'
 import {
-  DropOffCode,
+  AuditableRecord,
+  LiveTracking,
   TimestampedTracking,
-  VettedDrivers,
 } from '@/components/icons'
 import { Coverage } from '@/components/home/Coverage'
 import { ExpandingGallery } from '@/components/ExpandingGallery'
@@ -42,9 +42,29 @@ export const metadata = {
   title: 'Legal document delivery',
 }
 
+// PHASE 4.2 replaced one of these three.
+//
+//   'Confidentiality-trained drivers'  REMOVED. This is the same claim the
+//     PROOF_REASONS card below lost, stated more baldly and rendered higher on
+//     the page. The confidentiality course is PLANNED work: it does not exist,
+//     is not assigned, has not been completed, and has no completion record. A
+//     planned training requirement is not a present-tense fact about drivers.
+//     Not softened to "privacy-trained", "confidentiality-certified" or
+//     "legally trained" drivers — each asserts the same unevidenced thing.
+//     Replaced with a capability every tracking surface demonstrably renders.
+//
+// ⚠️ 'Proof of delivery' and 'Fully insured' are LEFT IN PLACE and both REQUIRE
+// REVIEW. Neither was named for removal in this pass, and unlike driver
+// training they are claims the founder or a broker can evidence directly.
+// 'Fully insured' is called out by name in VISION.md → Trust Philosophy ("No
+// 'fully insured' gloss over an undefined reality"), and Phase 0 D10 lists both
+// insurance and proof-of-delivery evidentiary weight as unreviewed. They are
+// flagged in the Phase 4.2 report rather than removed unilaterally, because
+// withdrawing an insurance claim is a commercial decision, not a copy decision.
+// Confirm or remove them.
 const CREDENTIALS = [
   'Proof of delivery',
-  'Confidentiality-trained drivers',
+  'Timestamped status',
   'Fully insured',
 ]
 
@@ -57,14 +77,18 @@ const SERVICES = [
   {
     title: 'Court filings',
     description:
-      'Documents taken from your office to the registry, with the trip tracked and the drop-off confirmed on arrival.',
+      // PHASE 4.2: "and the drop-off confirmed on arrival" removed — the only
+      // confirmation mechanism named anywhere is the unverifiable code.
+      'Documents taken from your office to the registry, with the trip tracked from pickup through completion.',
     image: courthouse,
     alt: 'A stone courthouse building with a Canadian flag flying outside.',
   },
   {
     title: 'Confidential document delivery',
     description:
-      'Client files and sensitive correspondence carried by drivers trained on confidentiality, released at the destination you name.',
+      // PHASE 4.2: "carried by drivers trained on confidentiality" removed —
+      // the confidentiality course is planned, not delivered.
+      'Client files and sensitive correspondence carried to the destination you name, tracked from pickup through completion.',
     image: document,
     alt: 'Two people passing a large document envelope across a desk.',
   },
@@ -86,14 +110,39 @@ const PROOF_REASONS = [
     icon: <TimestampedTracking className="h-5 w-5" />,
   },
   {
-    title: 'Drop-off code confirmation',
-    description: 'A code confirms the handover at the destination.',
-    icon: <DropOffCode className="h-5 w-5" />,
+    // WAS: 'Drop-off code confirmation — A code confirms the handover at the
+    // destination.' Removed in Phase 4.2. The code is not rendered anywhere in
+    // this repository and Phase 0 blocks it pending founder verification of
+    // where it is generated, who receives it, how it is validated, whether it
+    // is live, and what is retained. No substitute mechanism was introduced —
+    // no PIN, no signature, no seal.
+    title: 'Route and status visibility',
+    description: 'Follow the job from pickup through completion.',
+    icon: <LiveTracking className="h-5 w-5" />,
   },
   {
-    title: 'Vetted drivers',
-    description: 'Confidentiality training is required to take these jobs.',
-    icon: <VettedDrivers className="h-5 w-5" />,
+    // WAS: 'Vetted drivers — Confidentiality training is required to take
+    // these jobs.' The confidentiality course is PLANNED work: it does not yet
+    // exist, is not assigned, and has no completion record. "Vetted" was
+    // dropped with it — driver vetting is not evidenced here either.
+    //
+    // An intermediate revision put 'Same-day across the GTA — Requested and
+    // dispatched the same day' here. That was ALSO WRONG and is recorded so it
+    // is not reintroduced: it swapped an unevidenced training claim for a new
+    // dispatch-timing promise, on a page under a "Proof of delivery" heading,
+    // when Phase 0 withheld pickup-time claims and said they must not be
+    // replaced by another timing promise. Removing one unsupported claim by
+    // adding a different one is not a claim-hygiene pass.
+    //
+    // What is here instead is the third genuinely distinct, repository-verified
+    // fact about the record: it survives the delivery and is retrievable by
+    // code. src/app/track/[trackingCode]/page.jsx fetches /public/track/{code}
+    // and renders Tracking Code, Category, Vehicle, Order Placed, On Route To
+    // Pickup and Package Picked Up. This is the same statement already shipped
+    // on the homepage showcase caption in Phase 4.
+    title: 'A record you can retrieve',
+    description: 'Every job’s record is retrievable from its tracking code.',
+    icon: <AuditableRecord className="h-5 w-5" />,
   },
 ]
 
@@ -130,7 +179,23 @@ export default function LegalPage() {
         // that qualifier several hundred pixels away. So the lede now mirrors
         // how :74 frames it — the trip and the record, never the legal
         // outcome: "a timestamped record of the attempt returned to your firm."
-        lede="Filings, confidential files and process-serving runs moved by vetted drivers, with proof on every job."
+        //
+        // PHASE 4.2 removed two more claims from this same sentence:
+        //
+        //   "moved by vetted drivers"  — driver vetting is not evidenced
+        //     anywhere in this repository, and the PROOF_REASONS card that
+        //     also said it was dropped in this pass. Leaving it in the h1 lede
+        //     while removing it from a card below would have been incoherent.
+        //   "with proof on every job"  — an unqualified proof claim, in the
+        //     first sentence a firm reads, on a page whose whole risk is a
+        //     buyer relying on our proof in a proceeding. Phase 0 D10 lists
+        //     proof-of-delivery evidentiary weight as BLOCKED.
+        //
+        // The replacement is the wording approved for the homepage legal lead
+        // (VerticalSection.jsx LEGAL_VERTICAL), so the two surfaces now say the
+        // same true thing. It describes the workflow and the record, and claims
+        // no sworn service, admissibility, signature, affidavit or custody.
+        lede="Filings, confidential files and process-serving runs coordinated through a tracked delivery workflow, with timestamped status from request through completion."
         panels={SERVICES}
         cta="Register your firm"
         headingLevel="h1"

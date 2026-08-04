@@ -2,8 +2,8 @@ import { BRAND } from '@/lib/config'
 import { PARTNER_URL } from '@/lib/navigation'
 import {
   AuditableRecord,
-  CertifiedDriver,
   MonthlyInvoicing,
+  RequestRide,
   ScheduledRoutes,
 } from '@/components/icons'
 import { Coverage } from '@/components/home/Coverage'
@@ -50,10 +50,24 @@ export const metadata = {
 
 // Rendered in the dark strip under the hero. Each is a standing capability of
 // the service, not a performance claim.
+// PHASE 4.2 replaced two of these four.
+//
+//   'TDG-licensed'      REMOVED. The founder holds TDG certification; the
+//                       drivers do not. Driver certification is future work.
+//   'Chain-of-custody'  REMOVED. No custody artifact exists in this product —
+//                       Phase 0 blocks the claim, and what is actually
+//                       produced is a timestamp trail, which is now stated.
+//
+// ⚠️ 'Fully insured' and 'Temperature-controlled' are LEFT IN PLACE and both
+// REQUIRE REVIEW. They were not named for removal, and unlike TDG they are
+// claims the founder may be able to evidence directly (a policy document; a
+// vehicle capability). They are flagged in the Phase 4.2 report rather than
+// removed unilaterally, because withdrawing an insurance claim is a
+// commercial decision, not a copy decision. Confirm or remove them.
 const CREDENTIALS = [
-  'TDG-licensed',
+  'Live tracking',
   'Fully insured',
-  'Chain-of-custody',
+  'Timestamped status',
   'Temperature-controlled',
 ]
 
@@ -65,14 +79,18 @@ const SERVICES = [
   {
     title: 'Pharmaceutical delivery',
     description:
-      'Prescriptions and pharmacy stock moved between locations the same day, by drivers certified to carry regulated goods.',
+      // PHASE 4.2: "by drivers certified to carry regulated goods" removed —
+      // the same unevidenced driver-certification claim as the TDG wording.
+      'Prescriptions and pharmacy stock moved between locations the same day, tracked from pickup through completion.',
     image: pharma,
     alt: 'A courier moving boxes on a hand truck from a delivery van.',
   },
   {
     title: 'Lab & specimen transport',
     description:
-      'Samples collected from your clinic and delivered to the receiving lab, with the handover confirmed and the trip tracked end to end.',
+      // PHASE 4.2: "with the handover confirmed" removed — the only handover
+      // confirmation this business names is the unverifiable drop-off code.
+      'Samples collected from your clinic and delivered to the receiving lab, with the trip tracked from pickup through completion.',
     image: specimen,
     alt: 'Sample tubes standing in a laboratory rack.',
   },
@@ -89,15 +107,32 @@ const SERVICES = [
 // for a clinic buyer rather than a consumer.
 const CLINIC_REASONS = [
   {
-    title: 'Certified drivers',
-    description:
-      'TDG certification is required to take these jobs, and enforced.',
-    icon: <CertifiedDriver className="h-5 w-5" />,
+    // WAS: 'Certified drivers — TDG certification is required to take these
+    // jobs, and enforced.' Removed in Phase 4.2: the requirement is future
+    // operational work, and "enforced" asserted an active control that does
+    // not exist. Replaced with a capability the repository proves — all six
+    // vehicle names come from src/components/send/vehicles.js.
+    //
+    // THE ICON CHANGED TOO, and it is not cosmetic. This card kept
+    // <CertifiedDriver />, which icons.jsx:241 documents as "Rosette with a
+    // check" — a credential badge. Leaving it beside vehicle copy would have
+    // gone on asserting certification in the one register that survives when a
+    // reader skims past the words. RequestRide is the car silhouette, "same
+    // silhouette language as the vehicle picker" (icons.jsx:110), so the glyph
+    // now says what the card says.
+    title: 'Vehicle matched to the job',
+    description: 'Bike, car, SUV, minivan, cargo van or box truck.',
+    icon: <RequestRide className="h-5 w-5" />,
   },
   {
-    title: 'A record you can audit',
+    // WAS: 'A record you can audit — Every job carries live tracking and
+    // drop-off code confirmation.' The drop-off code is unverifiable and
+    // blocked by Phase 0; "audit" implied evidentiary weight the record has
+    // not been assessed for. Both replaced with what the tracking surfaces
+    // demonstrably render.
+    title: 'A record of every job',
     description:
-      'Every job carries live tracking and drop-off code confirmation.',
+      'Live tracking and timestamped status from pickup through completion.',
     icon: <AuditableRecord className="h-5 w-5" />,
   },
   {
@@ -144,9 +179,15 @@ function Hero() {
           <h1 className="font-display text-4xl font-extrabold text-[#17131c] sm:text-5xl">
             Medical courier for GTA clinics and labs
           </h1>
+          {/* PHASE 4.2: "handled by certified drivers" removed — driver
+              certification is future operational work, not a present fact.
+              "secure" also went: no security posture has been assessed or
+              approved (Phase 0 D10). What remains describes the service and
+              the tracking, both of which are real. */}
           <p className="mt-4 max-w-[560px] text-lg text-[#5f5868]">
-            Same-day secure transport for specimens, pharmaceuticals, and
-            temperature-sensitive goods, handled by certified drivers.
+            Same-day transport for specimens, pharmaceuticals and
+            temperature-sensitive goods, tracked from pickup through
+            completion.
           </p>
 
           <PartnerCta className="mt-8">Set up your clinic account</PartnerCta>
@@ -179,9 +220,15 @@ function FinalCta() {
       <div className="flex flex-wrap items-center justify-between gap-8 rounded-card bg-brand-600 p-8 text-white sm:p-11">
         <div className="max-w-[560px]">
           <div className="font-display text-3xl font-bold">Set up your clinic account</div>
+          {/* PHASE 4.2: "certified drivers" removed for the same reason as
+              the hero. "Standing routes" and "per-location billing" are
+              retained — they describe how an account is arranged with the
+              partner platform rather than a shipped product feature — but
+              both are flagged for founder confirmation in the Phase 4.2
+              report, since neither is evidenced in this repository. */}
           <div className="mt-2 text-base opacity-85">
-            Standing routes, per-location billing and certified drivers, managed
-            from the {BRAND.name} partner platform.
+            Standing routes and per-location billing, managed from the{' '}
+            {BRAND.name} partner platform.
           </div>
         </div>
 

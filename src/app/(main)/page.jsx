@@ -1,6 +1,5 @@
 import { BRAND } from '@/lib/config'
 import { getGoogleReviews } from '@/lib/google-reviews'
-import { BecomeADriver } from '@/components/home/BecomeADriver'
 import { Coverage } from '@/components/home/Coverage'
 import { HeroNetwork } from '@/components/home/HeroNetwork'
 import { OperationalProof } from '@/components/home/OperationalProof'
@@ -83,7 +82,21 @@ export default async function Home() {
           /legal and holds no copy of its own. */}
       <WhyBrand heading={`Why ${BRAND.name}`} reasons={HOME_REASONS} />
       <Coverage image={COVERAGE_IMAGE} />
-      <BecomeADriver />
+      {/* PHASE 4.2: BecomeADriver removed from the homepage.
+
+          Phase 0 (D9) already approved taking driver recruitment off the
+          customer-facing page. Phase 4.2 executes it now because the section
+          carried two unconfirmed claims — "get paid weekly" and "once you are
+          certified" — and removing the section removes them without needing a
+          driver-programme redesign.
+
+          The component FILE IS RETAINED, unimported, as the rollback target
+          and as the starting asset for a future driver page.
+
+          NO FOOTER OR NAV LINK WAS ADDED. `ROUTES.becomeADriver` is still
+          live: false and no driver page exists; linking to it would be a dead
+          route (content gate C5). Driver recruitment is separate future work.
+          Restore a link only once that page ships. */}
     </div>
   )
 }

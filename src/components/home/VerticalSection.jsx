@@ -82,7 +82,21 @@ export const MEDICAL_VERTICAL = {
   // nobody has verified exists in the form that phrase implies. The account
   // framing stays, because that is a fact about how the service is arranged
   // rather than a claim about what it bills.
-  lead: 'Specimen runs, pharmacy stock and temperature-sensitive goods, moved by TDG-certified drivers. Standing routes are arranged on your account, not booked per drop.',
+  // PHASE 4.2. Two claims were removed from this lead:
+  //
+  //   "moved by TDG-certified drivers"  — the founder is TDG-certified, the
+  //     drivers are not. Driver certification is future operational work.
+  //   "Standing routes"                 — scheduling is not a product this
+  //     repository can evidence: no date or time picker exists in the send
+  //     flow and no scheduling field exists in the order payload.
+  //
+  // What remains is the tracked workflow, which every tracking surface proves,
+  // plus the account distinction — a fact about how these buyers purchase,
+  // not a claim about a feature.
+  //
+  // Do NOT reintroduce specimen-handling certification, cold-chain capability,
+  // PHIPA, chain of custody or TDG here. Each needs separate evidence.
+  lead: 'Medical deliveries coordinated through a tracked workflow, with route and status visibility from pickup through completion. Arranged on your clinic’s account rather than booked per drop.',
   cta: 'See medical delivery',
   href: ROUTES.medical.href,
   image: specimen,
@@ -114,7 +128,19 @@ export const LEGAL_VERTICAL = {
   // copy (legal/page.jsx:89 'Drop-off code confirmation'). That page is outside
   // this phase's scope. The divergence is deliberate and temporary: the
   // homepage must be accurate now, and /legal needs its own claim pass.
-  lead: 'Filings, confidential files and process-serving runs, moved by drivers who must complete confidentiality training. Every job carries a timestamped trail, on your firm’s account.',
+  // PHASE 4.2: "moved by drivers who must complete confidentiality training"
+  // removed. The confidentiality course is PLANNED work — it does not yet
+  // exist, is not assigned, has not been completed, and has no completion
+  // record. A planned training requirement is not a present-tense fact.
+  //
+  // Not softened to "privacy-trained", "confidentiality-certified" or
+  // "legally trained" drivers, which assert the same unevidenced thing.
+  //
+  // The timestamped status that remains is real — createdAt, onRouteToPickup,
+  // packagePickedUp and a status reaching `delivered`. It is described as a
+  // record and nothing more: no sworn service, no admissibility, no captured
+  // signature, no affidavit, no evidentiary chain of custody.
+  lead: 'Filings, confidential files and process-serving runs coordinated through a tracked delivery workflow, with timestamped status from request through completion, on your firm’s account.',
   cta: 'See legal delivery',
   href: ROUTES.legal.href,
   image: legalDocument,

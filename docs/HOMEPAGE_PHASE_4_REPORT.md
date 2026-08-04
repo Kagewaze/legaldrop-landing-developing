@@ -517,3 +517,429 @@ The claim sweep surfaced **three real WCAG AA contrast failures in the hero** th
 | **5** | Insurance, PHIPA, security, SLA | Not on the homepage | Unchanged from Phase 0 |
 
 **Items 1–3 are live on the homepage today and are not resolved by this pass.** They were not named for removal in this brief, and each is a specific factual claim a founder or advisor can confirm rather than an unverifiable mechanism. They should be closed before the homepage is considered claim-clean.
+
+---
+
+# Phase 4.2 — Final Claim Cleanup
+
+> The last factual-accuracy pass before Phase 5. It removes the claims Phase 4.1
+> left standing — driver TDG certification, confidentiality training, and the
+> driver-recruitment pay claims — and extends the pass to `/medical` and
+> `/legal`, which Phase 4.1 explicitly deferred. **Phase 5 has not begun.**
+>
+> Labels as before: **[measured]** from a production build, **[observed]**
+> confirmed manually. Nothing estimated.
+
+## 1. The rule this pass applied
+
+**A founder's certification does not establish driver certification, and a
+planned training requirement does not establish that drivers have completed
+that training.**
+
+Phase 4.1 left TDG and confidentiality-training wording in place on the grounds
+that each was "a specific factual claim the founder plus a compliance advisor
+can confirm." That reasoning was wrong in an important way, and the correction
+is the substance of this phase: the founder holds TDG certification; the
+**drivers do not**. The claim was not awaiting confirmation — it was already
+known to be false of the population it described. A planned in-app training
+requirement is future operational work, not a present-tense fact about anyone.
+
+Nothing was softened. "Regulation-ready drivers", "compliance-trained fleet",
+"privacy-trained drivers" and "confidentiality-certified drivers" assert the
+same unevidenced thing in vaguer words and were all rejected.
+
+## 2. Preflight **[measured]**
+
+| Check | Result |
+|---|---|
+| Branch | `homepage-redesign` |
+| Commit `3a5aca3` present | ✅ |
+| Working tree clean | ❌ — see below |
+| Lint | ✅ no warnings or errors |
+| Production build | ✅ compiled successfully |
+
+⚠️ **The working tree was not clean at preflight.** Five files carried
+uncommitted edits, every hunk labelled `PHASE 4.2` and implementing this brief.
+A prior session had made the edits and stopped before verification,
+documentation or commit. They were **related, not unrelated**, so the "stop if
+unrelated changes are present" gate did not fire; the work was verified against
+the brief, completed where incomplete, and committed here. Four defects in that
+partial work are recorded in §6.
+
+### Baseline phrase search at `3a5aca3` — routes affected
+
+| Phrase | File | Public route |
+|---|---|---|
+| `TDG-certified drivers` | `home/WhyBrand.jsx:50` | `/` |
+| `TDG-certified drivers` | `home/VerticalSection.jsx:85` | `/` |
+| `confidentiality training` | `home/VerticalSection.jsx:117` | `/` |
+| `confidentiality training` | `legal/page.jsx:95` | `/legal` |
+| `paid weekly`, `once you are certified` | `home/BecomeADriver.jsx:23` | `/` |
+| `drop-off code` | `legal/page.jsx:89` | `/legal` |
+| `drop-off code` | `medical/page.jsx:100` | `/medical` |
+| `confirmation code`, `signature on delivery`, `proof and photo` | comments only | none |
+
+`TDG certified drivers`, `confidential training` and `dropoff code` returned no
+matches anywhere.
+
+**Not caught by the phrase list, found by reading the files:**
+`'Confidentiality-trained drivers'` in the `/legal` credentials strip. The brief's
+search terms were `confidentiality training` and `confidential training`; the
+rendered string is the hyphenated adjectival form. It is the same claim, stated
+more baldly, higher on the page than the card that was being removed.
+
+## 3. Claims removed, and their replacements
+
+### 3.1 Homepage — `WhyBrand.jsx` (Task 1)
+
+| | |
+|---|---|
+| **Was** | **TDG-certified drivers** — *"Trained for medical and regulated goods."* |
+| **Now** | **Vehicle options for every delivery** — **"Choose from bike, car, SUV, minivan, cargo van and box truck."** |
+
+**Evidence [measured].** All six names verified in `src/components/send/vehicles.js`:
+`Bike`, `Car`, `SUV`, `Minivan`, `Cargo van`, `Box truck` — the `name` field of
+each entry in `VEHICLES`, selectable in the live booking flow. "Choose from"
+describes the options; no availability guarantee is implied.
+
+**The icon changed with it.** `TdgCertified` is a shield with a diamond cut out,
+and `icons.jsx:213` records that the diamond is chosen because *"TDG placards are
+diamonds — the shape is the actual regulatory signifier."* Leaving it would have
+gone on making the regulatory claim in the register that survives skim-reading.
+Replaced with `RequestRide`, the car silhouette.
+
+### 3.2 Homepage — medical vertical lead (Task 2)
+
+| | |
+|---|---|
+| **Was** | *"Specimen runs, pharmacy stock and temperature-sensitive goods, moved by TDG-certified drivers. **Standing routes** are arranged on your account, not booked per drop."* |
+| **Now** | **"Medical deliveries coordinated through a tracked workflow, with route and status visibility from pickup through completion. Arranged on your clinic's account rather than booked per drop."** |
+
+Two claims went. The TDG one for the reason in §1. **"Standing routes"** went
+because Phase 4.1 had already established it is unverifiable — there is no date
+or time picker in `send/page.jsx` and no scheduling field in `send-flow.js:21–36`
+or `buildOrderPayload.js` — yet it survived that pass in this sentence.
+
+No specimen-handling certification, cold-chain capability, PHIPA, chain of
+custody or TDG compliance was introduced.
+
+### 3.3 Homepage — legal vertical lead (Task 3)
+
+| | |
+|---|---|
+| **Was** | *"Filings, confidential files and process-serving runs, moved by drivers who must complete confidentiality training. Every job carries a timestamped trail, on your firm's account."* |
+| **Now** | **"Filings, confidential files and process-serving runs coordinated through a tracked delivery workflow, with timestamped status from request through completion, on your firm's account."** |
+
+No sworn service, admissibility, captured signature, affidavit or evidentiary
+chain of custody is implied. The timestamped status is real: `createdAt`,
+`onRouteToPickup`, `packagePickedUp`, and a status reaching `delivered`.
+
+### 3.4 Driver recruitment — removed from the homepage (Phase 0 D9)
+
+`BecomeADriver` carried *"get paid weekly"* and *"once you are certified"*.
+Removing the section removes both without a driver-programme redesign.
+
+| Requirement | Status |
+|---|---|
+| Homepage import removed | ✅ |
+| Rendered section removed | ✅ |
+| Component file retained on disk, unimported | ✅ `src/components/home/BecomeADriver.jsx` |
+| No footer link created | ✅ — and none renders: `ROUTES.becomeADriver` is `live: false` and `Footer.jsx:65` filters on `item.live` |
+| No dead route created | ✅ **[measured]** `become-a-driver` appears 0 times in the prerendered `/` HTML |
+| No replacement recruitment CTA | ✅ |
+| Documented as separate future work | ✅ this section + `page.jsx` comment |
+
+### 3.5 `/medical` (Task 4)
+
+| Location | Was | Now |
+|---|---|---|
+| Credentials strip | `TDG-licensed` | **`Live tracking`** |
+| Credentials strip | `Chain-of-custody` | **`Timestamped status`** |
+| Hero lead | *"Same-day **secure** transport … handled by **certified drivers**."* | **"Same-day transport for specimens, pharmaceuticals and temperature-sensitive goods, tracked from pickup through completion."** |
+| Pharmaceutical delivery | *"… by drivers certified to carry regulated goods."* | **"… tracked from pickup through completion."** |
+| Lab & specimen transport | *"… with the **handover confirmed** and the trip tracked end to end."* | **"… with the trip tracked from pickup through completion."** |
+| Reasons card 1 | **Certified drivers** — *"TDG certification is required to take these jobs, and **enforced**."* | **Vehicle matched to the job** — **"Bike, car, SUV, minivan, cargo van or box truck."** |
+| Reasons card 2 | **A record you can audit** — *"… live tracking and **drop-off code confirmation**."* | **A record of every job** — **"Live tracking and timestamped status from pickup through completion."** |
+| Final CTA | *"Standing routes, per-location billing and **certified drivers** …"* | **"Standing routes and per-location billing, managed from the Druppr partner platform."** |
+
+*"secure"* went with the hero rewrite: no security posture has been assessed or
+approved (Phase 0 D10). *"enforced"* asserted an active control that does not
+exist. *"audit"* implied evidentiary weight the record has not been assessed for.
+
+### 3.6 `/legal` (Task 5)
+
+| Location | Was | Now |
+|---|---|---|
+| Credentials strip | `Confidentiality-trained drivers` | **`Timestamped status`** |
+| Hero lede | *"… moved by **vetted drivers**, with **proof on every job**."* | **"Filings, confidential files and process-serving runs coordinated through a tracked delivery workflow, with timestamped status from request through completion."** |
+| Court filings | *"… with the trip tracked and the **drop-off confirmed on arrival**."* | **"… with the trip tracked from pickup through completion."** |
+| Confidential document delivery | *"… carried by **drivers trained on confidentiality**, released at the destination you name."* | **"… carried to the destination you name, tracked from pickup through completion."** |
+| Proof card 2 | **Drop-off code confirmation** — *"A code confirms the handover at the destination."* | **Route and status visibility** — **"Follow the job from pickup through completion."** |
+| Proof card 3 | **Vetted drivers** — *"Confidentiality training is required to take these jobs."* | **A record you can retrieve** — **"Every job's record is retrievable from its tracking code."** |
+
+The hero lede now matches the approved homepage legal lead, so the two surfaces
+state the same true thing rather than diverging.
+
+**Evidence for card 3 [measured].** `src/app/track/[trackingCode]/page.jsx`
+fetches `/public/track/{code}` and renders Tracking Code, Category, Vehicle,
+Order Placed, On Route To Pickup and Package Picked Up. This is the same
+statement already shipped on the homepage showcase caption in Phase 4
+("retrievable from its tracking code after delivery").
+
+**No substitute proof mechanism was introduced anywhere** — no PIN, no
+recipient code, no signature, no seal, no custody claim, no evidentiary weight.
+
+## 4. Section order — before and after **[measured]**
+
+| # | Before (Phase 4.1) | After (Phase 4.2) |
+|---|---|---|
+| 1 | Hero | Hero |
+| 2 | Operational record | Operational record |
+| 3 | From request to recorded delivery | From request to recorded delivery |
+| 4 | *(Reviews, conditional)* | *(Reviews, conditional)* |
+| 5 | Same-day medical transport | Same-day medical transport |
+| 6 | Filings and confidential files | Filings and confidential files |
+| 7 | Why Druppr | Why Druppr |
+| 8 | Coverage | Coverage |
+| 9 | **Become a driver** | — **removed** |
+
+**One change: `BecomeADriver` removed. Nothing was reordered.** `HeroNetwork`,
+`NetworkDemo`, the operational-proof metrics and the Platform Showcase frames
+were not modified; `Services` and `HowItWorks` were not restored.
+
+## 5. Files modified
+
+| File | Change |
+|---|---|
+| `src/components/home/WhyBrand.jsx` | TDG card → vehicle options; icon `TdgCertified` → `RequestRide` |
+| `src/components/home/VerticalSection.jsx` | Medical and legal leads rewritten |
+| `src/app/(main)/page.jsx` | `BecomeADriver` import and render removed |
+| `src/app/(main)/medical/page.jsx` | Credentials, hero, two panels, two reason cards, final CTA; icon `CertifiedDriver` → `RequestRide` |
+| `src/app/(main)/legal/page.jsx` | Credentials, hero lede, two panels, two proof cards; icons `DropOffCode`/`VettedDrivers` → `LiveTracking`/`AuditableRecord` |
+
+**Blast radius.** `HOME_REASONS` and `VerticalSection` are imported only by
+`src/app/(main)/page.jsx`; `/medical` and `/legal` import the `WhyBrand`
+*component* but pass their own reasons. Homepage edits therefore cannot reach the
+two B2B pages, and each B2B page was edited in its own file. `BecomeADriver.jsx`
+itself was not modified — only unimported.
+
+## 6. Defects found in the inherited partial work
+
+Four, all fixed here. Recorded because three of them would have shipped a claim
+this phase exists to remove.
+
+| # | Defect | Fix |
+|---|---|---|
+| **1** | **`'Confidentiality-trained drivers'` still rendering** in the `/legal` credentials strip — the exact claim Task 3 prohibits, and one of the brief's named "do not replace it with" forms. Missed because the phrase search used `confidentiality training`, not the hyphenated adjective | Replaced with `Timestamped status` |
+| **2** | **`/legal` hero lede still said "moved by vetted drivers, with proof on every job"** while the card below it had just had "Vetted drivers" removed for being unevidenced. Internally contradictory, and an unqualified proof claim in the first sentence a firm reads | Replaced with the approved homepage legal wording |
+| **3** | **A new claim was introduced while removing one.** The `/legal` proof card had become *"Same-day across the GTA — Requested and dispatched the same day"*, a dispatch-timing promise, under a "Proof of delivery" heading — when Phase 0 withheld pickup-time claims and said they must not be replaced by another timing promise | Replaced with the retrievable-record card (§3.6) |
+| **4** | **`/medical`'s vehicle card kept the `CertifiedDriver` icon** — a rosette with a check, i.e. a credential badge, sitting beside vehicle copy and still asserting certification pictorially | Replaced with `RequestRide` |
+
+## 7. Repository-wide claim sweep **[measured]**
+
+Rendered text of all six routes, extracted from the prerendered HTML with
+scripts and tags stripped. **The extractor was validated against 11 positive
+controls before the negative sweep was trusted** — a first attempt used a greedy
+`<script>` regex that emptied every document and reported a clean sweep on
+nothing.
+
+### Prohibited vocabulary — rendered output
+
+| Term | `/` | `/medical` | `/legal` | `/send` | `/track/*` | `/track-partner/*` |
+|---|---|---|---|---|---|---|
+| TDG · certified · certification | 0 | 0 | 0 | 0 | 0 | 0 |
+| confidentiality · confidentiality-trained · trained | 0 | 0 | 0 | 0 | 0 | 0 |
+| vetted | 0 | 0 | 0 | 0 | 0 | 0 |
+| drop-off code · dropoff code · confirmation code | 0 | 0 | 0 | 0 | 0 | 0 |
+| signature · photo proof · proof and photo | 0 | 0 | 0 | 0 | 0 | 0 |
+| chain of custody · chain-of-custody | 0 | 0 | 0 | 0 | 0 | 0 |
+| paid weekly · once you are certified · earnings | 0 | 0 | 0 | 0 | 0 | 0 |
+| PHIPA · HIPAA · SLA · guarantee | 0 | 0 | 0 | 0 | 0 | 0 |
+| regulated goods · within the hour | 0 | 0 | 0 | 0 | 0 | 0 |
+| sworn · affidavit · tamper · sealed | 0 | 0 | 0 | 0 | 0 | 0 |
+
+The only raw match anywhere was `signed` on `/`, four times — every one a
+substring of `Assigned`/`assigned`, the real `TaskStatusType` value. Not a
+signature claim.
+
+### Classification of every surviving claim
+
+| Claim | Where | Classification |
+|---|---|---|
+| Request a delivery · track a delivery · tracking link · route visibility · status progression · timestamped status | `/`, `/medical`, `/legal` | **Repository verified** |
+| Six vehicle types | `/`, `/medical` | **Repository verified** — `send/vehicles.js` |
+| Record retrievable from its tracking code | `/`, `/legal` | **Repository verified** — `track/[trackingCode]/page.jsx` |
+| Shared tracking link for sender, business and recipient | `/` | **Repository verified** — `TrackingMap`, `PartnerTrackingMap` |
+| 50+ completed deliveries · 5 business partners · 5 onboarded GTA drivers · Accurate as of August 2026 | `/` | **Founder confirmed** — Phase 3, unchanged |
+| Now serving Toronto and the GTA | all three | **Founder confirmed** — factual service area |
+| Product demonstration · Sample data · Sample ETA · "an illustration, not live customer activity" | `/` | **Clearly labelled demonstration** |
+| Same-day (as a service category) | all three | **Founder confirmed** — category, not a timing promise. No pickup-time or dispatch-time claim remains |
+| **Fully insured** | `/medical`, `/legal` | ⚠️ **Requires professional review** |
+| **Proof of delivery** (credential chip + section heading) | `/legal` | ⚠️ **Requires professional review** |
+| **Temperature-controlled** · **Cold-chain capable vehicles** | `/medical` | ⚠️ **Requires founder confirmation** |
+| **Standing scheduled routes** · **Recurring pickups at set times** · **Standing routes and per-location billing** | `/medical` | ⚠️ **Requires founder confirmation** — contradicted by the repository (§3.2) |
+| **Monthly invoicing, split per location** | `/medical` | ⚠️ **Requires founder confirmation** — no billing surface in this repository |
+| **Served documents delivered to the address you provide** | `/legal` | ⚠️ **Requires review** — qualified in-copy to the trip and the record, never the legal outcome |
+| Insurance · PHIPA · security · SLA · integrations · API | nowhere | **Excluded from public copy** |
+| Chain of custody · drop-off code · signatures · seals · affidavits | nowhere | **Excluded from public copy** |
+| Driver pay · driver availability · recruitment | nowhere | **Outside current scope** — separate future work |
+
+**No unsupported present-tense homepage claim remains.** Every ⚠️ row is on
+`/medical` or `/legal`, is pre-existing, was not named for removal in this
+brief, and is a commercial or professional fact the founder or an adviser can
+evidence directly — unlike driver certification, which was known to be false of
+the population it described.
+
+⚠️ **`Fully insured` deserves particular attention.** `VISION.md` → Trust
+Philosophy names this exact phrase as prohibited: *"No 'fully insured' gloss
+over an undefined reality."* It was left in place because withdrawing an
+insurance claim is a commercial decision, not a copy decision — but on the
+document's own terms it should be confirmed against a policy or removed.
+
+## 8. Bundle measurements **[measured]**
+
+| Metric | Baseline `3a5aca3` | Phase 4.2 | Δ |
+|---|---:|---:|---:|
+| `/` route size | 2.86 kB | **2.86 kB** | **0** |
+| **`/` First Load JS** | 102 kB | **102 kB** | **0** |
+| **Shared JS** | 87.2 kB | **87.2 kB** | **0** |
+| `/` route type | `○ (Static)` | **`○ (Static)`** | unchanged |
+| `/medical` | 997 B / 96 kB | 997 B / 96 kB | 0 |
+| `/legal` | 1.02 kB / 96 kB | 1.02 kB / 96 kB | 0 |
+| Client islands on `/` | 2 | **2** | **0 added** |
+
+Both figures were taken from two full production builds — the baseline was built
+from a stash of these changes, not carried forward from the Phase 4.1 report.
+Removing `BecomeADriver` moved no bytes because it was a server component
+contributing no client JavaScript.
+
+**Scroll height at 1440 [measured]:**
+
+| Route | Baseline | Phase 4.2 | Δ |
+|---|---:|---:|---:|
+| `/` | 5,035 px | **4,711 px** | **−324 px** (the driver band) |
+| `/medical` | 2,651 px | 2,679 px | +28 px (copy reflow) |
+| `/legal` | 2,251 px | 2,279 px | +28 px (copy reflow) |
+
+Interactive elements on `/`: **18 → 17**, the removed driver CTA.
+
+## 9. Maps and Places **[measured]**
+
+Network trace, fresh browser context per route.
+
+| Route | Maps | Places |
+|---|---|---|
+| `/` | **0** | **0** |
+| `/medical` | **0** | **0** |
+| `/legal` | **0** | **0** |
+| `/send` | 6 | 0 (expected — the address flow) |
+| `/track/[code]` | 0 | 0 |
+| `/track-partner/[token]` | 0 | 0 |
+
+## 10. Accessibility results **[measured]**
+
+Contrast computed **with alpha compositing** — translucent foregrounds are
+flattened over their resolved ground before the ratio is taken, the correction
+Phase 4.1 recorded.
+
+| Check | Baseline | Phase 4.2 |
+|---|---|---|
+| Contrast failures on `/` | 0 | **0** |
+| Contrast failures on `/legal` | 0 | **0** |
+| Interactive elements without focus treatment, `/` | 0 / 18 | **0 / 17** |
+| Interactive elements without focus treatment, `/medical` | 5 / 21 | 5 / 21 — **unchanged, pre-existing** |
+| Interactive elements without focus treatment, `/legal` | 4 / 22 | 4 / 22 — **unchanged, pre-existing** |
+| `<h1>` count | 1 per route | **1 per route** |
+| Heading order `/` | `H1 H2×8` | **`H1 H2×8`** — no skips |
+| Heading order `/medical` | `H1 H2 H3 H3 H3 H2×4` | **identical** — no skips |
+| Heading order `/legal` | `H1 H2×7` | **identical** — no skips |
+| Console errors, six routes | 0 | **0** |
+
+**JavaScript disabled:** the homepage renders complete — hero, `OPERATIONAL
+RECORD` with all three metrics, the showcase, all four Why Druppr cards
+including the new vehicle card, both vertical leads. No prohibited phrase
+present. **Reduced motion:** content identical across 2.5 s, complete state
+shown.
+
+### ⚠️ Two measurement artifacts, recorded so they are not mistaken for defects
+
+1. **`/medical` reported 6 contrast failures at ~1.05:1.** All six are white text
+   inside `ExpandingGallery`, sitting on a **photograph**. The computed-style
+   walker resolves a ground by climbing ancestors for a background *colour*;
+   finding none, it fell back to the page ground and scored white-on-white.
+   Re-measured by **sampling the rendered pixels**: **15.70:1**, **6.41:1** and
+   **5.77:1** for the three horizontal runs — all passing. The two vertical
+   spine labels (`writing-mode: vertical-rl`) defeated the pixel sampler's clip
+   as well and were confirmed legible by screenshot. `/legal` reports 0 for the
+   same component only because its gallery ground is an opaque
+   `bg-surface-ink`. **Real contrast regressions introduced by this phase: 0.**
+2. **The first baseline capture was invalid.** The Phase 4.2 server was still
+   holding port 3000, the baseline `next start` failed with `EADDRINUSE`, and
+   the "baseline" screenshots were the Phase 4.2 build. Caught because the
+   images showed the new copy. The port was cleared and every baseline figure in
+   this report re-measured against a server verified to be serving `TDG-licensed`.
+
+## 11. Regression results **[measured]**
+
+| Route | HTTP | `<h1>` | Console errors | Maps |
+|---|---|---|---|---|
+| `/` | 200 | 1 | **0** | 0 |
+| `/medical` | 200 | 1 | **0** | 0 |
+| `/legal` | 200 | 1 | **0** | 0 |
+| `/send` | 200 | 1 | **0** | 6 (expected) |
+| `/track/[code]` | 200 | 1 | **0** | 0 |
+| `/track-partner/[token]` | 200 | 1 | **0** | 0 |
+
+## 12. Screenshots captured
+
+In `scratchpad/phase42/shots/`: `p42-home-full-1440.png` ·
+`p42-medical-full-1440.png` · `p42-legal-full-1440.png` ·
+`p42-home-whybrand-1440.png` · `p42-home-whybrand-390.png` ·
+`p42-home-medical-1440.png` · `p42-home-legal-1440.png` ·
+`p42-home-tail-no-driver-1440.png` · `p42-medical-reasons-1440.png` ·
+`p42-legal-proof-1440.png` · `p42-js-disabled.png` · `p42-reduced-motion.png`.
+Baseline comparisons in `scratchpad/phase42/baseline/`.
+
+## 13. Out-of-scope finding, not addressed
+
+**`ExpandingGallery` renders collapsed at 1440 on both `/medical` and `/legal`.**
+The three panels occupy roughly 380 px of a 1200 px container, and the open
+panel's copy is clipped mid-sentence. **This is pre-existing** — confirmed
+against the baseline build, where it is marginally worse (the open panel's title
+is cut off entirely). It is a layout defect in a shared component, not a claim
+problem, and the brief forbids redesigning these pages. **Recorded as required
+follow-up.**
+
+Also unchanged and out of scope: the `Coverage` neighbourhood list renders on
+all three routes, which `HOMEPAGE.md` → *Homepage Narrative* rules out as a
+local-services SEO pattern; and the 5 + 4 pre-existing focus-treatment gaps on
+`/medical` and `/legal` (Phase 0 A5, never remediated on those routes).
+
+## 14. Acceptance criteria
+
+| Criterion | Status |
+|---|---|
+| No driver TDG-certification claim on any public route | ✅ **[measured]** |
+| No confidentiality-training claim on any public route | ✅ **[measured]** |
+| No claim softened rather than removed | ✅ |
+| Driver recruitment removed, component retained, no dead link | ✅ |
+| `/medical` and `/legal` drop-off-code language removed | ✅ **[measured]** |
+| Homepage remains statically rendered | ✅ `○ (Static)` |
+| First Load JS ≈ 102 kB · shared ≈ 87.2 kB | ✅ **both unchanged** |
+| Zero Maps and Places on `/` | ✅ **0 / 0** |
+| No client JavaScript added | ✅ |
+| Section order unchanged except the driver removal | ✅ |
+| `HeroNetwork`, `NetworkDemo`, proof metrics, showcase frames untouched | ✅ |
+| No console errors | ✅ 0 across six routes |
+| Production build passes · lint passes | ✅ |
+
+**Phase 4.2 meets its acceptance criteria.**
+
+## 15. Phase 5
+
+**Phase 5 has not begun.** No regulated-vertical redesign, no trust and
+compliance section, no consumer booking form, no address inputs, no
+autocomplete, no pricing, no address handoff, no reviews or partner movement, no
+chain-of-custody artifact, no integrations, no insurance/TDG/PHIPA/security/SLA
+claims, no case studies, no customer logos, no testimonials, no driver page, and
+no broader motion system.

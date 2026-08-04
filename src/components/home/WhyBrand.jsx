@@ -1,8 +1,8 @@
 import {
   ConfirmedDelivery,
   LiveTracking,
+  RequestRide,
   SameDayDelivery,
-  TdgCertified,
 } from '@/components/icons'
 
 // A four-card value grid.
@@ -47,9 +47,26 @@ export const HOME_REASONS = [
     icon: <LiveTracking className="h-5 w-5" />,
   },
   {
-    title: 'TDG-certified drivers',
-    description: 'Trained for medical and regulated goods.',
-    icon: <TdgCertified className="h-5 w-5" />,
+    // WAS: "TDG-certified drivers — Trained for medical and regulated goods."
+    //
+    // REMOVED IN PHASE 4.2, and the reason is the important part: the founder
+    // holds TDG certification; the DRIVERS do not. A founder's certification
+    // does not establish driver certification, and the planned in-app training
+    // requirement does not establish that anyone has completed it. Stating it
+    // in the present tense turned future operational work into a live
+    // regulatory claim, on the page a clinic's compliance officer reads.
+    //
+    // NOT softened to "regulation-ready drivers", "compliance-trained fleet" or
+    // similar. Those assert the same unevidenced thing in vaguer words.
+    //
+    // The replacement is a capability the repository can prove: all six vehicle
+    // names below come from src/components/send/vehicles.js and are selectable
+    // in the live booking flow. No availability guarantee is implied — "choose
+    // from" describes the options, not that every one is free at every moment.
+    title: 'Vehicle options for every delivery',
+    description:
+      'Choose from bike, car, SUV, minivan, cargo van and box truck.',
+    icon: <RequestRide className="h-5 w-5" />,
   },
   {
     // CORRECTED TWICE. History matters here, because the card has drifted
