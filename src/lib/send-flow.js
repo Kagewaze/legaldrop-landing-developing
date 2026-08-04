@@ -9,13 +9,23 @@ import {
   useState,
 } from 'react'
 
+import {
+  SEND_FLOW_STORAGE_KEY,
+  hasBothAddresses,
+  isPlace,
+} from '@/lib/send-flow-contract'
+
 // Send-flow state, shared across /send and /send/details.
 //
 // Persisted to sessionStorage so a refresh mid-flow does not throw away the
 // addresses someone just typed. Same reasoning as the guest session: one
 // booking, one tab — it survives refresh and dies when the tab closes.
 
-const STORAGE_KEY = 'legaldrop.send-flow.v1'
+// PHASE 7: the literal moved to src/lib/send-flow-contract.js so the homepage
+// address form can write this key without importing this module — which would
+// have pulled SendFlowProvider's context onto a page that must not mount it.
+// Aliased rather than renamed so every existing reference below is untouched.
+const STORAGE_KEY = SEND_FLOW_STORAGE_KEY
 
 const EMPTY_STATE = {
   pickup: null, // { address, lat, lng }
@@ -172,20 +182,11 @@ export function clearPaymentSession() {
   }
 }
 
-function isPlace(value) {
-  return (
-    value &&
-    typeof value.address === 'string' &&
-    Number.isFinite(value.lat) &&
-    Number.isFinite(value.lng)
-  )
-}
-
-// Both endpoints of the journey are known. Every downstream step depends on
-// this, so it lives here rather than being re-derived per page.
-export function hasBothAddresses(state) {
-  return isPlace(state?.pickup) && isPlace(state?.dropoff)
-}
+// PHASE 7: isPlace and hasBothAddresses moved to send-flow-contract.js, which
+// has no React in it. Re-exported here so every existing importer of
+// `hasBothAddresses` from this module keeps working unchanged — /send,
+// /send/details and /send/pay all import it from here.
+export { hasBothAddresses }
 
 function readStored() {
   if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') {
