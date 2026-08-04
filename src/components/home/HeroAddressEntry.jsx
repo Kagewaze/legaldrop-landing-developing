@@ -85,6 +85,7 @@ function AddressField({
   selected,
   ensurePlaces,
   loaderState,
+  onDegraded,
 }) {
   const [suggestions, setSuggestions] = useState([])
   const [open, setOpen] = useState(false)
@@ -159,9 +160,10 @@ function AddressField({
         setSuggestions([])
         setOpen(false)
         setStatus('failed')
+        onDegraded()
       }
     },
-    [ensurePlaces],
+    [ensurePlaces, onDegraded],
   )
 
   const handleChange = (event) => {
@@ -216,9 +218,10 @@ function AddressField({
       } catch (error) {
         if (!mounted.current) return
         setStatus('failed')
+        onDegraded()
       }
     },
-    [onSelect],
+    [onSelect, onDegraded],
   )
 
   const handleKeyDown = (event) => {
@@ -437,6 +440,12 @@ export function HeroAddressEntry() {
     }
   }, [])
 
+  // Set the moment either field cannot reach Google — a missing or
+  // referrer-rejected key, a blocked network, a details call that fails. It only
+  // ever adds an escape hatch; it never blocks anything the user can still do.
+  const [degraded, setDegraded] = useState(false)
+  const markDegraded = useCallback(() => setDegraded(true), [])
+
   const ready = isPlace(pickup) && isPlace(dropoff)
 
   const handleSubmit = (event) => {
@@ -495,6 +504,7 @@ export function HeroAddressEntry() {
           selected={pickup}
           ensurePlaces={ensurePlaces}
           loaderState={loaderState}
+          onDegraded={markDegraded}
         />
         <AddressField
           id={`${baseId}-dropoff`}
@@ -510,6 +520,7 @@ export function HeroAddressEntry() {
           selected={dropoff}
           ensurePlaces={ensurePlaces}
           loaderState={loaderState}
+          onDegraded={markDegraded}
         />
       </div>
 
@@ -539,6 +550,28 @@ export function HeroAddressEntry() {
           ? 'Both addresses set. Continue to choose a vehicle.'
           : 'Choose a suggestion for each address to continue.'}
       </p>
+
+      {/* ESCAPE HATCH. Shown only when address lookup is degraded — a missing
+          or rejected browser key, a blocked network, a failing details call.
+          Without it a visitor who cannot get suggestions has no route into the
+          product from here, since submission correctly refuses to accept typed
+          text as an address.
+
+          The full booking page runs its own autocomplete against the same
+          service, so this is not a promise that it will work — it is a way out
+          of a form that currently cannot complete. No configuration detail or
+          key name is exposed. */}
+      {(degraded || loaderState === 'failed') && (
+        <p className="mt-2 text-sm text-white/70">
+          <Link
+            href={ROUTES.send.href}
+            className="rounded-control font-semibold text-white underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            Continue on the full booking page
+          </Link>{' '}
+          to enter your addresses there.
+        </p>
+      )}
     </form>
   )
 }
