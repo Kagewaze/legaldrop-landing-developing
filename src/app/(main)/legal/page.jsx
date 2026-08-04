@@ -6,7 +6,7 @@ import {
   TimestampedTracking,
 } from '@/components/icons'
 import { Coverage } from '@/components/home/Coverage'
-import { ExpandingGallery } from '@/components/ExpandingGallery'
+import { ServicePanels } from '@/components/ServicePanels'
 import { WhyBrand } from '@/components/home/WhyBrand'
 import courthouse from '@/images/legal-courthouse.jpg'
 import document from '@/images/legal-document.jpg'
@@ -86,7 +86,7 @@ const CREDENTIALS = [
   'Shared tracking link',
 ]
 
-// Rendered by the shared ExpandingGallery. Descriptions are unchanged from the
+// Rendered by the shared ServicePanels grid. Descriptions are unchanged from the
 // card grid this replaced — see the constraints block above before touching a
 // word of them. Alt text describes what is in the frame and nothing more: on
 // this page especially, a photograph must not imply a proof mechanism the copy
@@ -199,7 +199,7 @@ const RECORD_REASONS = [
 export default function LegalPage() {
   return (
     <div className="bg-surface-page">
-      <ExpandingGallery
+      <ServicePanels
         heading="Legal document delivery for GTA firms"
         // "served documents" was here. Unqualified it reads as asserting that
         // service was legally effected, which this business does not claim.
@@ -232,13 +232,23 @@ export default function LegalPage() {
         // h3 under an h1 the outline skips a level, which is what this page
         // shipped for the first build of this rework.
         panelHeadingLevel="h2"
-        // Below lg this gallery is the whole hero, and three full-height cards
-        // made that 1389px on a 390 phone. Compact mode keeps the open panel
-        // and turns the other two into tappable rows.
-        mobileHeroMode
+        // PHASE 5: `mobileHeroMode` is gone with the accordion. It existed
+        // because three full-height cards below lg made this hero 1389px on a
+        // 390 phone, so closed panels became 64px tappable rows. Those rows
+        // were also the thing that made two of the three services unreachable
+        // without JavaScript. ServicePanels shows every card at every width
+        // instead; the section is taller than the compact accordion was but
+        // shorter than the three full cards it was invented to avoid, and
+        // nothing is hidden behind a tap.
         groundClassName="bg-surface-ink"
         headingClassName="font-display text-4xl font-extrabold text-white sm:text-5xl"
         ledeClassName="mt-4 max-w-[560px] text-lg text-white/85"
+        // White fill on the ink ground. The brand-600 button that works on
+        // /medical's light ground cannot be reused here: #7B2FBE against
+        // surface-ink #1a1421 measures 2.57:1, under the 3:1 floor for a
+        // non-text UI boundary, so the button would barely separate from the
+        // band. White measures 18.01:1. Same recipe as this page's FinalCta.
+        ctaClassName="inline-block rounded-control bg-white px-[30px] py-4 text-base font-semibold text-brand-600 transition-colors hover:bg-[#f2e9fa] hover:text-[#5d1f96] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
       />
       <Credentials />
       <WhyBrand heading="The record every job leaves" reasons={RECORD_REASONS} />
@@ -291,7 +301,7 @@ function FinalCta() {
 // The PartnerCta helper that used to live here went with the text hero — that
 // hero was its only caller. Every remaining partner link on this page is a
 // plain anchor at its own call site: FinalCta above, and the per-panel CTA
-// inside ExpandingGallery, which takes the label as a prop.
+// inside ServicePanels, which takes the label as a prop.
 //
 // PARTNER_URL is a different origin, so these are anchors rather than
 // next/link, and they open in the same tab: registering a firm is the

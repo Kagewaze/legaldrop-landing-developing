@@ -6,7 +6,7 @@ import {
   SendPackage,
 } from '@/components/icons'
 import { Coverage } from '@/components/home/Coverage'
-import { ExpandingGallery } from '@/components/ExpandingGallery'
+import { ServicePanels } from '@/components/ServicePanels'
 import { WhyBrand } from '@/components/home/WhyBrand'
 import pharma from '@/images/medical-pharma.jpg'
 import specimen from '@/images/medical-specimen.jpg'
@@ -79,7 +79,7 @@ export const metadata = {
 // and the recipient.
 const CREDENTIALS = ['Live tracking', 'Timestamped status', 'Shared tracking link']
 
-// Rendered by the shared ExpandingGallery. Descriptions are unchanged from the
+// Rendered by the shared ServicePanels grid. Descriptions are unchanged from the
 // card grid this replaced — see the constraints block above before touching a
 // word of them. Alt text describes what is in the frame and nothing more: these
 // photographs must not narrate a capability the copy is careful not to claim.
@@ -197,7 +197,7 @@ export default function MedicalPage() {
     <div className="bg-surface-page">
       <Hero />
       <Credentials />
-      <ExpandingGallery
+      <ServicePanels
         heading="What we move"
         panels={SERVICES}
         cta="Set up your clinic account"
@@ -308,7 +308,7 @@ function FinalCta() {
 // page's journey, not a detour from it.
 //
 // The matching PartnerLink helper went with the card grid; its per-panel CTA
-// now lives inside ExpandingGallery, which takes the label as a prop.
+// now lives inside ServicePanels, which takes the label as a prop.
 function PartnerCta({ children, className = '' }) {
   return (
     <a
