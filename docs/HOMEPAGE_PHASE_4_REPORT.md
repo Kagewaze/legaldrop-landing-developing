@@ -943,3 +943,366 @@ autocomplete, no pricing, no address handoff, no reviews or partner movement, no
 chain-of-custody artifact, no integrations, no insurance/TDG/PHIPA/security/SLA
 claims, no case studies, no customer logos, no testimonials, no driver page, and
 no broader motion system.
+
+---
+
+# Phase 4.3 — B2B Claim Closeout
+
+> Closes the six claims Phase 4.2 flagged and left standing on `/medical` and
+> `/legal`, plus one found on a third route no earlier phase had audited.
+> **Phase 5 has not begun.**
+>
+> Labels as before: **[measured]** from a production build. Nothing estimated.
+
+## 1. The evidence position
+
+Every one of Tasks 1–5 is conditional on the founder supplying current
+documentary or operational evidence: a policy with effective dates and an
+insured entity; a legal review of what the delivery record proves; equipment
+specs and temperature ranges; a described standing-route process; a described
+billing process.
+
+**No such evidence was supplied.** The brief's own decision standard therefore
+resolves every one of them the same way — *"Remove it when the capability is
+planned, informal, unavailable, expired, or cannot be verified"* — so all five
+claims were **removed**, none were softened, and each is recorded in-file with
+the exact evidence that would restore it.
+
+This is not a judgement that the claims are false. Insurance and a manual
+standing-route arrangement may well exist. It is a judgement that **a public
+present-tense claim requires evidence at the time it is published**, and none
+was available at the time of this pass.
+
+## 2. Preflight **[measured]**
+
+| Check | Result |
+|---|---|
+| Branch | `homepage-redesign` |
+| Working tree clean | ✅ |
+| Commit `f870aa4` present | ✅ |
+| Lint | ✅ no warnings or errors |
+| Production build | ✅ compiled successfully |
+
+### Occurrence record — every match, and where it renders
+
+Repository search plus a rendered-text sweep of **all eight public routes**.
+
+| Phrase | Renders on | Location |
+|---|---|---|
+| `fully insured` | **`/medical`**, **`/legal`** | credentials strip, both |
+| `proof of delivery` | **`/legal`** ×2 | credentials strip + `WhyBrand` section heading |
+| `temperature-controlled` | **`/medical`** ×3 | credential chip + gallery panel title (rendered twice by `ExpandingGallery`) |
+| `cold-chain` | **`/medical`** | gallery panel description |
+| `standing routes` | **`/medical`** | final CTA |
+| `standing routes` | **`/contact-us`** | ⚠️ "Set up a business account" description |
+| `monthly invoicing` | **`/medical`** | reason-card title |
+| `insurance` | nowhere | source comments only |
+| `audit` | nowhere | `AuditableRecord` icon identifier + comments |
+| `chain of custody` | nowhere | `home/Services.jsx` — **unimported**, rollback only |
+| `temperature controlled`, `cold chain`, `monthly billing` | nowhere | no matches |
+
+⚠️ **`/contact-us` was carrying the standing-routes and per-location-billing
+claim** and had never been audited by Phases 0–4.2, which scoped themselves to
+the homepage and the two B2B pages. It was found only because this phase swept
+*rendered routes* rather than named files. `/privacy-policy` was swept for the
+first time too (§8).
+
+## 3. Decisions — Keep / Narrow / Remove
+
+| # | Claim | Decision | Basis |
+|---|---|---|---|
+| 1 | **Fully insured** | **REMOVE** | No policy, effective dates, insured entity, covered operations, vehicle/courier coverage, exclusions or approved wording produced. `VISION.md` → Trust Philosophy names this exact phrase: *"No 'fully insured' gloss over an undefined reality."* |
+| 2 | **Proof of delivery** | **NARROW** | No legal review of what the record proves or what standard it meets. Phase 0 D10 lists proof-of-delivery evidentiary weight as **BLOCKED**. The three cards underneath were already accurate; the *heading* was doing the overclaiming |
+| 3 | **Temperature-controlled / cold-chain** | **REMOVE** | No equipment spec, temperature range, handling procedure, monitoring, logging, driver instruction or exception process. Carrying medical items is not cold-chain capability |
+| 4 | **Standing / scheduled routes** | **REMOVE** | No scheduling exists in the product — no date or time picker in `send/page.jsx`, no scheduling field in `send-flow.js` `EMPTY_STATE` or `buildOrderPayload.js` — and no manual process was described |
+| 5 | **Monthly invoicing** | **REMOVE** | No billing surface exists at all: no invoice generation, billing frequency, payment terms, eligibility rule or approval step. `send/pay` is per-order Stripe checkout |
+
+**None was softened.** No "protected deliveries", "covered service", "insured
+network", "liability protected", "temperature-safe", "medical-grade transport",
+"legally valid proof", "court-ready proof", or "scheduled delivery".
+
+## 4. Exact replacement wording
+
+### `/medical`
+
+| Location | Was | Now |
+|---|---|---|
+| Credentials strip | `Live tracking` · **`Fully insured`** · `Timestamped status` · **`Temperature-controlled`** | `Live tracking` · `Timestamped status` · **`Shared tracking link`** |
+| Hero lead | "Same-day transport for specimens, pharmaceuticals and **temperature-sensitive goods**, tracked from pickup through completion." | **"Same-day transport for specimens, pharmaceuticals and clinic supplies, tracked from pickup through completion."** |
+| Gallery panel 3 | **Temperature-controlled transport** — "Cold-chain capable vehicles for goods that cannot travel at ambient temperature…" | **panel removed entirely** |
+| Reason card 3 | **Standing scheduled routes** — "Recurring pickups at set times, arranged on your account." | **Packages and weight** — **"Set the number of packages and the weight when you book."** |
+| Reason card 4 | **Monthly invoicing** — "Billed monthly, split per location for multi-site practices." | **card removed** (two cards → one replacement) |
+| Final CTA | "**Standing routes and per-location billing**, managed from the Druppr partner platform." | **"Book and track your clinic's deliveries from the Druppr partner platform."** |
+
+**Why the hero lead changed too.** "Temperature-sensitive goods" names the
+cargo, not a capability, which is why earlier passes let it stand. With every
+temperature claim now gone from the page, advertising the service *for goods
+that cannot travel at ambient temperature* is itself a handling claim — a clinic
+reads it as *"they can take this."* `medical_supply` is a real section preset
+(`send/page.jsx:143`), so "clinic supplies" claims nothing new.
+
+**Why the whole panel went rather than its wording.** The title, the description
+**and the photograph** were each the same claim. `medical-temp.jpg` is *"a gloved
+hand holding a metal transport canister packed with cold packs"*. Rewriting the
+copy to workflow language while keeping that frame would have left the
+photograph making the claim the copy had just dropped — exactly what the file's
+own constraints block forbids. No replacement panel was invented, because this
+repository evidences no third medical service distinct from the two remaining,
+and Task 6 prohibits inventing one. `medical-temp.jpg` is now unused and retained
+on disk.
+
+**Why one replacement for two removed cards.** `WhyBrand` resolves three reasons
+to `lg:grid-cols-3`; two would have sat in a four-column track with two dead
+columns. The replacement is verified and restates neither card above it:
+`send-flow.js` `EMPTY_STATE` carries `packageCount` and `weight`,
+`send/details/page.jsx:115,135` renders a `<Stepper>` and a weight `<select>`,
+and `PriceBreakdown.jsx:39` charges for extra packages.
+
+### `/legal`
+
+| Location | Was | Now |
+|---|---|---|
+| Credentials strip | **`Proof of delivery`** · `Timestamped status` · **`Fully insured`** | **`Delivery record`** · `Timestamped status` · **`Shared tracking link`** |
+| `WhyBrand` heading | **Proof of delivery** | **The record every job leaves** |
+| Const name | `PROOF_REASONS` | `RECORD_REASONS` |
+
+The three cards beneath — *Timestamped tracking*, *Route and status visibility*,
+*A record you can retrieve* — were **left exactly as Phase 4.2 wrote them.** They
+describe timestamps, status and retrieval accurately. Only the frame that called
+all three "proof" was removed.
+
+### `/contact-us`
+
+| Was | Now |
+|---|---|
+| "**Standing routes and per-location billing** for clinics and firms." | **"Book and track deliveries for your clinic or firm from one account."** |
+
+### Source comments corrected
+
+Three comment blocks stated removed claims as fact — the `/medical` header
+("standing routes, per-location billing, driver certification on file"), the
+`/legal` header ("accounts, matter-level billing and vetted-driver
+arrangements"), and the `/legal` constraints block ("describe only the proof this
+system actually produces: a timestamped trail and a drop-off code"). All three
+were rewritten. **A comment that states a removed claim as fact is how the claim
+gets restored by the next person editing the file.**
+
+## 5. Files modified
+
+| File | Change |
+|---|---|
+| `src/app/(main)/medical/page.jsx` | Credentials strip, hero lead, gallery panel removed, two reason cards → one, final CTA, header comment; imports `ScheduledRoutes`/`MonthlyInvoicing`/`temp` dropped, `SendPackage` added |
+| `src/app/(main)/legal/page.jsx` | Credentials strip, `WhyBrand` heading, `PROOF_REASONS` → `RECORD_REASONS`, header and constraints comments |
+| `src/app/contact-us/page.jsx` | `OTHER_WAYS` business-account description |
+
+**Rendered routes affected:** `/medical`, `/legal`, `/contact-us`. The homepage
+was **not** touched — `HeroNetwork`, `NetworkDemo`, `OperationalProof`,
+`PlatformShowcase`, the Phase 3 metrics and the section order are all unchanged,
+and no booking or tracking architecture was modified.
+
+## 6. Final claim sweep **[measured]**
+
+Rendered text of all eight public routes, extractor validated against 8 positive
+controls before the negative sweep was trusted.
+
+| Term | `/` | `/medical` | `/legal` | `/send` | `/contact-us` | `/privacy-policy` | `/track/*` | `/track-partner/*` |
+|---|---|---|---|---|---|---|---|---|
+| insurance · insured · fully insured | 0 | **0** | **0** | 0 | 0 | 0 | 0 | 0 |
+| proof · custody · signature · affidavit · sworn | 0 | **0** | **0** | 0 | 0 | 0 | 0 | 0 |
+| temperature · cold-chain · refrigerat* | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 |
+| invoic* · monthly billing | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 |
+| standing route · scheduled route · recurring | 0 | **0** | 0 | 0 | **0** | 0 | 0 | 0 |
+| TDG · certified · certification · confidentiality | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| guarantee · SLA · PHIPA | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| secure · security | 0 | 0 | 0 | 0 | 0 | **3** | 0 | 0 |
+| audit | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+
+`signed` matches 4× on `/` — every one a substring of `Assigned`/`assigned`, the
+real `TaskStatusType` value, as established in Phase 4.2.
+
+### Classification of every surviving claim
+
+| Claim | Where | Classification |
+|---|---|---|
+| Request · track · tracking link · shared tracking link · route and status visibility · timestamped status | `/`, `/medical`, `/legal` | **Repository verified** |
+| Six vehicle types | `/`, `/medical` | **Repository verified** — `send/vehicles.js` |
+| Packages and weight set at booking | `/medical` | **Repository verified** — `send-flow.js`, `send/details/page.jsx`, `PriceBreakdown.jsx` |
+| Record retrievable by tracking code | `/`, `/legal` | **Repository verified** — `track/[trackingCode]/page.jsx` |
+| Book and track from the partner platform | `/medical`, `/contact-us` | **Repository verified** — `track-partner/[trackingToken]` |
+| 50+ deliveries · 5 partners · 5 drivers · Accurate as of August 2026 | `/` | **Founder confirmed** — Phase 3 |
+| Now serving Toronto and the GTA | all marketing routes | **Founder confirmed** |
+| Product demonstration · Sample data · Sample ETA · "an illustration, not live customer activity" | `/` | **Clearly labelled demonstration** |
+| Same-day (service category) | `/`, `/medical` | **Founder confirmed** — category, not a timing promise |
+| Served documents delivered to the address you provide | `/legal` | **Repository verified as worded** — describes the trip and the returned record, never the legal outcome |
+| Fully insured · Proof of delivery · Temperature-controlled · Cold-chain · Standing routes · Monthly invoicing | — | **REMOVED** |
+| TDG · confidentiality training · drop-off code · signatures · seals · affidavits · chain of custody · PHIPA · SLA · integrations · API | — | **Removed / excluded from public copy** |
+| **"We implement security measures … including encryption and restricted access"** | **`/privacy-policy`** | ⚠️ **STILL BLOCKED** — see §8 |
+
+**No unresolved present-tense claim remains on any marketing route.** The single
+outstanding item is on the privacy policy, which is a legal instrument rather
+than marketing copy.
+
+## 7. `ExpandingGallery` — Phase 5 prerequisite
+
+**Confirmed defect, not repaired in this phase** (Task 7 forbids a partial CSS
+patch).
+
+| Property | Finding |
+|---|---|
+| Widths | At 1440 px the gallery stays collapsed; panels occupy ~250–380 px of a 1200 px container |
+| Copy | The open panel's copy is clipped — on `/medical` the panel **title is cut off entirely** and the description wraps one word per line |
+| Routes | Both `/medical` and `/legal` |
+| Origin | **Pre-existing.** Confirmed against the `3a5aca3` baseline build during Phase 4.2, where it is marginally worse |
+| Mechanism | `ExpandingGallery.jsx:143–145` — closed panels are `lg:flex-[0_1_76px]`, the open panel `lg:flex-[1_1_76px]`. The open panel's `flex-grow` is not filling the row |
+| ⚠️ Phase 4.3 consequence | Removing the temperature panel leaves `/medical` with **two** panels, so the unfilled row is now **more conspicuous**. The claim decision was correct and the layout defect is unrelated to it, but the two are visible together |
+
+**Added to the Phase 5 implementation prerequisites as a visual and responsive
+defect requiring repair or replacement.** It is not a claim problem, and it
+should be fixed before `/medical` and `/legal` are next presented.
+
+## 8. Remaining item requiring professional review
+
+**`/privacy-policy` §4 Data Security** — *"We implement security measures to
+protect your information, including encryption and restricted access."*
+
+This asserts specific security controls. Phase 0 D10 lists **Security controls:
+none in repo, security reviewer, not started.** It surfaced for the first time in
+this phase because `/privacy-policy` had never been swept.
+
+**Deliberately not edited.** A privacy policy is a legal instrument, not
+marketing copy; its wording carries compliance consequences, and Phase 0 assigns
+it to privacy counsel. Rewriting it on engineering judgement would be a worse
+error than leaving it flagged. **Owner: privacy counsel + founder.**
+
+The adjacent *"Secure payment details processed through third-party providers"*
+is accurate as worded — payment data is handled in Stripe's elements, which is
+what `VISION.md` → Trust Philosophy requires.
+
+## 9. Bundle measurements **[measured]**
+
+| Metric | Phase 4.2 | Phase 4.3 | Δ |
+|---|---:|---:|---:|
+| `/` route size | 2.86 kB | **2.86 kB** | **0** |
+| **`/` First Load JS** | 102 kB | **102 kB** | **0** |
+| **Shared JS** | 87.2 kB | **87.2 kB** | **0** |
+| `/` route type | `○ (Static)` | **`○ (Static)`** | unchanged |
+| `/medical` | 997 B / 96 kB | **845 B / 95.8 kB** | **−152 B** |
+| `/legal` | 1.02 kB / 96 kB | 1.02 kB / 96 kB | 0 |
+| `/contact-us` | 33.4 kB / 154 kB | 33.4 kB / 154 kB | 0 |
+| Client islands on `/` | 2 | **2** | **0 added** |
+
+`/medical` shrank because a gallery panel, an image import, a reason card and
+two icon imports were removed. **No client JavaScript was added anywhere.**
+
+**Scroll height at 1440 [measured]:** `/` 4,711 px (unchanged) · `/medical`
+2,679 → **2,596 px** · `/legal` 2,279 px (unchanged).
+
+## 10. Maps and Places **[measured]**
+
+| Route | Maps | Places |
+|---|---|---|
+| `/` | **0** | **0** |
+| `/medical` | **0** | **0** |
+| `/legal` | **0** | **0** |
+| `/contact-us` | **0** | **0** |
+| `/send` | 6 | 0 (expected — the address flow) |
+| `/track/[code]`, `/track-partner/[token]` | 0 | 0 |
+
+## 11. Accessibility results **[measured]**
+
+Contrast computed **with alpha compositing**, and each failure additionally
+tagged for whether its ground is a photograph.
+
+| Check | Phase 4.2 | Phase 4.3 |
+|---|---|---|
+| Contrast failures on `/` | 0 | **0** |
+| Contrast failures on `/legal` | 0 | **0** |
+| Contrast failures on `/medical`, **off-image** | 0 | **0** |
+| Contrast failures on `/medical`, over photographs | 6 | 5 — **harness artifact**, see below |
+| Focus treatment missing, `/` | 0 / 17 | **0 / 17** |
+| Focus treatment missing, `/medical` | 5 / 21 | **4 / 19** — improved with the removed panel |
+| Focus treatment missing, `/legal` | 4 / 22 | 4 / 22 — unchanged, pre-existing |
+| `<h1>` count | 1 per route | **1 per route** |
+| Heading order `/` | `H1 H2×8` | **`H1 H2×8`** — no skips |
+| Heading order `/medical` | `H1 H2 H3 H3 H3 H2×4` | **`H1 H2 H3 H3 H2×4`** — one fewer H3 (removed panel), no skips |
+| Heading order `/legal` | `H1 H2×7` | **`H1 H2×7`** — unchanged |
+| Console errors | 0 | **0 across seven routes** |
+
+**The five `/medical` contrast entries are all white text over photographs
+inside `ExpandingGallery`** — the computed-style artifact documented in Phase
+4.2 §10, where pixel sampling measured the same runs at 15.70:1, 6.41:1 and
+5.77:1. The harness now tags them, and **off-image failures are 0**.
+
+**JavaScript disabled:** `/medical` and `/legal` both render complete — all new
+credential chips, the new reason card, the new headings — and **no removed claim
+appears**. **Reduced motion:** content identical across 2.5 s on `/`, `/medical`
+and `/legal`.
+
+### ⚠️ Pre-existing accessibility defect found on `/contact-us`
+
+**3.51:1 at 14 px** — `SERVICE_AREA` ("Now serving Toronto and the GTA") rendered
+in `#8d8695` at `contact-us/page.jsx:202`. This is the exact token failure Phase
+0 recorded as A1/A2 and Phase 1 remediated **on the homepage and the two B2B
+pages only**; `/contact-us` was missed and never re-audited.
+
+**Not fixed here.** It is unrelated to claims, on a route outside this phase's
+scope, and a claim-cleanup commit should stay independently reversible as a
+claim change. **Recorded as a Phase 1 remediation gap and a Phase 5
+prerequisite alongside `ExpandingGallery`.** The fix is the documented one:
+`#8d8695` → `#5f5868`.
+
+## 12. Regression results **[measured]**
+
+| Route | HTTP | `<h1>` | Console errors | Maps |
+|---|---|---|---|---|
+| `/` | 200 | 1 | **0** | 0 |
+| `/medical` | 200 | 1 | **0** | 0 |
+| `/legal` | 200 | 1 | **0** | 0 |
+| `/send` | 200 | 1 | **0** | 6 (expected) |
+| `/contact-us` | 200 | 1 | **0** | 0 |
+| `/track/[code]` | 200 | 1 | **0** | 0 |
+| `/track-partner/[token]` | 200 | 1 | **0** | 0 |
+
+`/privacy-policy` also returns 200 and was swept for claims.
+
+## 13. Screenshots captured
+
+In `scratchpad/phase43/shots/`: `p43-medical-full-1440.png` ·
+`p43-legal-full-1440.png` · `p43-home-full-1440.png` ·
+`p43-medical-credentials-1440.png` · `p43-legal-credentials-1440.png` ·
+`p43-medical-reasons-1440.png` · `p43-medical-gallery-1440.png` ·
+`p43-legal-record-1440.png` · `p43-home-whybrand-1440.png` · plus
+`p43-{home,medical,legal}-js-disabled.png`.
+
+## 14. Acceptance criteria
+
+| Criterion | Status |
+|---|---|
+| Insurance claims removed from all public routes | ✅ **[measured]** |
+| Proof-of-delivery framing narrowed | ✅ **[measured]** |
+| Temperature and cold-chain claims removed | ✅ **[measured]** |
+| Standing/scheduled-route claims removed, all three routes | ✅ **[measured]** |
+| Monthly-invoicing claim removed | ✅ **[measured]** |
+| No claim softened while preserving its implication | ✅ |
+| No empty slot, no duplicated card, no invented capability | ✅ 3-card grid, 3 chips per strip |
+| No compliance claim, performance promise or new functionality added | ✅ |
+| `ExpandingGallery` not modified | ✅ — documented as a Phase 5 dependency |
+| Homepage untouched; section order unchanged | ✅ |
+| `/` remains static · 102 kB · 87.2 kB shared | ✅ **all unchanged** |
+| Zero Maps and Places on the homepage | ✅ **0 / 0** |
+| No client JavaScript added | ✅ |
+| All routes 200 · zero console errors | ✅ |
+| Production build passes · lint passes | ✅ |
+
+**Phase 4.3 meets its acceptance criteria.**
+
+## 15. Phase 5
+
+**Phase 5 has not begun.** No regulated-vertical redesign, no trust and
+compliance section, no consumer booking form, no address inputs, no
+autocomplete, no pricing, no address handoff, no reviews or partner movement, no
+chain-of-custody artifact, no integrations, no scheduling, no invoicing, no
+partner portal, no new routes, and no broader motion system.
+
+**Carried into Phase 5 as prerequisites:** the `ExpandingGallery` collapse (§7)
+and the `/contact-us` contrast failure (§11).

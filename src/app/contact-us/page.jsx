@@ -61,7 +61,16 @@ const OTHER_WAYS = [
     live: true,
     external: true,
     label: 'Set up a business account',
-    description: 'Standing routes and per-location billing for clinics and firms.',
+    // PHASE 4.3: was "Standing routes and per-location billing for clinics and
+    // firms." Both claims were removed from /medical in the same pass and this
+    // was the third public surface carrying them — found by searching rendered
+    // routes rather than only the two pages the phase was scoped to.
+    //
+    // Scheduling is not a product this repository can evidence (no date or time
+    // picker in send/page.jsx, no scheduling field in send-flow.js or
+    // buildOrderPayload.js) and no billing surface exists at all. Replaced with
+    // what the partner platform demonstrably does.
+    description: 'Book and track deliveries for your clinic or firm from one account.',
   },
 ]
 

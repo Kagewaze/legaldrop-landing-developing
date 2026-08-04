@@ -14,9 +14,14 @@ import lawoffices from '@/images/legal-lawoffices.jpg'
 
 // /legal — a B2B lead-generation page for law firms.
 //
-// NOT a booking surface. Firms run on accounts, matter-level billing and
-// vetted-driver arrangements, so every call to action here registers a firm on
-// the partner platform. No send-flow embed, no address form, no price.
+// NOT a booking surface. Every call to action here registers a firm on the
+// partner platform. No send-flow embed, no address form, no price.
+//
+// ⚠️ This paragraph used to say firms "run on accounts, matter-level billing
+// and vetted-driver arrangements". Matter-level billing and driver vetting are
+// not evidenced anywhere in this repository and were removed from the public
+// copy in Phases 4.2 and 4.3; the description went with them, because a comment
+// that states a removed claim as fact is how it gets restored.
 //
 // ── COPY IS CONSTRAINED. READ BEFORE EDITING ────────────────────────────────
 //
@@ -34,38 +39,51 @@ import lawoffices from '@/images/legal-lawoffices.jpg'
 //
 // The buyer here is a firm relying on delivery proof in a proceeding. A claim
 // about sworn service, signatures or seals that does not hold is not a
-// marketing problem — it is a claim a court may be asked to lean on. Describe
-// only the proof this system actually produces: a timestamped trail and a
-// drop-off code.
+// marketing problem — it is a claim a court may be asked to lean on.
+//
+// This line used to end "describe only the proof this system actually produces:
+// a timestamped trail and a drop-off code." Both halves have since changed. The
+// drop-off code was removed in Phase 4.2 (not rendered anywhere in this
+// repository; blocked by Phase 0 pending five founder confirmations), and Phase
+// 4.3 stopped using the word PROOF on this page at all — Phase 0 D10 lists
+// proof-of-delivery evidentiary weight as blocked, so nothing here should be
+// framed as proving anything.
+//
+// DESCRIBE ONLY: a timestamped status trail, retrievable by tracking code.
 
 export const metadata = {
   title: 'Legal document delivery',
 }
 
-// PHASE 4.2 replaced one of these three.
+// PHASE 4.2 removed 'Confidentiality-trained drivers' — the confidentiality
+// course is planned work with no completion record, and the claim was the same
+// one the record cards below had just lost, stated more baldly and rendered
+// higher on the page.
 //
-//   'Confidentiality-trained drivers'  REMOVED. This is the same claim the
-//     PROOF_REASONS card below lost, stated more baldly and rendered higher on
-//     the page. The confidentiality course is PLANNED work: it does not exist,
-//     is not assigned, has not been completed, and has no completion record. A
-//     planned training requirement is not a present-tense fact about drivers.
-//     Not softened to "privacy-trained", "confidentiality-certified" or
-//     "legally trained" drivers — each asserts the same unevidenced thing.
-//     Replaced with a capability every tracking surface demonstrably renders.
+// PHASE 4.3 removed the two it had flagged and left standing:
 //
-// ⚠️ 'Proof of delivery' and 'Fully insured' are LEFT IN PLACE and both REQUIRE
-// REVIEW. Neither was named for removal in this pass, and unlike driver
-// training they are claims the founder or a broker can evidence directly.
-// 'Fully insured' is called out by name in VISION.md → Trust Philosophy ("No
-// 'fully insured' gloss over an undefined reality"), and Phase 0 D10 lists both
-// insurance and proof-of-delivery evidentiary weight as unreviewed. They are
-// flagged in the Phase 4.2 report rather than removed unilaterally, because
-// withdrawing an insurance claim is a commercial decision, not a copy decision.
-// Confirm or remove them.
+//   'Proof of delivery'  REMOVED. Ambiguous in the one context where ambiguity
+//     is expensive. To a firm, "proof" reads as evidentiary weight, and Phase 0
+//     D10 lists proof-of-delivery evidentiary claims as BLOCKED — no legal
+//     review has confirmed what the record proves or what standard it meets.
+//     What this product makes is a timestamped status trail retrievable by
+//     tracking code, so that is what the strip now says. Not restated as
+//     "legally valid proof", "court-ready", "verified legal service" or
+//     "indisputable confirmation".
+//   'Fully insured'      REMOVED. No policy, effective dates, insured entity,
+//     covered operations or exclusions were produced. VISION.md → Trust
+//     Philosophy names this exact phrase: "No 'fully insured' gloss over an
+//     undefined reality." Not softened to "protected", "covered" or "liability
+//     protected".
+//
+// Both are RESTORABLE the day the evidence exists. 'Shared tracking link' is
+// the replacement because it is the one verified facet the record cards below
+// do not carry: track/[trackingCode] and track-partner/[trackingToken] serve
+// the same job to the firm and to the recipient.
 const CREDENTIALS = [
-  'Proof of delivery',
+  'Delivery record',
   'Timestamped status',
-  'Fully insured',
+  'Shared tracking link',
 ]
 
 // Rendered by the shared ExpandingGallery. Descriptions are unchanged from the
@@ -101,9 +119,20 @@ const SERVICES = [
   },
 ]
 
-// Passed to the shared WhyBrand grid — the "Proof of delivery" section from the
-// brief, rendered in the same card treatment as the home page.
-const PROOF_REASONS = [
+// Passed to the shared WhyBrand grid, in the same card treatment as the home
+// page.
+//
+// PHASE 4.3 renamed this from PROOF_REASONS, and renamed the section heading it
+// renders under from "Proof of delivery" to "The record every job leaves". The
+// three cards were already accurate — they describe timestamps, status and
+// retrieval — but the heading above them was doing the overclaiming, framing
+// all three as PROOF to a buyer who may one day rely on that word in a
+// proceeding. Phase 0 D10 lists proof-of-delivery evidentiary weight as
+// BLOCKED, so the frame had to go even though its contents could stay.
+//
+// Do not restore "proof" as the heading without legal review confirming both
+// what the record proves and what standard it satisfies.
+const RECORD_REASONS = [
   {
     title: 'Timestamped tracking',
     description: 'Every job carries a live, time-stamped record of the trip.',
@@ -183,7 +212,7 @@ export default function LegalPage() {
         // PHASE 4.2 removed two more claims from this same sentence:
         //
         //   "moved by vetted drivers"  — driver vetting is not evidenced
-        //     anywhere in this repository, and the PROOF_REASONS card that
+        //     anywhere in this repository, and the RECORD_REASONS card that
         //     also said it was dropped in this pass. Leaving it in the h1 lede
         //     while removing it from a card below would have been incoherent.
         //   "with proof on every job"  — an unqualified proof claim, in the
@@ -212,7 +241,7 @@ export default function LegalPage() {
         ledeClassName="mt-4 max-w-[560px] text-lg text-white/85"
       />
       <Credentials />
-      <WhyBrand heading="Proof of delivery" reasons={PROOF_REASONS} />
+      <WhyBrand heading="The record every job leaves" reasons={RECORD_REASONS} />
       <Coverage />
       <FinalCta />
     </div>
