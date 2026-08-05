@@ -412,7 +412,7 @@ prefilled.
 
 | # | Item | Status |
 |---|---|---|
-| **W13** | **Hero is +258 px at 390**, pushing the network demonstration mostly below the fold (~120 px visible). Everything the brief requires in the first screen is there, but the demo is now a scroll-reveal on a phone | New, accepted |
+| **W13** | **Hero is +258 px at 390**, pushing the network demonstration mostly below the fold (~120 px visible) | ✅ **CLOSED by Phase 7.1** — hero 912 px, demo 199 px visible including the complete route and the active status |
 | **W14** | At 1440 an open suggestion list extends ~100 px below the fold with five results. Nothing is clipped and the page scrolls normally | New, minor |
 | **W15** | The homepage and `/send` now run **two different autocomplete implementations** against the same service. Deliberate, and the commit path is shared — but a future change to how a place becomes coordinates must be made in both | New, documented in-file |
 | **W16** | `net::ERR_FAILED` appears in the console when the network blocks Google. Browser-level, not application code | New, benign |
@@ -449,3 +449,242 @@ prefilled.
 **Phase 8 has not begun.** No review animation, partner-logo animation,
 integrations, chain-of-custody artifact, footer restructuring, broad motion work
 or final launch optimisation.
+
+---
+
+# Phase 7.1 — Mobile Product-Balance Refinement
+
+> A narrowly scoped composition pass. No change to the address architecture,
+> Places implementation, storage contract, tracking language, section order,
+> metrics, Platform Showcase, verticals or Trust section. **Phase 8 has not
+> begun.**
+>
+> **[measured]** from a production build, live DOM. Screenshots were never used
+> as the measurement; all captures suppress motion.
+
+## 1. Initial height breakdown at 390 (viewport 844) **[measured]**
+
+| Element | Height |
+|---|---:|
+| hero padding-top | 40 |
+| H1 | 108 |
+| supporting statement (+16 margin) | 77 |
+| grid gap before the form | 28 |
+| form top margin | 24 |
+| pickup control (label + input) | 79 |
+| inter-field gap | 16 |
+| drop-off control | 79 |
+| submit row (+20 margin) — submit 58, gap 12, secondary 44 | **114** |
+| helper region (+12 margin) — **two lines** | **43** |
+| **`NetworkDemo` panel** | 404 |
+| ├ panel padding | 16 |
+| ├ header (label + Sample data) | 36 |
+| ├ route diagram | 153 |
+| ├ active dispatch block | ~110 |
+| └ secondary queue (2 rows) | ~70 |
+| hero padding-bottom | 40 |
+| **Hero total** | **1,101 (1.30 viewports)** |
+| **Demo visible in first viewport** | **120** |
+
+**Three sources, not one:** a stacked submit row spending 114 px on two actions,
+a helper sentence wrapping to two lines, and a diagram whose `viewBox` carries
+an almost empty band above Y = 45 (the route lives at Y 68–188).
+
+**Reductions ruled out** as harmful: input height (52 px, target size), visible
+labels, the secondary business action, failure messages, the `/send` degraded
+link, combobox semantics, H1 or supporting copy (both required complete), and
+body text size.
+
+## 2. Form changes — mobile only
+
+Field gap `4→3` · label margin `1.5→1` · submit padding `py-4→py-3` · submit row
+gap `3→2` with a tighter top margin · form top margin `6→4` · helper margin
+`3→2` · **both helper strings shortened to one line at 390**.
+
+The ready message mattered beyond its own height: *"Both addresses set. Continue
+to choose a vehicle."* wrapped to two lines, so selecting the second address
+nudged the whole panel down ~21 px — **a layout shift caused by the user
+succeeding.** Now *"Ready — continue to choose a vehicle."*, one line in both
+states.
+
+**Unchanged:** labels, control heights, the custom autocomplete, every validation
+rule, keyboard behaviour, the degraded fallback, the no-JavaScript fallback, and
+the `/contact-us` action. Fields were **not** placed on one narrow row.
+
+## 3. Network-demo responsive changes — CSS variants only
+
+**No new client island, no JavaScript, no dependency.**
+
+| Change | Effect |
+|---|---|
+| Panel padding `4→3` below sm | −8 |
+| Tighter internal margins (active block, progress bars, queue) | −10 |
+| **Queue shows one row below sm**, both from sm | −26 |
+| **Diagram's dead top band clipped** — wrapper with `-mt-[42px]` below sm | −42 |
+
+**Nothing of the route is lost.** The route runs viewBox Y 68–188 with the
+marker at 120; the crop stops well clear of P3. A wrapper rather than a second
+`viewBox` because `viewBox` is an attribute, not a class — changing it
+responsively would need JavaScript, and this phase adds none.
+
+Retained: the `Product demonstration` and `Sample data` labels, the route,
+pickup and destination, the active category, the current status, evidence that
+other jobs exist, the `sr-only` description, and the no-JS and reduced-motion
+completed states. **No disclosure control, carousel, tabs or horizontal scroll.**
+
+**Tablet.** Between sm and lg the demo took the full 1200 px column — 656 px wide
+at 768, and since the diagram keeps its 400×210 ratio its height followed to
+~344 px. Capped at **520 px below lg**, which is exactly the ceiling the lg grid
+already gives that column, so the two ranges agree rather than adding a rule.
+
+## 4. Hero height, before and after **[measured]**
+
+| Width | Before | After | Δ | Viewports |
+|---|---:|---:|---:|---|
+| **390** | 1,101 | **912** | **−189** | 1.30 → **1.08** |
+| **430** | 1,054 | **897** | **−157** | 1.25 → **1.06** |
+| **768** | 1,194 | **1,098** | **−96** | 1.41 → **1.30** |
+| **1024** | 773 | **773** | **0** | 0.92 — unchanged |
+| **1440** | 696 | **696** | **0** | 0.82 — unchanged |
+
+Page height at 390: 6,413 → **6,223**.
+
+## 5. First-viewport elements at 390, before and after **[measured]**
+
+| Element | Before | After |
+|---|---|---|
+| Complete H1 | ✅ | ✅ |
+| Complete supporting statement | ✅ | ✅ |
+| Pickup field | ✅ | ✅ |
+| Drop-off field | ✅ | ✅ |
+| Submit control | ✅ | ✅ |
+| Business CTA | ✅ | ✅ |
+| `Product demonstration` + `Sample data` | 36 px — label only | ✅ 26 px, fully legible |
+| **Complete route diagram** | ❌ 55 of 153 px | ✅ **158 of 158 px** |
+| **Active dispatch row + status chip** | ❌ 0 px | ✅ **23 px** |
+| Secondary queue row | ❌ 0 px | 12 px |
+
+At 430: demo visible **235 px**, diagram complete, active row **38 px**.
+
+**This is the preferred outcome, not the minimum** — the route diagram and the
+active status are both substantially visible, rather than one or the other.
+
+## 6. Visible network-demo height **[measured]**
+
+| Width | Before | After |
+|---|---:|---:|
+| 390 | **120** | **199** |
+| 430 | 177 | **235** |
+| 768 | 262 | 262 |
+| 1024 | 504 | 504 |
+| 1440 | 504 | 504 |
+
+## 7. Booking-regression results **[measured]**
+
+| Check | Result |
+|---|---|
+| Maps / Places before interaction | **0 / 0**, no `google` object |
+| Bootstrap entries after focusing both fields | **1** — no duplicate script |
+| Suggestion selection | ✅ 5 options, keyboard and pointer |
+| Stale-response protection | ✅ monotonic ids |
+| Edit-after-selection invalidation | ✅ submit disables, re-selection re-enables |
+| Keyboard combobox | ✅ arrows, Enter, Escape, Tab — no trap |
+| Valid submit → session merge | ✅ real coordinates written |
+| Unrelated state preserved | ✅ `packageCount`, `weight`, `vehicle`, `section`, `contact` |
+| Address data in URL | ✅ none — query and hash empty |
+| `/send` redirect and prefill | ✅ both element values read back exactly |
+| Degraded-network escape link | ✅ `/send` and `/contact-us` both offered |
+| Malformed session state | ✅ empty fields, no crash |
+| No-JavaScript fallback | ✅ form hidden, real links shown |
+
+**The storage contract and the loader were not touched.**
+
+## 8. Keyboard and accessibility results **[measured]**
+
+| Check | `/` |
+|---|---|
+| Visible labels retained | ✅ |
+| Control targets | inputs 52 px, submit ≥ 44, secondary 44 |
+| Focus treatment | **0 / 23** missing |
+| Active option distinguishable without colour | ✅ `brand-600` leading rule + tint |
+| Duplicate IDs | none — `useId()` |
+| Focus trap | none |
+| Horizontal overflow | none at 390/430/768/1024/1440 |
+| **Visible clipping at 200 % zoom** | **0** — 4 reported, all `sr-only` |
+| Unnecessary announcements | none — status is `aria-describedby`, not `aria-live` |
+| `sr-only` network description | retained |
+| `<h1>` count · heading order | 1 · `H1 H2×5 H3×3 H2×3`, unchanged |
+| **Contrast (alpha-composited)** | **0 failures** |
+
+## 9. JavaScript-disabled results **[measured]**
+
+`[data-hero-entry]` `display:none`, `[data-hero-nojs]` `display:flex`, links to
+`/send` and `/contact-us`, H1, lead and the demonstration's completed state all
+present. 3,620 characters of body text.
+
+## 10. Reduced-motion results **[measured]**
+
+Content identical across 2.5 s on `/`, `/medical` and `/legal`. The demo's
+completed state renders; the crop is a static wrapper and does not animate.
+
+## 11. Bundle measurements **[measured]**
+
+| Metric | Phase 7 | Phase 7.1 |
+|---|---:|---:|
+| `/` route type | `○ (Static)` | **`○ (Static)`** |
+| `/` route size | 6.79 kB | **6.85 kB** |
+| **`/` First Load JS** | 101 kB | **101 kB** |
+| **Shared JS** | 87.2 kB | **87.2 kB** |
+| **Client islands** | 3 | **3** |
+
+**Zero JavaScript added** — the +0.06 kB is Tailwind variant classes in the
+markup. No new dependency.
+
+## 12. Maps and Places **[measured]**
+
+`/` **0 / 0** on initial load. `/medical`, `/legal`, `/contact-us` 0 / 0.
+`/send` 6 Maps (expected). Both tracking routes 0 / 0.
+
+## 13. CLS results **[measured]** — three isolated contexts
+
+| Width | Before | After |
+|---|---|---|
+| 1440 | 0.0001 | **0.0001 · 0.0001 · 0.0001** |
+| 390 | 0 | **0.002 · 0.002 · 0.002** |
+
+⚠️ **390 moved from 0 to 0.002.** Immaterial against the 0.05 budget — ~25×
+inside it — but it is a change, and it is recorded rather than rounded away.
+
+## 14. Regression **[measured]**
+
+| Route | HTTP | `<h1>` | Console errors | Maps |
+|---|---|---|---|---|
+| `/` | 200 | 1 | **0** | **0** |
+| `/medical` · `/legal` · `/contact-us` | 200 | 1 | **0** | 0 |
+| `/send` | 200 | 1 | **0** | 6 (expected) |
+| `/track/[code]` · `/track-partner/[token]` | 200 | 1 | **0** | 0 |
+
+## 15. Remaining mobile weaknesses
+
+| # | Item | Status |
+|---|---|---|
+| **W13** | **Closed.** The demo is no longer a label and a border; the complete route and the active status are in the first viewport | Resolved |
+| **W17** | The **second queue row is hidden below sm**. One row still carries "other jobs exist", but a phone visitor sees less breadth than a desktop one | New, accepted |
+| **W18** | **768 is still 1.30 viewports.** Better than 1.41, but the single-column range remains the tallest hero | Improved, open |
+| **W19** | CLS at 390 is 0.002 rather than 0 | New, immaterial |
+| W11 | `/` is 7.37 mobile screens; E1 (≤ 5) still unmet | Improved from 7.60 |
+| W14–W16 | Suggestion list extends below the fold at 1440 · two autocomplete implementations · browser `net::ERR_FAILED` under a blocked network | Unchanged |
+
+## 16. Is the platform-versus-booking balance restored?
+
+**Yes, at 390 and 430.** A first-time mobile visitor now sees a usable delivery
+entry *and* a coordination system: the labelled demonstration, a complete route
+between two points, and a live job with its status — the evidence that Druppr
+coordinates rather than merely takes bookings. The form did not lose a label, a
+target size, a validation rule or a fallback to get there.
+
+**At 768 the balance is better but the hero is still 1.30 viewports**, which is
+the honest remaining gap.
+
+**Phase 8 has not begun.** No reviews movement, partner movement, integrations,
+broad motion, footer restructuring or launch optimisation.
