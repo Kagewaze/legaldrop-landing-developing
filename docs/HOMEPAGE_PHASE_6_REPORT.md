@@ -26,7 +26,19 @@
 | `/` route type | `○ (Static)` |
 | `/` route size · First Load JS | 2.46 kB · **102 kB** |
 | Shared JS | **87.2 kB** |
-| Client islands on `/` | 1 reachable (`HeaderMobileNav`) |
+| Client islands on `/` | ⚠️ **1 reachable (`HeaderMobileNav`) — WRONG, see note below** |
+
+> ⚠️ **SUPERSEDED BY PHASE 7 — the island count in this report is wrong
+> throughout.** It records 1; the correct figure at Phase 6 was **2**
+> (`HeaderMobileNav` and `NetworkDemo`, added in Phase 2). `NetworkDemo` was
+> simply missed. Corrected in `HOMEPAGE_PHASE_7_REPORT.md` §19. Every "1" in the
+> island rows of this document should be read as "2".
+>
+> Running total for the record: Phase 1 **1** · Phase 2 **2** · Phases 3–6 **2**
+> · Phase 7 **3** (`HeroAddressEntry`) · Phase 8 **4** when four or more reviews
+> render (`ReviewMotion`), otherwise 3. Phase 9 verified 3 on the live page and
+> 4 with reviews, and records that 4 now exceeds both documented ceilings — see
+> `HOMEPAGE_PHASE_9_REPORT.md`.
 | Maps / Places on `/` | **0 / 0** |
 | CLS (3 isolated runs) | 0.0001 · 0.0001 · 0.0001 |
 | Homepage height | 390 **6,493** · 768 6,219 · 1024 4,558 · 1440 **4,571** |

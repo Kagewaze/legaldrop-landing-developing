@@ -312,7 +312,17 @@ Reviewed against the five questions, from the first screen only:
 | Reduced-motion fallback complete | ✅ **[measured]** |
 | No material CLS regression | ✅ home 0.0001, `/legal` 0 **[measured]** |
 | No console errors | ✅ **0** on all six routes **[measured]** |
-| No accessibility regression | ✅ 0 contrast fails, 0 focus gaps, 1 h1, landmarks intact **[measured]** |
+| No accessibility regression | ⚠️ **"0 contrast fails" SUPERSEDED — see below** · 0 focus gaps, 1 h1, landmarks intact **[measured]** |
+
+> ⚠️ **SUPERSEDED BY PHASE 4 — the "0 contrast failures" above was wrong.**
+> The Phase 2.1 probe compared raw `rgba()` values as if they were opaque
+> instead of compositing them over the ground, so `rgba(255,255,255,0.3)` scored
+> as pure white at 18:1. Three elements actually failed. Phase 3 caught the same
+> flaw in its own method and re-measured; Phase 2.1 was never re-run, so this row
+> stood uncorrected until Phase 4 found it. The full account, and the fixes, are
+> in `HOMEPAGE_PHASE_4_REPORT.md` — search "Phase 2.1 contrast probe".
+> Phase 9 re-measured the homepage with compositing: **0 of 120 text/ground
+> pairs below threshold at 1440, 0 of 116 at 390.**
 | All listed routes pass regression | ✅ **6/6**, HTTP 200 **[measured]** |
 | Production build passes | ✅ **[measured]** |
 | Homepage remains static | ✅ `○ (Static)` **[measured]** |

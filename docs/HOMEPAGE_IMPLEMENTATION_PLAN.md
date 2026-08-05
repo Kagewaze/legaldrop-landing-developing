@@ -477,7 +477,7 @@ Preserving the current server-rendered advantage is a hard requirement, not an a
 | Route rendering | Static prerender | **Must remain static** |
 | First Load JS `/` | 100 kB | **≤ 130 kB** |
 | Homepage-specific JS | ≈ 12.8 kB | **≤ 40 kB** |
-| Client islands on `/` | 1 (`HeaderMobileNav`) | **≤ 3** |
+| Client islands on `/` | 1 (`HeaderMobileNav`) | **≤ 3** — ⚠️ **now exceeded when reviews render; see below** |
 | LCP (mid-tier, 4G) | *not captured — Phase 1* | **≤ 2.0 s** |
 | CLS | 0.0016 / 0.0014 | **≤ 0.05** |
 | Total transfer, cold desktop | 454 kB | **≤ 600 kB** |
@@ -485,6 +485,43 @@ Preserving the current server-rendered advantage is a hard requirement, not an a
 | Largest single image (source) | 441 kB | **≤ 200 kB** |
 | `maps.googleapis.com` on load | **0 requests** | **0 requests** |
 | Autoplay animation cost | none | **≤ 2 ms/frame**, paused off-screen and when tab hidden |
+
+### ⚠️ Phase 9 — the island ceiling is exceeded, and the two governing documents disagree
+
+Recorded here rather than resolved in code, per §2's rule that a conflict is
+settled in the documents first. **This one is not settled: it needs a founder
+decision.**
+
+| Source | Ceiling |
+|---|---|
+| `HOMEPAGE.md` → Experience gates, **E1–E9 are hard gates** | **≤ 2** interactive islands |
+| This plan, §10 above | **≤ 3** |
+| **Measured on the live page, Phase 9** | **3**, or **4** when Google returns ≥ 4 reviews |
+
+The two documents have disagreed since they were written; nobody reconciled them,
+and the actual count passed both numbers without either being cited. Phase 8
+recorded the increase honestly ("Client islands 3 → 4") but did not note that it
+crossed a ceiling.
+
+Every island traces to an approved decision, which is why this reads as a stale
+number rather than as scope creep:
+
+| Island | Approved by |
+|---|---|
+| `HeaderMobileNav` | pre-existing; the shared header's mobile disclosure |
+| `NetworkDemo` | Phase 0 **D4** — the hero demonstration |
+| `HeroAddressEntry` | Phase 0 **D5** — "functional or a button", and functional was chosen |
+| `ReviewMotion` | Phase 8 brief — the approved auto-advance exception |
+
+**What is NOT in question:** the budget the number exists to protect is being
+met. `/` is still `○ (Static)`, First Load JS is **101 kB** against a 130 kB
+ceiling, shared JS 87.2 kB, and the reviews themselves stay server-rendered —
+`ReviewMotion` is a wrapper around `children`, so no review data enters the
+client bundle.
+
+**Resolution required from the founder:** either raise E5 in `HOMEPAGE.md` to
+match what has been approved and shipped, or remove an island. Until then the
+gate is recorded as exceeded rather than quietly re-baselined.
 
 **Google Maps and Places must not load on the critical path.** If a functional homepage address form ships (S7), the Maps/Places SDK loads **lazily on first user interaction** — focus or click on the field — never on page load. The server-rendered band must be complete and usable-looking before any Maps code is requested. A hero network visual that requires Maps is **not permitted**; use a lightweight rendering (SVG/canvas) with a static poster fallback.
 
