@@ -113,7 +113,20 @@ const SERVICES = [
       // the same unevidenced driver-certification claim as the TDG wording.
       'Prescriptions and pharmacy stock moved between locations the same day, tracked from pickup through completion.',
     image: pharma,
-    alt: 'A courier moving boxes on a hand truck from a delivery van.',
+    // PHASE 9: was 'A courier moving boxes on a hand truck from a delivery van.'
+    //
+    // This file's own Phase 5 note above gives up the "medical courier" search
+    // term in the <title> because VISION.md forbids Druppr being described as a
+    // courier — and then the alt text two blocks down said it anyway. Alt text
+    // is published copy: screen readers announce it and search engines index it,
+    // so the one word the page had deliberately paid to remove was still on it.
+    //
+    // The replacement follows the rule already stated above this array — alt
+    // text "describes what is in the frame and nothing more". It names the
+    // action and the objects, and assigns no job title to the person, which is
+    // also more accurate: nothing in the photograph identifies who they work
+    // for.
+    alt: 'A person moving boxes on a hand truck from a delivery van.',
   },
   {
     title: 'Lab & specimen transport',
