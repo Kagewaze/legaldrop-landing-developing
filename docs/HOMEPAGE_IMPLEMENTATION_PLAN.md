@@ -455,7 +455,7 @@ Hover and focus states (colour and elevation, ≤ 200 ms), form focus transition
 
 ### Movement requiring justification
 
-- **Review movement** — permitted only as a static grid or a **manually-controlled** scroller. Auto-advance is prohibited.
+- **Review movement** — ⚠️ **AMENDED BY THE PHASE 8 APPROVAL.** This line previously read *"permitted only as a static grid or a manually-controlled scroller. Auto-advance is prohibited."* The Phase 8 brief approved a continuously moving review track (left to right) under conditions that did not exist when the prohibition was written: a visible pause/resume control with `aria-pressed`, hover and focus pausing, explicit pause outranking both, full suppression under `prefers-reduced-motion` and without JavaScript, an `aria-hidden` duplicate so each review is announced once, and a measured count threshold below which the static grid still renders. Recorded here rather than left as a contradiction between this document and the code — see `HOMEPAGE_PHASE_8_REPORT.md`. **The static grid remains the behaviour below four reviews.**
 - **Partner-logo movement** — a marquee is permitted only with a visible pause control, reduced-motion suppression, and only when logos are real and consented. Default is a **static grid**. Note `tailwind.config.js` already defines an unused `marquee` animation; reviving it requires meeting these conditions, not merely referencing it.
 
 ### Decorative motion — rejected
