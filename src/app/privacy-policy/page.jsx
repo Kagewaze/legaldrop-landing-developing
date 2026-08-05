@@ -14,7 +14,17 @@ const PrivacyPolicy = () => {
       </Head>
 
       <Layout>
-      <main className="max-w-4xl mx-auto p-6">
+      {/* ⚠️ PHASE 9: this was a second <main>. Layout already renders
+          <main id="main-content">, so the route shipped TWO main landmarks —
+          measured, 2 on this route against 1 on every other. A document may
+          have only one, and the skip link targets Layout's, so assistive
+          technology enumerating landmarks met an unnamed duplicate.
+
+          Changed to a <div>; the classes are unchanged, so nothing moves.
+          THE POLICY TEXT IS DELIBERATELY UNTOUCHED — the security-controls
+          sentence below is assigned to privacy counsel, not to engineering.
+          See HOMEPAGE_PHASE_9_REPORT.md. */}
+      <div className="max-w-4xl mx-auto p-6">
         <h1 className="text-3xl font-semibold mb-6">Privacy Policy</h1>
         <p className="mb-4">
           <strong>Effective Date:</strong> 2025-01-06
@@ -124,7 +134,7 @@ const PrivacyPolicy = () => {
             <strong>Phone:</strong>+13435984928
           </p>
         </section>
-      </main>
+      </div>
       </Layout>
 
     </>

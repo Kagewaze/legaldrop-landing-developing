@@ -45,6 +45,24 @@ const ERROR = 'mt-1.5 text-sm text-[#b42318]'
 
 const CONTACT_LINK = 'transition-colors hover:text-[#17131c]'
 
+// The two "Other ways to reach us" links, extracted so the identical recipe is
+// not typed twice in the branch below.
+//
+// ⚠️ PHASE 9 ADDED `inline-flex min-h-6 items-center`. These rendered 20px tall
+// — the only sub-24px targets left on any public route, against WCAG 2.5.8
+// Target Size (Minimum, AA, 24x24). The criterion's inline exception does not
+// cover them: each is a standalone block link heading its own list item with a
+// description beneath, not a link inside a sentence.
+//
+// Same remedy as Footer.jsx, where the reasoning is recorded at length:
+// inline-flex is what allows a min-height to apply to an otherwise inline box.
+// Text size and colour are unchanged, so the only visual effect is 4px of box.
+// No `after` hit-area overlay is used here — Footer needs one because its links
+// sit on a 32px pitch, whereas these are a whole list item apart, so the box can
+// simply be the correct size.
+const OTHER_WAY_LINK =
+  'inline-flex min-h-6 items-center rounded-control text-base font-semibold text-brand-600 transition-colors hover:text-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600'
+
 // Built ONLY from destinations that already exist and are already flagged
 // shippable in navigation.js, filtered through the same `live` gate the Footer
 // uses — so a route that has not shipped cannot leak onto the page that
@@ -176,17 +194,11 @@ export default function ContactUs() {
                         {/* PARTNER_SIGNUP_URL is a different origin, so it is a plain
                             anchor — next/link is for in-app routes. */}
                         {way.external ? (
-                          <a
-                            href={way.href}
-                            className="rounded-control text-base font-semibold text-brand-600 transition-colors hover:text-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
-                          >
+                          <a href={way.href} className={OTHER_WAY_LINK}>
                             {way.label}
                           </a>
                         ) : (
-                          <Link
-                            href={way.href}
-                            className="rounded-control text-base font-semibold text-brand-600 transition-colors hover:text-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
-                          >
+                          <Link href={way.href} className={OTHER_WAY_LINK}>
                             {way.label}
                           </Link>
                         )}
