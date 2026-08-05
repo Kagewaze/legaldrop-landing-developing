@@ -255,14 +255,26 @@ export const LEGAL_ENTITY = null
 // footer line below says "Now serving Toronto and the GTA".
 //
 //   SERVICE_AREA_PHRASE — drops into running copy ("Send anything across …").
-//                         Deliberately does NOT name a city: it matches the
-//                         site tagline, "Your city's same-day delivery
-//                         network", and stays true as more cities open.
+//                         Deliberately does NOT name a city, so it stays true as
+//                         more cities open.
 //   SERVICE_AREA        — the standalone line in the footer's bottom bar.
 //
-// STILL NOT WIRED: src/app/layout.jsx's metadata description spells the area
-// out longhand and is not driven from here. That file was out of scope when
-// this constant landed — align it when layout.jsx is next touched.
+// ⚠️ PHASE 9.1 CORRECTED THE RATIONALE ABOVE, NOT THE VALUE. It used to justify
+// the city-less phrasing by saying it "matches the site tagline, 'Your city's
+// same-day delivery network'". That tagline no longer exists: Gate 6 replaced
+// the default title with "Same-day logistics infrastructure for the GTA",
+// which names the market deliberately. The comment would otherwise have gone on
+// citing a string that is nowhere in the codebase.
+//
+// THE VALUE IS UNCHANGED, and is currently rendered by nothing: its only
+// consumer is home/Hero.jsx, the unimported Phase 2 rollback component. If that
+// hero is ever restored, note that "Send anything across your city" now sits
+// BELOW the title's stated GTA service area rather than matching it — resolve it
+// then, on evidence, rather than pre-emptively editing a component nobody
+// renders.
+//
+// STILL NOT WIRED: src/app/layout.jsx's metadata description spells the area out
+// longhand and is not driven from here.
 export const SERVICE_AREA_PHRASE = 'your city'
 
 // Copy, not configuration, but kept here so it is not buried in JSX.

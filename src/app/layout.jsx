@@ -76,10 +76,35 @@ const manrope = Manrope({
 // STILL NOT WIRED to SERVICE_AREA in src/lib/navigation.js, which is flagged
 // there. The area is spelled longhand here because SERVICE_AREA is a sentence
 // ("Now serving Toronto and the GTA"), not a fragment that drops into this one.
+// ⚠️ PHASE 9.1 — THE DEFAULT TITLE CHANGED. It read:
+//
+//   "Druppr - Your city's same-day delivery network"
+//
+// Founder-approved replacement, Gate 6. Two problems with the old wording, and
+// neither was a content-gate violation — this is a positioning decision that was
+// escalated rather than made in engineering:
+//
+//   "your city"          The service area is specifically Toronto and the GTA.
+//                        A vague geography is a liability, not a growth story
+//                        (HOMEPAGE.md -> Hero Philosophy); naming the real
+//                        market and widening it later is a happy edit.
+//   "delivery network"   Permitted, and inside the five-second test's accepted
+//                        answers — but it was the last place the brand described
+//                        itself in delivery rather than platform terms.
+//
+// The replacement is the h1 from HeroNetwork.jsx and the opening of the
+// description below, so the browser tab, the search result and the page now all
+// say the same thing in the same words.
+//
+// ONLY THE DEFAULT CHANGED. The template is untouched, so /medical, /legal and
+// /send keep their own segment titles. This default is what /, /contact-us,
+// /privacy-policy and the tracking routes render.
+//
+// THE %s IS STILL LOAD-BEARING — see the note below.
 export const metadata = {
   title: {
     template: `%s - ${BRAND.name}`,
-    default: `${BRAND.name} - Your city's same-day delivery network`,
+    default: `${BRAND.name} - Same-day logistics infrastructure for the GTA`,
   },
   description:
     'Same-day logistics infrastructure for Toronto and the GTA. Specimens, filings, business deliveries and parcels — dispatched, tracked and recorded on one platform.',
