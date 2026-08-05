@@ -58,6 +58,26 @@
  * a card cut off. `transform: none` puts the source set back at its natural
  * position and wrapping lets the cards flow instead of running off the edge.
  *
+ * ⚠️ PHASE 9 CORRECTION — WRAPPING NEEDS A WIDTH, NOT JUST `flex-wrap`.
+ *
+ * `flex-wrap: wrap` alone did nothing here, and the suppressed state silently
+ * hid reviews. The track carries Tailwind's `w-max` (`width: max-content`) so
+ * the marquee is exactly twice one set's width; a flex container sized to
+ * max-content is BY DEFINITION wide enough for every item on one line, so the
+ * wrap point never arrives. Measured with a five-review stub before the fix:
+ * the track computed 1844px inside a 1440px parent whose overflow-x is hidden,
+ * leaving 3 of 5 reviews readable at 1440 and 1 OF 5 AT 390 — with no motion
+ * and no scroll to reach the others. Under `prefers-reduced-motion`, which
+ * HOMEPAGE.md E6 makes a hard floor, that is content removed rather than
+ * motion removed.
+ *
+ * So the width is released (`width: auto`) and the items are allowed to shrink.
+ * The li carries an INLINE `width: 340px` from Reviews.jsx — inline styles beat
+ * a stylesheet, so overriding it is the one place `!important` is warranted.
+ * `flex: 1 1 300px` then wraps the cards into readable columns at any width,
+ * and the 1200px cap plus auto margins line the block up with every other
+ * section on the page instead of running full-bleed as the moving strip does.
+ *
  * The aria-hidden duplicate is removed here: with no motion it is not making a
  * loop seamless, it is the same reviews printed twice.
  *
@@ -74,6 +94,16 @@
     animation: none;
     transform: none;
     flex-wrap: wrap;
+    width: auto;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  [data-review-track] > li {
+    width: auto !important;
+    flex: 1 1 300px;
+    max-width: 100%;
   }
 
   [data-review-duplicate] {

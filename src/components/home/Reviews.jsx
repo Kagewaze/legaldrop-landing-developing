@@ -208,9 +208,16 @@ export function Reviews({ data }) {
           scripting. Without this the CSS animation would keep running with no
           way to stop it — the pause button is the only control and it is inert
           without JavaScript — which would leave moving content a visitor
-          cannot pause. Change both copies together. */}
+          cannot pause. Change both copies together.
+
+          ⚠️ PHASE 9 added the width release and the li override. `flex-wrap`
+          on its own never fired, because `w-max` below sizes this track to
+          max-content and a max-content flex container always fits its items on
+          one line. Without JavaScript that left 1 of 5 reviews readable at 390
+          with no scroll and no motion to reach the rest. See the full note in
+          src/styles/tailwind.css — the two copies must not drift. */}
       <noscript>
-        <style>{`[data-review-track]{animation:none!important;transform:none!important;flex-wrap:wrap!important}[data-review-duplicate]{display:none!important}[data-review-motion-control]{display:none!important}`}</style>
+        <style>{`[data-review-track]{animation:none!important;transform:none!important;flex-wrap:wrap!important;width:auto!important;max-width:1200px!important;margin-left:auto!important;margin-right:auto!important}[data-review-track]>li{width:auto!important;flex:1 1 300px!important;max-width:100%!important}[data-review-duplicate]{display:none!important}[data-review-motion-control]{display:none!important}`}</style>
       </noscript>
 
       <ReviewMotion label="customer reviews">
