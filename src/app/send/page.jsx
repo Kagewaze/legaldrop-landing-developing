@@ -231,8 +231,13 @@ export default function SendAddressesPage() {
         {/* Quiet — it confirms the trip is understood, it is not a headline.
             A live region because it resolves asynchronously: this is exactly
             the kind of status StepChrome's focus move is NOT for. */}
+        {/* PHASE 9: #8d8695 -> #5f5868, the same 3.51:1 -> 6.81:1 correction as
+            the two controls below. This one is easy to miss in an audit because
+            the element is EMPTY until a distance resolves, so a contrast sweep
+            of a freshly loaded page finds no text here to measure. It was found
+            by reading the file after the sweep, not by the sweep. */}
         <p
-          className="mt-3 px-1 text-[13px] text-[#8d8695]"
+          className="mt-3 px-1 text-[13px] text-[#5f5868]"
           role="status"
           aria-live="polite"
         >
@@ -257,19 +262,39 @@ export default function SendAddressesPage() {
              tabbing through the form never landed on it and was never told why
              they could not proceed — the button was simply missing. This stays
              focusable and carries its reason, while remaining inert: there is
-             no onClick, so activating it does nothing. */
+             no onClick, so activating it does nothing.
+
+             ⚠️ PHASE 9 — AND THAT CHOICE IS WHY BOTH COLOURS BELOW CHANGED.
+             WCAG 1.4.3 exempts text in an INACTIVE component, and a `disabled`
+             button would qualify. This one deliberately is not: aria-disabled
+             keeps it focusable and in the tab order, so a keyboard user does
+             land on it and does have to read it. The exemption therefore does
+             not apply here, and both measured below the floor:
+
+               Continue label   #9b93a5 on #ece7f1  2.43:1  ->  #5f5868  5.60:1
+               reason text      #8d8695 on #ffffff  3.51:1  ->  #5f5868  6.81:1
+
+             #5f5868 is not a new value — it is the token Phase 1 used to clear
+             the six identical #8d8695 failures on the marketing pages (Phase 0,
+             A1). The reason text is the more important of the two: it is what
+             aria-describedby points at, so it is the sentence that explains why
+             the flow will not continue.
+
+             THE GROUND IS DELIBERATELY UNCHANGED. The muted #ece7f1 fill is
+             what signals "not yet available"; only the label darkened, so the
+             button still reads as unavailable while its text is legible. */
           <>
             <button
               type="button"
               aria-disabled="true"
               aria-describedby="continue-blocked-reason"
-              className="mt-6 w-full cursor-not-allowed rounded-xl bg-[#ece7f1] px-5 py-[18px] text-[16px] font-bold text-[#9b93a5] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+              className="mt-6 w-full cursor-not-allowed rounded-xl bg-[#ece7f1] px-5 py-[18px] text-[16px] font-bold text-[#5f5868] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
             >
               Continue
             </button>
             <p
               id="continue-blocked-reason"
-              className="mt-2.5 px-1 text-center text-[13px] text-[#8d8695]"
+              className="mt-2.5 px-1 text-center text-[13px] text-[#5f5868]"
             >
               Enter both a pickup and a dropoff address to continue.
             </p>

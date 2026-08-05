@@ -520,8 +520,17 @@ export function AddressAutocomplete({
 
           <div ref={containerRef} className="min-w-0 flex-1" />
 
+          {/* PHASE 9: #8d8695 -> #5f5868 (3.51:1 -> 6.81:1 on white). Colour
+              only — no behaviour, no structure, nothing about the Google
+              element's contract is touched.
+              It is a transient indicator, but WCAG 1.4.3 has no exemption for
+              short-lived text, and this ellipsis is the ONLY visual signal that
+              the field is loading, so it is carrying information rather than
+              decorating. The neighbouring "Unavailable" was measured in the
+              same pass and left alone: rose-600 is 4.70:1, already over the
+              4.5 floor at this size. */}
           {status === 'loading' && (
-            <span className="flex-none text-[13px] text-[#8d8695]">…</span>
+            <span className="flex-none text-[13px] text-[#5f5868]">…</span>
           )}
 
           {status === 'error' && (
