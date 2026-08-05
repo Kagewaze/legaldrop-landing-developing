@@ -73,11 +73,56 @@ The second row is a ceiling, not a prohibition: a minority reading us as a conve
 | E2 | Regulated-vertical content reachable | by screen **2** on mobile |
 | E3 | LCP | ≤ 2.0 s on a mid-tier device, 4G |
 | E4 | CLS | ≤ 0.05 |
-| E5 | Client JS on the home route | ≤ 2 interactive islands |
+| E5 | Client JS on the home route | **≤ 3 interactive islands, or ≤ 4 while the verified Google Reviews motion wrapper renders** — raised from ≤ 2 on 2026-08-05, see below |
 | E6 | `prefers-reduced-motion` | every animation degrades to no motion |
 | E7 | Contrast | every text/ground pair measured ≥ 4.5:1 |
 | E8 | Keyboard | full traversal, visible focus on every interactive element |
 | E9 | No horizontal overflow | 320 px → 2560 px |
+
+#### E5 was raised on 2026-08-05, after it had already been exceeded
+
+Recorded plainly rather than presented as though the original ceiling had always
+been this number. **E5 read "≤ 2 interactive islands" and the homepage was
+running 3, or 4 with animated reviews. The gate was exceeded before it was
+raised.** How that happened is part of the record:
+
+- This document said ≤ 2 and `HOMEPAGE_IMPLEMENTATION_PLAN.md` §10 said ≤ 3. The
+  two disagreed from the day they were written and nobody reconciled them.
+- The count passed **both** numbers without either being cited in a phase
+  acceptance check. Phase 8 recorded the increase honestly ("Client islands
+  3 → 4") but did not note that it crossed a ceiling.
+- Phase 9 found the conflict and escalated it rather than re-baselining it
+  silently. Phase 9.1 records the founder's decision to approve the implemented
+  architecture (Gate 4, Option A, 2026-08-05, decision-maker: Abdul).
+
+**What the new ceiling is:** 3 islands, or 4 while the Google Reviews motion
+wrapper renders — and that fourth is conditional on live review data, so it is
+absent whenever the Places response is null or returns fewer than four reviews.
+
+**Why it was approved.** The budget this gate exists to protect is being met, and
+was measured on a production build at the time of the decision:
+
+| Property | Measured |
+|---|---|
+| `/` rendering | **`○ (Static)`** — still prerendered |
+| First Load JS `/` | **101 kB** (ceiling 130 kB) |
+| Shared JS | **87.2 kB** |
+| `maps.googleapis.com` / `places.googleapis.com` before address interaction | **0 / 0** |
+| CLS | ≤ 0.002 at every tested width |
+
+Each island implements an independently approved function, so this is a stale
+number rather than scope creep: `HeaderMobileNav` (pre-existing shared header),
+`NetworkDemo` (Phase 0 **D4**), `HeroAddressEntry` (Phase 0 **D5** — "functional
+or a button", and functional was chosen), `ReviewMotion` (the Phase 8 motion
+approval). Reviews remain **server-fetched and server-rendered**: `ReviewMotion`
+receives the cards as `children` and owns only the pause boolean, so no review
+data enters the client bundle.
+
+**What this does not license.** The ceiling is a count of *approved* islands, not
+a budget to spend. A fifth island, or a fourth that is not the review wrapper,
+requires its own decision — and the four properties in the table above are the
+conditions under which this approval stands. If any of them regresses, the
+approval does not carry.
 
 ### Outcome measures (tracked, not gating)
 
