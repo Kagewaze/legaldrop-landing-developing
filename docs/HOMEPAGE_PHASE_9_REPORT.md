@@ -1,6 +1,12 @@
 # Homepage Phase 9 — Final Launch Readiness
 
-> **Status: verification complete. Five commits created. Nothing pushed, nothing merged.**
+> **Status: verification complete. Six commits created. Nothing pushed, nothing merged.**
+>
+> *(Corrected in Phase 9.1: this line and §2 originally said five. Both were
+> written before this report was itself committed and counted only the commits
+> that existed at the time of writing. The report's own commit is the sixth.
+> §23 and §30 already said six. Verified: `git rev-list --count 2037ca4..HEAD`
+> = **6**, branch total 44.)*
 >
 > This phase verified the redesigned homepage as one integrated system rather than as nine
 > independently-passed phases. Everything below was measured against a production build
@@ -73,7 +79,11 @@ are correct arithmetic on different denominators — the number to carry forward
 
 ## 2. Complete commit inventory
 
-38 commits inherited, **5 created in Phase 9**, 43 total on the branch.
+38 commits inherited, **6 created in Phase 9**, **44 total on the branch**.
+
+*(Corrected in Phase 9.1 — this line originally read "5 created … 43 total",
+counting only what existed when the sentence was written. The sixth is this
+report's own commit, `7c8c8e5`.)*
 
 ### Created by Phase 9
 
@@ -85,7 +95,7 @@ are correct arithmetic on different denominators — the number to carry forward
 | `b9e1cc3` | `fix(send): raise muted text to the AA contrast floor` |
 | `bc17b06` | `docs: reconcile homepage phase reports` |
 
-*(This report adds a sixth.)* No empty commits were created — the brief's suggested
+*(`7c8c8e5`, this report, is the sixth.)* No empty commits were created — the brief's suggested
 "navigation and footer corrections" commit does not exist because the navigation and footer audit
 found nothing to correct (§10, §11).
 
@@ -375,6 +385,10 @@ does not support.
 "Delivery network" is a rung above courier and sits inside the five-second test's accepted
 answers; it is also the established brand tagline in `config.js`. Changing it is a wording
 decision for the founder, not a defect. **Flagged, not touched.**
+
+> ⚠️ **SUPERSEDED BY PHASE 9.1 (Gate 6).** The founder approved replacing it with
+> *"Druppr — Same-day logistics infrastructure for the GTA"* on 2026-08-05. See the
+> Phase 9.1 appendix, §9.1-9.
 
 ---
 
@@ -864,6 +878,10 @@ would never find it.
 
 ## 21. Launch-blocker table
 
+> ⚠️ **SUPERSEDED BY THE PHASE 9.1 APPENDIX (§9.1-15).** Six of the sixteen rows below were
+> closed or decided on 2026-08-05. The table is retained as the Phase 9 record; **the
+> authoritative blocker list is the Phase 9.1 one at the end of this document.**
+
 | # | Item | Classification | Detail |
 |---|---|---|---|
 | 1 | **Formal five-second test** | 🔴 **Blocker** | The primary hard gate in `HOMEPAGE.md`. Never run. No participants available. Script ready in §4. **This is the one item that should stop a deploy**, because it is the measure the entire redesign is subordinate to. |
@@ -1091,3 +1109,434 @@ approval.
 ---
 
 **Phase 9 complete. Stopping here for review.**
+
+---
+---
+
+# Phase 9.1 — External Launch-Gate Closure
+
+> **Status: four gates closed by founder decision, two remain open because no input exists to
+> close them. Four commits created. Nothing pushed, nothing merged. Partner-logo implementation
+> has not begun.**
+>
+> Phase 9.1 exists only to close or accurately record the external gates Phase 9 identified. No
+> new homepage functionality, integrations, claims, booking changes, footer redesign or visual
+> redesign was undertaken. Decisions recorded here were made by the founder on **2026-08-05**;
+> none was made on his behalf.
+
+## 9.1-1. Preflight
+
+| Check | Result |
+|---|---|
+| `git status` | clean |
+| Branch | `homepage-redesign` ✅ |
+| Unrelated changes | none — did not need to stop |
+| `7c8c8e5` (Phase 9 report) present | ✅ |
+| All Phase 9 fix commits present | ✅ `30dd3b9` `3615bc8` `9a6caf6` `b9e1cc3` `bc17b06` |
+| Lint | ✅ no warnings or errors |
+| Production build | ✅ compiled, 16/16 static pages |
+| Pushed or merged? | **No** — `git rev-parse @{u}` returns *"no upstream configured"*, so the branch has never been pushed |
+
+## 9.1-2. Phase 9 commit count — corrected
+
+**The report was internally inconsistent: the header and §2 said five, §23 and §30 said six.
+The correct figure is SIX.**
+
+Verified: `git rev-list --count 2037ca4..HEAD` = **6** at the time of the Phase 9 handover;
+`git rev-list --count main..HEAD` = **44**.
+
+| # | Hash | Subject |
+|---|---|---|
+| 1 | `30dd3b9` | `fix(marketing): remove courier self-description from published copy` |
+| 2 | `3615bc8` | `fix(home): stop reduced motion hiding reviews` |
+| 3 | `9a6caf6` | `fix(marketing): resolve final accessibility defects` |
+| 4 | `b9e1cc3` | `fix(send): raise muted text to the AA contrast floor` |
+| 5 | `bc17b06` | `docs: reconcile homepage phase reports` |
+| 6 | `7c8c8e5` | `docs: add Phase 9 launch readiness report` |
+
+**Cause:** the header and §2 were written before the report was itself committed, and counted only
+the commits that existed while the sentence was being typed. The report's own commit is the sixth.
+Both statements are corrected in place, each carrying a note saying what it used to read — the
+error is recorded, not erased.
+
+**Branch totals:** 38 inherited + 6 Phase 9 + **4 Phase 9.1** = **48 commits ahead of `main`.**
+
+## 9.1-3. Gate 1 — Formal five-second test — **OPEN**
+
+**No participant results were supplied, so the gate does not pass and is not claimed to.**
+
+- Participants: **none supplied**
+- Familiarity: n/a
+- Device conditions: n/a
+- Responses: **none** — no participant has been shown the page
+- Classification: n/a
+- Desktop vs mobile: n/a
+- **Pass percentage: not calculable**
+
+**No participants, responses or results were fabricated. No copy or composition change was made
+on the basis of imagined feedback.** The Phase 9 §4 script is unchanged and ready to run.
+
+**Exact remaining action for the founder:**
+
+1. Recruit **5 minimum, 8–10 preferred**, from clinic/lab operations, legal operations, or SMB
+   owners. Exclude anyone who has seen the redesign.
+2. Show the **first viewport only**, five seconds, no scrolling, at **both** 1440×900 and 390×844.
+3. Ask the four questions in order. **Never say "software", "platform", "network" or
+   "technology"** — those words are the thing being measured.
+4. Record answers verbatim, then classify each against the two buckets in §4.
+5. Return the results and they will be recorded verbatim in an appendix, with the pass percentage
+   calculated and recurring confusion identified.
+
+**A commitment about scoring, stated before any result exists:** an unambiguously courier-only
+answer will be counted as courier-only. It will not be reinterpreted as a platform answer because
+the participant happened to mention tracking in a later question.
+
+**This remains the one item classified as a blocker.**
+
+## 9.1-4. Gate 2 — Privacy-policy decision — **DECIDED**
+
+| Field | Value |
+|---|---|
+| **Sentence** | *"We implement security measures to protect your information, including encryption and restricted access."* |
+| **Decision** | **Option 4 — founder accepts publication pending professional review** |
+| **Decision date** | 2026-08-05 |
+| **Decision-maker** | Abdul (founder) |
+| **Counsel name** | none — no professional review has taken place |
+| **Approved wording supplied** | none — the sentence ships **unchanged** |
+| **Route remains public** | **Yes.** `/privacy-policy` is not withheld |
+
+**The site is NOT marked legally reviewed.** No professional-review evidence exists in this
+repository and none is asserted. This is a recorded acceptance of risk by the founder, not a
+clearance. If counsel later revises the wording, that is a separate commit applying counsel's text
+verbatim — engineering does not draft it.
+
+**No policy text was edited.** Verified: the rendered policy body is **2,741 characters**, the
+identical figure the Phase 9 claim sweep recorded, and the security sentence is present and
+unaltered.
+
+### Dormant `next/head` block — removed
+
+Phase 9 flagged a `<Head>` block declaring `"Privacy Policy | LegalDrop"` and a description
+reading *"Privacy Policy of LegalDrop for **secure, compliant** delivery solutions."* Gate 2
+authorises removing dead code **only if it cannot affect the live policy and the change is
+independently reversible.** Both conditions were verified before the edit, not assumed:
+
+| Property | Before | After |
+|---|---|---|
+| Rendered `<title>` | site-wide default | **identical** |
+| Rendered description | site-wide default | **identical** |
+| Policy body `innerText` | 2,741 chars | **2,741 chars** |
+| Security sentence present | yes | **yes, unedited** |
+| `<h1>` / `<main>` count | 1 / 1 | **1 / 1** |
+| `"secure, compliant"` in response | 0 | **0** |
+
+Removed rather than migrated, because the dormant description asserts two claims Phase 0 (D10)
+gates on professional review and Phases 4.2/4.3 stripped from `/medical`. Anyone "fixing" the
+broken metadata by porting it into `export const metadata` would have published both while
+believing they were tidying up. Committed separately as `860976c` and independently revertable.
+
+*A measurement note:* hashing the raw HTML with tags stripped **did** change, which briefly looked
+like a regression. It was not — that stripper includes the RSC flight payload, which legitimately
+shrinks when a component leaves the tree. The rendered `innerText`, which is what a visitor and a
+screen reader actually receive, is identical.
+
+## 9.1-5. Gate 3 — Production Google Reviews validation — **OPEN DEPLOYMENT GATE**
+
+**Production credentials and deployment access are not available in this environment, so the
+production path was not validated and is not claimed to be.**
+
+No secret value is printed or recorded anywhere in this document.
+
+| Check | Status |
+|---|---|
+| Places API key exists in the deployment environment | ⬜ **cannot verify — no deployment access** |
+| Place ID correct | ⚪ constant is `ChIJ6bQwlukxK4gRFaB2nvrNqWw`; correctness against the live listing unverified |
+| Production domain permitted by key restrictions | ⬜ **cannot verify** |
+| Request succeeds from the production domain | ⬜ **cannot verify** |
+| Rating renders correctly | ✅ *contract only* |
+| Total review count renders correctly | ✅ *contract only* |
+| Review text renders | ✅ *contract only* |
+| Missing review text is safe | ✅ *contract only* |
+| Google attribution renders | ✅ *contract only* |
+| "See all reviews" reaches the correct listing | ✅ *contract only* |
+| 0 reviews → no section | ✅ *contract only* |
+| 1–3 reviews → static cards | ✅ *contract only* |
+| 4–5 reviews → movement | ✅ *contract only* |
+| Pause / resume | ✅ *contract only* |
+| Hover and focus pause | ✅ *contract only* |
+| Reduced motion shows **every** review | ✅ *contract only* — the Phase 9 fix (`3615bc8`) |
+| JavaScript disabled shows **every** review | ✅ *contract only* — same fix |
+| API failure removes the section cleanly | ✅ *contract only* |
+
+***Contract only*** means verified in Phase 9 against a local stub that was reverted and never
+committed. **It is not production validation.** The ten-step deployment checklist in §5 is
+retained verbatim and unchanged; run it once the key is set.
+
+**One item deserves emphasis at deploy time.** `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is a *separate*
+browser key from the server-side Places key, and the production domain must be on its
+HTTP-referrer allowlist. If it is not, the homepage address entry **degrades silently** into
+"Address suggestions are unavailable right now" — which is exactly what Phase 9 reproduced by
+testing on a non-allowlisted port. The page stays honest and offers the `/send` escape hatch, so
+nothing breaks visibly, and that is precisely why it could ship unnoticed.
+
+## 9.1-6. Gate 4 — Client-island ceiling — **DECIDED: OPTION A**
+
+| Field | Value |
+|---|---|
+| **Decision** | **Option A — approve the implemented architecture** |
+| **Decision date** | 2026-08-05 |
+| **Decision-maker** | Abdul (founder) |
+
+**Updated ceiling, now identical in both governing documents:**
+
+> **≤ 3 client islands, or ≤ 4 while the verified Google Reviews motion wrapper renders.**
+
+`HOMEPAGE.md` E5 raised from ≤ 2; `HOMEPAGE_IMPLEMENTATION_PLAN.md` §10 aligned from ≤ 3. The
+authoritative statement lives in `HOMEPAGE.md` → *Experience gates* → *E5 was raised on
+2026-08-05*; the plan cites it rather than restating it, so the two cannot drift apart again.
+
+**The record does not pretend the former gate was never exceeded.** Stated in both documents:
+E5 said ≤ 2 while the page ran 3 (4 with reviews); the two documents disagreed from the day they
+were written; the real count passed **both** numbers without either being cited in a phase
+acceptance check; Phase 8 recorded "3 → 4" honestly but did not flag the crossing; Phase 9 found
+it and escalated rather than re-baselining.
+
+**Why approved** — measured on a production build at the time of decision:
+
+| Property | Measured |
+|---|---|
+| `/` rendering | **`○ (Static)`** |
+| First Load JS `/` | **101 kB** (ceiling 130 kB) |
+| Shared JS | **87.2 kB** |
+| Maps / Places before address interaction | **0 / 0** |
+| CLS | ≤ 0.002 at every tested width |
+| Reviews | **server-fetched and server-rendered** |
+| `ReviewMotion` scope | owns **only** the pause boolean; cards arrive as `children` |
+
+Each island implements an independently approved function: `HeaderMobileNav` (pre-existing shared
+header), `NetworkDemo` (Phase 0 **D4**), `HeroAddressEntry` (Phase 0 **D5**), `ReviewMotion`
+(Phase 8 motion approval).
+
+**What the new ceiling does not license**, recorded in `HOMEPAGE.md` so it is not read as
+headroom: it counts *approved* islands, not a budget to spend. A fifth island, or a fourth that is
+not the review wrapper, requires its own decision — and the properties above are the conditions
+the approval rests on. If any regresses, the approval does not carry.
+
+## 9.1-7. Gate 5 — Operational metric review
+
+| Field | Value |
+|---|---|
+| **Metrics** | 50+ completed deliveries · 5 business partners · 5 onboarded GTA drivers |
+| **Displayed as-of** | *Accurate as of August 2026* |
+| **Owner** | **Abdul (founder)** |
+| **Next review date** | **2026-11-03**, or before the next public release — whichever comes first |
+| **Deadline confirmed** | ✅ 2026-08-05 |
+| **Source of truth** | Founder-confirmed operational records. Not a system query — there is no metrics endpoint in this repository, which is itself why a human owner and a date exist |
+
+**Removal procedure if the figures become stale.** Per `HOMEPAGE.md` → *Operational Proof*, rule
+4: a metric that cannot be re-confirmed is **removed, never frozen at its last good value.**
+
+1. Re-confirm each figure against operational records on or before 2026-11-03.
+2. Any figure that cannot be confirmed is **deleted from `OperationalProof.jsx`**, not carried
+   forward and not softened with an adjective.
+3. If fewer than three remain, **the section does not ship** — the three-metric gate is not
+   lowered (Phase 0, OQ-1). The two survivors move into the Trust section.
+4. Update the displayed as-of date only when the figures behind it were actually re-checked.
+5. **No number is revised upward without founder-supplied operational evidence.** None was
+   supplied in Phase 9.1, so no figure changed.
+
+## 9.1-8. Gate 6 — Site title — **DECIDED**
+
+| Field | Value |
+|---|---|
+| **Was** | `Druppr - Your city's same-day delivery network` |
+| **Now** | **`Druppr - Same-day logistics infrastructure for the GTA`** |
+| **Decision date** | 2026-08-05 |
+| **Decision-maker** | Abdul (founder) |
+
+Never a content-gate violation — which is why Phase 9 flagged it and deliberately did not touch
+it. Escalated for two softer reasons: **"your city"** understates a service area that is
+specifically Toronto and the GTA, and `HOMEPAGE.md` → *Hero Philosophy* holds that vague geography
+is a liability rather than a growth story; and **"delivery network"** was the last place the brand
+described itself in delivery rather than platform terms.
+
+The replacement is the h1 from `HeroNetwork.jsx` and the opening of the meta description, so tab,
+search result and page now say the same thing in the same words. 53 characters.
+
+**Only the default changed.** The `%s` template is untouched, so `/medical`, `/legal` and `/send`
+keep their own segment titles.
+
+| Route | Rendered `<title>` |
+|---|---|
+| `/` | Druppr - Same-day logistics infrastructure for the GTA |
+| `/contact-us` | Druppr - Same-day logistics infrastructure for the GTA |
+| `/privacy-policy` | Druppr - Same-day logistics infrastructure for the GTA |
+| `/medical` | Medical logistics - Druppr *(unchanged)* |
+| `/legal` | Legal document delivery - Druppr *(unchanged)* |
+| `/send` | Send a package - Druppr *(unchanged)* |
+
+**Avoided, as required:** no "courier", no "delivery app", no national or multi-city positioning,
+and "your city" is gone. Verified across all six public routes: **courier 0 · delivery app 0 ·
+coming soon 0 · your city 0 · "secure, compliant" 0.**
+
+A consequence worth recording: `SERVICE_AREA_PHRASE` in `navigation.js` justified its city-less
+value by citing the old tagline, a string that now exists nowhere. The **comment** was corrected;
+the **value was not**, because it is rendered by nothing — its only consumer is the unimported
+Phase 2 rollback `Hero.jsx`.
+
+## 9.1-9. Gate 7 — Optional launch items
+
+### Partner logos — **NOT A LAUNCH BLOCKER. Deferred. Implementation has not begun.**
+
+**No logo asset, directory, placeholder, commented-out data, dormant component or temporary
+company name was added in Phase 9.1.** Re-verified after all Phase 9.1 changes.
+
+Remains deferred until **all** of the following exist:
+
+1. official assets supplied;
+2. relationship type documented;
+3. public display permission documented **in writing** — verbal is not sufficient;
+4. approval date and named approver recorded;
+5. **at least three distinct approved logos** before any moving strip is considered.
+
+The "5 Business Partners" metric remains a **count**, not permission to name or display anyone.
+
+### App Store and Google Play badges — **NOT A LAUNCH BLOCKER**
+
+The homepage makes no app promise anywhere, so nothing is unfulfilled. There is still **no
+reference to the App Store, Google Play, Apple or any download link in `src/` or `public/`.**
+
+Add later only with a confirmed live listing, a confirmed public URL, approved official badge
+artwork, and a verified destination. Per Phase 0 (D1) they belong in the Platform Showcase, never
+the proof bar, and **never count toward the three-metric gate.**
+
+### Insurance — **PROFESSIONAL REVIEW / FOUNDER DOCUMENTATION REQUIRED**
+
+**No insurance claim appears anywhere on the site.** Phase 4.3 removed "Fully insured" from
+`/medical` because no policy, effective dates, insured entity, covered operations or exclusions
+were produced.
+
+**Nothing on the site depends on this**, so it blocks nothing at launch — it blocks only the
+*restoration* of such a claim. Publishing one requires active policy evidence **and** approved
+wording. It must not be softened into "protected", "covered" or "medical-grade" in the meantime.
+
+### Mobile page length and 768 px hero height — **POST-LAUNCH IMPROVEMENT**
+
+Classified as post-launch, not blockers, and **no product evidence was cut to satisfy a screen
+count.**
+
+- Mobile length **7.37 screens at 390** against E1's ≤ 5. `HOMEPAGE.md` §12 already rules that the
+  scroll target yields to trust and conversion content; the reason is recorded in Phase 9 §13.
+- **768 px hero 1,098 px**, the tallest at any width. Improved in Phase 7.1, not resolved.
+
+Revisit only if real user testing demonstrates a conversion or comprehension problem. The
+five-second test (Gate 1) is the instrument most likely to surface one, since at 390 the
+demonstration's route line falls below the fold.
+
+## 9.1-10. Testing
+
+Documentation and two small metadata/dead-code changes only. All required checks run against a
+production build.
+
+| Check | Result |
+|---|---|
+| Lint | ✅ no warnings or errors |
+| Production build | ✅ compiled, 16/16 static pages |
+| Homepage remains static | ✅ **`○ (Static)`** |
+| First Load JS ≈ 101 kB | ✅ **101 kB**, unchanged |
+| Shared JS ≈ 87.2 kB | ✅ **87.2 kB**, unchanged |
+| Zero Maps / Places before address interaction | ✅ **0 / 0** at all five widths |
+| All public routes HTTP 200 | ✅ 10/10 — and `/nonexistent-control` returns **404**, confirming the 200s mean something |
+| Zero application console errors | ✅ at 390, 430, 768, 1024, 1440 |
+| CLS | ✅ 0.0020 / 0.00003 / 0.00023 / 0.00023 / 0.0001 — unchanged |
+
+Because metadata changed, the **rendered claim sweep was re-run including `<head>`**, with
+positive controls firing on every route. Result: the only listed term surviving anywhere is
+`security` / `restricted access` on `/privacy-policy` — the counsel-assigned sentence, which now
+carries an explicit founder disposition (§9.1-4). **No new unsupported claim was introduced.**
+`/privacy-policy` was verified directly and the search-description output confirmed on all six
+public routes.
+
+## 9.1-11. Final blocker table
+
+**This supersedes the Phase 9 table in §21.**
+
+| # | Item | Classification | State |
+|---|---|---|---|
+| 1 | **Formal five-second test** | 🔴 **Blocker** | **OPEN.** No participants supplied. Script ready (§4). The only item that should stop a deploy. |
+| 2 | **Privacy-policy security wording** | ✅ **Decided** | Founder accepts publication pending professional review, 2026-08-05. Route stays public. **Site not claimed legally reviewed.** |
+| 3 | **Production Google Reviews validation** | 🟡 **Open deployment gate** | No credentials or deployment access. Contract verified; production not. Ten-step checklist retained (§5). |
+| 4 | **Client-island ceiling** | ✅ **Closed** | Option A. E5 raised to ≤ 3 / ≤ 4 with reviews; both documents aligned. |
+| 5 | **Site title wording** | ✅ **Closed** | *"Same-day logistics infrastructure for the GTA"* shipped. |
+| 6 | **Metric review date** | ✅ **Closed** | Owner Abdul; next review **2026-11-03** or before next release; removal procedure recorded. **Time-bounded — this expires.** |
+| 7 | **Privacy-policy dead `next/head`** | ✅ **Closed** | Removed; latent "secure, compliant" claim eliminated. Policy text untouched. |
+| 8 | **Partner-logo permission** | ✅ **Closed for launch** | Deferred, not a blocker. **Implementation has not begun.** |
+| 9 | **Insurance** | ⚖️ **Professional review required** | No claim on the site; blocks nothing at launch. |
+| 10 | **App store badges and URLs** | 🟠 **Optional, post-launch** | No app promise on the site; nothing unfulfilled. |
+| 11 | **Mobile page length (7.37 screens)** | 🟠 **Post-launch improvement** | Scroll target yields to evidence, per `HOMEPAGE.md` §12. |
+| 12 | **768 px hero height (1,098 px)** | 🟠 **Post-launch improvement** | Improved in Phase 7.1, not resolved. |
+| 13 | **Real-user Core Web Vitals** | 🟠 **Post-launch** | Lab figures pass; loopback-derived. Collect field data after deploy. |
+| 14 | **External partner signup availability** | ✅ **Closed** | `partner.legaldrop.ca/signup` returns 200; all six CTAs point at it. |
+| 15 | **Browser Maps key referrer allowlist** | 🟡 **Deploy-time check** | Production domain must be allowlisted or hero address entry **degrades silently**. |
+| 16 | **Dormant rollback components** | 🟠 **Post-launch** | Deliberately retained for their recorded claim history. `Coverage` and `WhyBrand` are still live on `/medical` and `/legal` and **must not** be deleted. |
+
+**Blockers: 1.** Founder decisions outstanding: **0.** Professional review outstanding: **2**
+(privacy — accepted pending; insurance — only if a claim is ever restored).
+
+## 9.1-12. Merge recommendation
+
+**Recommend merging `homepage-redesign` into `main`, unchanged from Phase 9.**
+
+Phase 9.1 added no functionality and changed no measured property: `/` is still statically
+prerendered, First Load JS is still 101 kB, shared JS still 87.2 kB, still zero Maps and Places
+before interaction, CLS unchanged, every public route 200, zero console errors, and the claim
+sweep is clean with positive controls.
+
+Four of the six open gates are now closed by explicit, dated, attributed founder decisions, and
+the two that remain open are external and cannot be closed from inside the repository.
+
+## 9.1-13. Deployment recommendation
+
+**Do not deploy until Gate 1 is closed.** It is now the *only* blocker.
+
+1. 🔴 **Run the five-second test** (§4). Report the results and they will be recorded verbatim
+   with the pass percentage calculated. If it fails, the likely lever is the 390 first viewport,
+   not the copy — the route line falls below the fold there.
+2. 🟡 At deploy: set `GOOGLE_PLACES_API_KEY`, confirm **Places API (New)** is enabled, and walk the
+   ten-step Reviews checklist (§5).
+3. 🟡 At deploy: set `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` and **confirm the production domain is on
+   the browser key's HTTP-referrer allowlist** — the hero degrades silently otherwise. Then delete
+   the transitional key literal in `maps-loader.js`.
+4. ⏰ Diarise **2026-11-03** for the metric review. A stale metric is a false claim.
+5. 📊 Begin collecting real-user Core Web Vitals; the lab figures are indicative only.
+
+The privacy policy ships as-is under the founder's recorded acceptance. That is a decision on
+record, not a clearance — if counsel later revises the wording, it applies verbatim in its own
+commit.
+
+## 9.1-14. Confirmations
+
+- **Partner-logo implementation has NOT begun.** No asset, directory, placeholder, commented data,
+  dormant component or temporary company name was added. Re-verified after every Phase 9.1 change.
+- **Nothing has been pushed. Nothing has been merged.** The branch has no upstream configured.
+- **No previous commit was amended.**
+- **No test stub was committed.**
+- **No policy body text was edited.**
+- **No metric was changed** — no operational evidence was supplied, so no figure moved.
+- **No participants, responses or five-second-test results were fabricated.**
+
+## 9.1-15. Commits created in Phase 9.1
+
+| # | Hash | Subject |
+|---|---|---|
+| 1 | `c2c2ba8` | `fix(metadata): align site title with logistics positioning` |
+| 2 | `860976c` | `fix(privacy): remove dead next/head metadata block` |
+| 3 | `d8b9a30` | `docs: resolve homepage client-island budget` |
+| 4 | *(this appendix)* | `docs: reconcile Phase 9 launch gates` |
+
+Each is independently revertable. No code commit was created where no code changed, and no commit
+was created for a gate that produced no change.
+
+---
+
+**Phase 9.1 complete. Stopping here for review.**
