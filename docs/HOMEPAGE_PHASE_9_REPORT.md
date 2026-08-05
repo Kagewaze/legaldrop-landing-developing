@@ -878,9 +878,8 @@ would never find it.
 
 ## 21. Launch-blocker table
 
-> ⚠️ **SUPERSEDED BY THE PHASE 9.1 APPENDIX (§9.1-15).** Six of the sixteen rows below were
-> closed or decided on 2026-08-05. The table is retained as the Phase 9 record; **the
-> authoritative blocker list is the Phase 9.1 one at the end of this document.**
+> ⚠️ **SUPERSEDED — first by Phase 9.1 (§9.1-11), then by PHASE 9.2 (§9.2-5), which is now the
+> authoritative blocker table.** The table below is retained as the Phase 9 record.
 
 | # | Item | Classification | Detail |
 |---|---|---|---|
@@ -1461,6 +1460,9 @@ public routes.
 
 **This supersedes the Phase 9 table in §21.**
 
+> ⚠️ **IN TURN SUPERSEDED BY §9.2-5**, after the founder deferred the five-second test on
+> 2026-08-05. Retained as the Phase 9.1 record.
+
 | # | Item | Classification | State |
 |---|---|---|---|
 | 1 | **Formal five-second test** | 🔴 **Blocker** | **OPEN.** No participants supplied. Script ready (§4). The only item that should stop a deploy. |
@@ -1540,3 +1542,105 @@ was created for a gate that produced no change.
 ---
 
 **Phase 9.1 complete. Stopping here for review.**
+
+---
+---
+
+# Phase 9.2 — Founder-Deferred Five-Second Test
+
+> **The formal five-second test is deferred until after launch by founder decision. It was not
+> run. It did not pass and it did not fail. No result was fabricated.**
+
+## 9.2-1. The decision
+
+| Field | Value |
+|---|---|
+| **Decision** | The formal five-second test is **deferred until after launch** |
+| **Decision date** | 2026-08-05 |
+| **Decision-maker** | Abdul, founder |
+| **Participant responses available** | **None** |
+| **Was the test run?** | **No** |
+| **Did it pass?** | **No — and it did not fail either.** An unrun test has no result |
+| **Was any result fabricated?** | **No.** No participants, responses, percentages or conclusions were invented |
+| **May development and merge proceed?** | **Yes** |
+| **Status going forward** | **Post-launch positioning-validation task** |
+
+## 9.2-2. What this does and does not change
+
+**What changes:** the five-second test is no longer classified as a launch blocker. It moves from
+🔴 *Blocker* to a founder-deferred post-launch validation task. Merge and deployment may proceed
+without it.
+
+**What does not change:** the page's positioning claims are unverified by real users. Nothing about
+this deferral makes them verified. `HOMEPAGE.md` still describes this test as the primary measure
+of the redesign's central objective, and that objective — *"a first-time visitor should understand
+within five seconds that Druppr is a technology-enabled logistics platform"* — remains **asserted
+rather than demonstrated**.
+
+This is a deliberate, recorded acceptance of that gap by the founder. It is not evidence that the
+gap does not exist.
+
+**No copy or composition was changed on the basis of imagined feedback**, in this phase or any
+earlier one.
+
+## 9.2-3. Scoring commitment for the deferred test
+
+Recorded **before** any result exists, so it cannot be adjusted afterwards to suit an outcome:
+
+- A response that identifies Druppr **only** as a courier, local delivery company, messenger
+  service or legal-document courier **will be scored courier-only.** It will not be reinterpreted
+  as a platform answer because the participant mentioned tracking, an app, or a website in a later
+  question.
+- The thresholds do not move: **≥ 80% platform-or-equivalent, ≤ 20% courier-only.**
+- The four questions are asked in order, and the words *"software"*, *"platform"*, *"network"* and
+  *"technology"* are never spoken to a participant — they are the thing being measured.
+- Desktop (1440×900) and mobile (390×844) results are reported **separately**, because the 390
+  first viewport carries less of the demonstration than 1440 does: the route line falls below the
+  fold there (Phase 9 §13).
+
+The full protocol is unchanged in Phase 9 §4. When results exist they will be recorded verbatim in
+an appendix, with the pass percentage calculated and recurring confusion identified.
+
+## 9.2-4. Production Google Reviews validation — still a deployment check
+
+Unchanged by this decision. Production credentials and deployment access remain unavailable, so
+the production review path **has not been validated and must not be described as completed.** The
+contract is verified against a reverted local stub; that is not the same thing. The ten-step
+deployment checklist in Phase 9 §5 stands.
+
+## 9.2-5. Authoritative blocker table
+
+**This supersedes both the Phase 9 table (§21) and the Phase 9.1 table (§9.1-11).**
+
+| # | Item | Classification | State |
+|---|---|---|---|
+| 1 | **Formal five-second test** | 🟣 **Founder-deferred** | **Post-launch positioning validation.** Not run, no result, nothing fabricated. Deferred 2026-08-05 by Abdul. Protocol ready in §4; scoring commitment in §9.2-3 |
+| 2 | **Production Google Reviews validation** | 🟡 **Deployment verification** | No credentials or deployment access. Contract verified; **production not validated**. Ten-step checklist in §5 |
+| 3 | **Privacy-policy security wording** | ✅ **Decided** | Founder accepts publication pending professional review, 2026-08-05. Route public, sentence unchanged. **Site not claimed legally reviewed** |
+| 4 | **Partner logos** | 🔒 **Permission-gated** | Engineering complete (Phase 10); **zero partners approved**, so the section does not render. See `HOMEPAGE_PHASE_10_REPORT.md` |
+| 5 | **Client-island ceiling** | ✅ **Closed** | Phase 9.1, Option A. E5 raised to ≤ 3, or ≤ 4 with the shared social-proof motion wrapper |
+| 6 | **Site title wording** | ✅ **Closed** | *"Same-day logistics infrastructure for the GTA"* |
+| 7 | **Metric review date** | ✅ **Closed** | Owner Abdul; next review **2026-11-03** or before the next release. **Time-bounded — this expires** |
+| 8 | **Insurance** | ⚖️ **Professional review required** | No claim on the site; blocks only the restoration of one |
+| 9 | **App store badges** | 🟠 **Optional, post-launch** | No app promise anywhere on the site |
+| 10 | **Mobile page length (7.37 screens)** | 🟠 **Post-launch improvement** | Scroll target yields to evidence, per `HOMEPAGE.md` §12 |
+| 11 | **768 px hero height (1,098 px)** | 🟠 **Post-launch improvement** | Improved in Phase 7.1, not resolved |
+| 12 | **Real-user Core Web Vitals** | 🟠 **Post-launch** | Lab figures pass; loopback-derived |
+| 13 | **Browser Maps key referrer allowlist** | 🟡 **Deploy-time check** | Production domain must be allowlisted or hero address entry **degrades silently** |
+| 14 | **External partner signup availability** | ✅ **Closed** | `partner.legaldrop.ca/signup` returns 200 |
+| 15 | **Dormant rollback components** | 🟠 **Post-launch** | Deliberately retained for their recorded claim history |
+
+**Launch blockers: 0.** Deployment verification items: **2** (production Reviews, Maps referrer
+allowlist). Professional review outstanding: **2** (privacy — accepted pending; insurance — only
+if a claim is restored). Founder decisions outstanding: **0**.
+
+## 9.2-6. Historical sections are unchanged
+
+No earlier section of this report was rewritten to suggest the test occurred. Phase 9 §4 still
+reads *"NOT RUN. GATE REMAINS OPEN."* and Phase 9.1 §9.1-3 still reads *"OPEN"*, because that is
+what was true when each was written. This section records what changed afterwards and why, which
+is the point of keeping them.
+
+---
+
+**Phase 9.2 complete.**
