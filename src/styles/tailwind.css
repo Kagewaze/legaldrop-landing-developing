@@ -1,3 +1,86 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── REVIEW TRACK MOTION ─────────────────────────────────────────────────────
+ *
+ * Phase 8. The only bespoke CSS in this project, and it lives here rather than
+ * in arbitrary-value classes because it needs four coordinated states that
+ * Tailwind variants cannot express together: a keyframe, an explicit pause flag
+ * set by a button, hover/focus pausing, and two total-suppression cases.
+ *
+ * DIRECTION IS LEFT TO RIGHT. The track holds the source set followed by an
+ * aria-hidden duplicate, so it is exactly twice the width of one set. Starting
+ * at translateX(-50%) — the duplicate's left edge — and ending at 0 moves the
+ * content rightwards, and because the two halves are identical the jump back to
+ * -50% at the end of the cycle is invisible. No reset flash, no acceleration:
+ * `linear`, one speed, forever.
+ *
+ * DURATION IS DERIVED, NOT PICKED. --review-duration is set inline from the
+ * card count at a fixed reading speed (see Reviews.jsx), so five reviews move
+ * at the same pixels per second as four. A duration chosen because it "looks
+ * active" would run fast on a narrow track and crawl on a wide one.
+ *
+ * PRECEDENCE. Explicit pause is declared last and is therefore unconditional:
+ * a visitor who presses Pause stays paused when the pointer leaves. Hover and
+ * focus pause only while the pointer or focus is inside.
+ */
+@keyframes review-marquee {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+[data-review-track] {
+  animation: review-marquee var(--review-duration, 60s) linear infinite;
+}
+
+/* Pause while the pointer is over the track, or while keyboard focus is
+ * anywhere inside it — so a visitor reading a card, or tabbing to a link, is
+ * never chasing a moving target. */
+[data-review-track]:hover,
+[data-review-track]:focus-within {
+  animation-play-state: paused;
+}
+
+/* The button's state. Declared last, and therefore the winner. */
+[data-review-motion][data-paused='true'] [data-review-track] {
+  animation-play-state: paused;
+}
+
+/* ── TOTAL SUPPRESSION ───────────────────────────────────────────────────────
+ *
+ * Two cases — reduced motion, and no JavaScript — and in BOTH the track must
+ * become a readable static block rather than a strip frozen mid-slide with half
+ * a card cut off. `transform: none` puts the source set back at its natural
+ * position and wrapping lets the cards flow instead of running off the edge.
+ *
+ * The aria-hidden duplicate is removed here: with no motion it is not making a
+ * loop seamless, it is the same reviews printed twice.
+ *
+ * The pause control is removed too. Nothing is moving, so a button offering to
+ * pause motion would be an inert control — which Phase 8 forbids explicitly.
+ *
+ * The no-JavaScript half is applied by a <noscript> block in Reviews.jsx, which
+ * carries the identical declarations. It cannot be shared with this rule
+ * because @media and <noscript> are different mechanisms; the duplication is
+ * deliberate and both copies must be changed together.
+ */
+@media (prefers-reduced-motion: reduce) {
+  [data-review-track] {
+    animation: none;
+    transform: none;
+    flex-wrap: wrap;
+  }
+
+  [data-review-duplicate] {
+    display: none;
+  }
+
+  [data-review-motion-control] {
+    display: none;
+  }
+}
