@@ -1,18 +1,38 @@
 import React from "react";
-import Head from "next/head";
 import Layout from "../(main)/layout";
 
+// ⚠️ PHASE 9.1 REMOVED A DEAD next/head BLOCK. It was:
+//
+//   <Head>
+//     <title>Privacy Policy | LegalDrop</title>
+//     <meta name="description"
+//           content="Privacy Policy of LegalDrop for secure, compliant delivery solutions." />
+//   </Head>
+//
+// `next/head` is a PAGES ROUTER API and is a no-op in the App Router, so neither
+// line had rendered since this project migrated. Verified before removal, not
+// assumed: the route served the site-wide default title and description, and the
+// strings "Privacy Policy | LegalDrop" and "secure, compliant" appeared nowhere
+// in the response.
+//
+// WHY REMOVE IT RATHER THAN MIGRATE IT. The dormant description claims Druppr
+// offers "secure, compliant delivery solutions". Both words are unsupported —
+// Phase 0 (D10) has security posture and every compliance claim gated on
+// professional review, and Phases 4.2/4.3 removed exactly this vocabulary from
+// /medical. Anyone "fixing" the broken metadata by porting it to an `export const
+// metadata` would have published two unsupported claims in one edit, believing
+// they were doing housekeeping. Deleting the trap is safer than leaving it armed.
+//
+// THE POLICY TEXT IS UNTOUCHED. This removes markup that never rendered; not one
+// word of the policy body changed. The security-controls sentence below remains
+// as counsel left it — see the Gate 2 decision in HOMEPAGE_PHASE_9_REPORT.md.
+//
+// If a page-specific title is wanted later, the App Router way is
+// `export const metadata = { title: 'Privacy policy' }` — and the description
+// must then be written from scratch, NOT recovered from the block above.
 const PrivacyPolicy = () => {
   return (
     <>
-      <Head>
-        <title>Privacy Policy | LegalDrop</title>
-        <meta
-          name="description"
-          content="Privacy Policy of LegalDrop for secure, compliant delivery solutions."
-        />
-      </Head>
-
       <Layout>
       {/* ⚠️ PHASE 9: this was a second <main>. Layout already renders
           <main id="main-content">, so the route shipped TWO main landmarks —
