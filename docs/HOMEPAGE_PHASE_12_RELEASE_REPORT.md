@@ -401,3 +401,105 @@ from an absence of errors.
 
 **Phase 12 stopped before Stage 8. Awaiting the environment-variable results, the exact production
 origins, and a decision between staging (Option A) and production-first validation (Option B).**
+
+---
+---
+
+# Phase 12.1 — Production Merge and Deployment
+
+> **Supersedes every earlier status in this document.**
+>
+> This section was written and committed **before** the merge, deliberately, so that it ships in
+> the *same* production deployment rather than forcing a second one. Facts that can only be known
+> after the push — DigitalOcean deployment status and the production smoke test — are recorded in
+> a **local-only addendum** at the end, which is committed but **not pushed**, for the same reason.
+
+## P1. Founder environment confirmation
+
+Supplied 2026-08-05 by Abdul, Founder:
+
+| Item | Confirmation |
+|---|---|
+| Hosting platform | **DigitalOcean App Platform** |
+| Production branch | **`main`** |
+| Required environment variables | **present** |
+| Environment-variable scopes | **correct** |
+| Production domains | **configured** |
+| Maps browser-key referrer restrictions include the production domains | **yes** |
+| Direction | **proceed with the production merge and deployment** |
+
+**These are founder attestations, not engineering verifications.** No dashboard access exists in
+this environment, so each is recorded as *stated by the founder* rather than *measured here*. That
+distinction is preserved deliberately — it is the difference between "we checked" and "we were
+told", and only the founder was in a position to check.
+
+## P2. Final remote verification — Stage 1 ✅
+
+`git fetch origin --prune` run immediately before the merge.
+
+| Ref | Hash |
+|---|---|
+| **`origin/main`** (previous production) | **`318e61f6f2e0588ca021b0243b4d37c605036417`** |
+| `origin/homepage-redesign` | `5e7dca5f08316f61b2bee4c0b864910f08e7bac0` |
+| local `homepage-redesign` | `88f0eb35dfbf6aaf6c0b4d2315fefbdf977e5e63` → then this report commit |
+| merge base | `318e61f6` |
+
+| Check | Result |
+|---|---|
+| Working tree clean | ✅ |
+| Branch | `homepage-redesign` ✅ |
+| Contains Phase 12 commit `5e7dca5` | ✅ verified with `git merge-base --is-ancestor` |
+| Unexpected commits on `origin/main` | **0** |
+| **Fast-forward still possible** | ✅ `origin/main` is an ancestor of HEAD |
+
+`origin/main` has **not moved** since Phase 11 — re-verified against the remote, not assumed.
+
+## P3. Rollback tag ✅ created and pushed
+
+| Item | Value |
+|---|---|
+| Tag | **`pre-druppr-homepage-2026-08-05`** (annotated) |
+| Message | *"Production before Druppr homepage redesign"* |
+| Tag object | `e3f3cf8730f6f3ef658c89a00f16b5940fc784d6` |
+| **Commit it pins** | **`318e61f6f2e0588ca021b0243b4d37c605036417`** |
+| Pushed to origin | ✅ confirmed present in `git ls-remote --tags origin` |
+| Verified to equal the pre-merge `origin/main` | ✅ |
+
+**The rollback point existed on the remote before `main` was touched.** Only this tag was pushed —
+no branch, no other tag.
+
+## P4. Pre-merge verification of the release-candidate tree
+
+Run on the exact tree `main` was about to become. A fast-forward produces a byte-identical tree, so
+these results carry over; they were nevertheless **re-run on `main` after the merge** (§P6).
+
+| Check | Result |
+|---|---|
+| Six partner logos approved | ✅ `PARTNER_LOGOS: 6`, `APPROVED_PARTNERS: 6` |
+| Partner logos not external links | ✅ **linkable: 0**, **websites set: 0** |
+| Booking storage key | ✅ `legaldrop.send-flow.v1` in `send-flow-contract.js` |
+| No address or coordinates in the URL | ✅ `router.push(ROUTES.send.href)` — no query string, no hash |
+| `.env` files tracked | ✅ **0** |
+| Private keys in tracked files | ✅ **0** |
+| Stripe secret keys (`sk_live` / `sk_test`) | ✅ **0** |
+| Server Places key | ✅ read from `process.env` only; **no literal in the repository** |
+
+⚠️ **One known, deliberate exception:** `src/lib/maps-loader.js` contains a hardcoded **browser**
+Maps key literal. Browser keys are public by design — they ship in the client bundle by necessity
+and are protected by HTTP-referrer restrictions, not secrecy. It is documented in-file as
+transitional. **Now that the founder confirms the environment variable is present, this literal can
+be deleted** — recorded as a post-deployment item (§P10) rather than changed here, because this
+phase forbids code changes.
+
+## P5. Merge method — fast-forward only
+
+    git checkout main
+    git pull --ff-only origin main
+    git merge --ff-only homepage-redesign
+
+**No merge commit. No rebase. No conflict resolution.** Results are recorded in the addendum below.
+
+## P6–P9
+
+Recorded in the local-only addendum at the end of this document, because they can only be
+determined after `main` is pushed.
