@@ -503,3 +503,171 @@ phase forbids code changes.
 
 Recorded in the local-only addendum at the end of this document, because they can only be
 determined after `main` is pushed.
+
+---
+
+# Phase 12.1 — Addendum: merge, push, and post-push status
+
+> ⚠️ **THIS ADDENDUM IS COMMITTED LOCALLY BUT DELIBERATELY NOT PUSHED.**
+>
+> DigitalOcean App Platform redeploys on every push to `main`. Pushing this addendum would trigger
+> a **second production deployment** whose only content is documentation. Step 9 of the brief
+> anticipates exactly this and instructs leaving the report unpushed with the reason recorded.
+>
+> **Push it whenever a real code change next goes out**, so it rides along at no cost.
+
+## P6. Merge and push results ✅
+
+| Item | Value |
+|---|---|
+| **Previous production `main`** | **`318e61f6f2e0588ca021b0243b4d37c605036417`** |
+| **Release-candidate hash** | **`05b5db72a84eb2c53cd3e6efe3e1a44b2bba53c9`** |
+| **New production `main`** | **`05b5db72a84eb2c53cd3e6efe3e1a44b2bba53c9`** |
+| Merge method | **`git merge --ff-only`** — fast-forward, **no merge commit** |
+| `HEAD` == `homepage-redesign` after merge | ✅ **identical** |
+| Merge commits introduced | **0** — verified with `git log --merges` |
+| Commits `main` advanced by | **59** |
+| Push command | `git push origin main` — **no force** |
+| Push result | ✅ `318e61f..05b5db7  main -> main` |
+| `origin/main` after push | `05b5db72` — matches local `main` and the release candidate |
+| History integrity | ✅ `318e61f6` is still an ancestor of `origin/main` — **nothing rewritten** |
+| **Rollback tag** | **`pre-druppr-homepage-2026-08-05`** → `e3f3cf87` → commit **`318e61f6`**, intact on the remote |
+
+### Step 4 verification on `main`, after the merge
+
+| Check | Result |
+|---|---|
+| Lint | ✅ no warnings or errors |
+| Production build | ✅ compiled, 16/16 static pages |
+| `/` route type | ✅ **`○ (Static)`** |
+| `/` First Load JS | ✅ **101 kB** |
+| Shared JS | ✅ **87.2 kB** |
+| Route/bundle regression | ✅ **none** — route table identical to Phase 11 |
+
+## P7. DigitalOcean deployment status — ⚠️ **UNKNOWN, MUST BE CONFIRMED BY THE FOUNDER**
+
+**The Git push succeeded. That is not evidence that the deployment succeeded, and it is not being
+reported as such.**
+
+App Platform is configured to deploy from `main`, so the push *should* have started a production
+build. Whether that build reached `ACTIVE / SUCCESS` cannot be determined from here.
+
+**Monitor at:** DigitalOcean → **Apps** → the Druppr/LegalDrop app → **Deployments**
+
+Confirm the newest deployment — the one for commit **`05b5db7`** — reaches **ACTIVE / SUCCESS**.
+
+⚠️ **If it reports `ERROR` or `CANCELED`, do not push another code change.** Capture the **build
+logs** and the **runtime logs** first; the cause is far more likely to be an environment-variable
+scope than the code, which builds and lints clean here.
+
+One App Platform specific worth checking first if the build fails or the site renders oddly:
+`NEXT_PUBLIC_*` variables must be available at **build** time. If they are scoped run-time-only,
+the build silently falls back to the hardcoded defaults in `config.js` and `maps-loader.js` rather
+than erroring.
+
+## P8. Production smoke test — ⚠️ **COULD NOT BE PERFORMED FROM THIS ENVIRONMENT**
+
+**No claim is made about the live site's state — in either direction.**
+
+### Why, with the evidence
+
+| Probe | Result |
+|---|---|
+| `https://druppr.ca` · `www.druppr.ca` · `legaldrop.ca` · `www.legaldrop.ca` | **HTTP 000** (IPv4 and IPv6 both) |
+| `https://www.google.com` | **HTTP 200** |
+| `https://partner.legaldrop.ca/signup` | **HTTP 200** |
+| **`https://github.com`** | **HTTP 000** — *seconds after `git push` to that same host succeeded* |
+
+**The GitHub result is decisive.** A curl HTTP 000 in this sandbox does **not** mean the remote host
+is down: `git push origin main` completed successfully against `github.com` moments before curl
+reported it unreachable. This environment has **restricted egress**, so these probes are
+uninformative about production.
+
+**DNS is healthy and the domains are configured**, which is the one useful thing the probes did
+establish:
+
+| Domain | Resolves to |
+|---|---|
+| `druppr.ca` · `www.druppr.ca` | `162.159.140.98` (Cloudflare) |
+| `legaldrop.ca` | `172.66.0.96` (Cloudflare) |
+| `partner.legaldrop.ca` | `64.29.17.65` — reachable, HTTP 200 |
+
+### The smoke test, for the founder to run on the live domain
+
+Run once DigitalOcean reports **ACTIVE / SUCCESS**. **Use generic public locations only — never a
+customer address or a private tracking code.**
+
+| # | Check | Expected |
+|---|---|---|
+| 1 | Homepage loads | 200, no error page |
+| 2 | Six logos under **"Business relationships"** | all six visible |
+| 3 | Click a partner logo | **nothing happens — they are not links** |
+| 4 | Partner logos | move **right to left**, slowly |
+| 5 | Reviews (if Google returns them) | move **left to right** |
+| 6 | Pause control | stops **both** bands; pressing again resumes |
+| 7 | Reduced motion (OS setting) | everything static, **all six logos still visible**, no pause button |
+| 8 | Pickup autocomplete | suggestions appear — ⚠️ **the key check** |
+| 9 | Drop-off autocomplete | suggestions appear |
+| 10 | Select two valid addresses | *Continue to booking* becomes enabled |
+| 11 | Submit | lands on `/send` |
+| 12 | Address bar on `/send` | **no address or coordinates in the URL** |
+| 13–16 | `/medical`, `/legal`, `/contact-us`, `/privacy-policy` | all load |
+| 17 | Header and footer links | all work |
+| 18 | Mobile width | **no horizontal scrolling** |
+| 19 | Browser console | **no application errors** |
+
+⚠️ **Step 8 is the one that fails silently.** If the Maps browser key is missing from an origin's
+referrer allowlist, the fields do **not** show an error — they degrade to *"Address suggestions are
+unavailable right now"* with a working *"Continue on the full booking page"* link to `/send`, and
+the page otherwise looks perfectly correct. **It must be confirmed positively on each origin that
+serves the site** (`druppr.ca` and `www.druppr.ca` are separate allowlist entries, as are
+`legaldrop.ca` and `www.legaldrop.ca`).
+
+If reviews do not appear, that is **not necessarily a fault**: the section is designed to be absent
+whenever the Places API returns nothing. It indicates `GOOGLE_PLACES_API_KEY` or the Places API
+(New) enablement needs checking, not that the page is broken.
+
+## P9. Rollback — **none performed**
+
+No rollback was required or attempted, because **no failure has been observed** — the production
+state is unknown, not bad.
+
+If the smoke test fails on any of: homepage 5xx · autocomplete failing on the production domain ·
+`/send` handoff failing · severe layout overflow · an exposed secret · important routes down —
+then roll back by **either**:
+
+1. **DigitalOcean dashboard → Deployments → redeploy the previous successful deployment** (fastest,
+   no Git operation), **or**
+2. **A normal revert commit** restoring the tree at `pre-druppr-homepage-2026-08-05`:
+   `git revert --no-commit 318e61f6..HEAD && git commit && git push origin main`
+
+**Do not force-reset published `main`.** It is now public history.
+
+## P10. Remaining operational items
+
+| # | Item | Owner |
+|---|---|---|
+| 1 | Confirm the DigitalOcean deployment reaches **ACTIVE / SUCCESS** | founder |
+| 2 | Run the P8 smoke test on **each** production origin | founder |
+| 3 | **Delete the transitional browser-key literal** in `src/lib/maps-loader.js` — the founder has confirmed the env var is present, so the fallback is no longer needed. It is a *public* browser key, not a secret, but it should no longer shadow the configured value | engineering, next change |
+| 4 | Push this addendum with the next real code change (see the banner above) | engineering |
+| 5 | Five-second positioning test — founder-deferred to post-launch | founder |
+| 6 | Metric review by **2026-11-03** — *"Accurate as of August 2026"* is live on the homepage | founder |
+| 7 | Privacy-policy security wording — published under founder acceptance, professional review still pending | counsel |
+| 8 | Real-user Core Web Vitals — lab figures only so far | founder |
+
+## P11. Confirmation
+
+- **No force-push.** No `--force`, no `--force-with-lease`, at any point.
+- **No history rewritten.** No rebase, no amend, no reset. `318e61f6` remains an ancestor of
+  `origin/main`.
+- **No merge commit.** Fast-forward only, verified.
+- **No conflicts** arose, so none were resolved — automatically or otherwise.
+- **Only `main` and the rollback tag were pushed.** `origin/homepage-redesign` was left at
+  `5e7dca5`.
+- The rollback tag was created and pushed **before** `main` was touched.
+
+---
+
+**Phase 12.1 complete to the limit of what this environment can verify. Deployment status and the
+production smoke test rest with the founder.**
