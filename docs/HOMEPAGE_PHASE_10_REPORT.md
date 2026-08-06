@@ -3,6 +3,10 @@
 > **Status: engineering complete. Zero partners approved, so the section does not render.
 > Four commits created. Nothing pushed, nothing merged.**
 >
+> ⚠️ **SUPERSEDED BY PHASE 10.1 (appended below).** The founder approved all six partners on
+> 2026-08-05 and the section now renders. Everything in Phase 10 below describes the state at the
+> time it was written and is retained as that record.
+>
 > **That the section is invisible is the deliverable working, not a defect.** Every supplied
 > permission record arrived blank, so the gate holds all six back. The system is built, tested
 > against every state including three, six and all-approved, and will render at the correct size
@@ -536,6 +540,8 @@ render a compact static row.
 
 ## 26. Does the section currently render publicly?
 
+> ⚠️ **SUPERSEDED BY PHASE 10.1 — the answer is now YES.** All six were approved on 2026-08-05.
+
 **No.**
 
 `APPROVED_PARTNERS` is empty, so `page.jsx` renders no partner section, no heading, no gap, no
@@ -579,3 +585,370 @@ requires written permission from six organizations, not more engineering.
 ---
 
 **Phase 10 complete. Stopping here for review.**
+
+---
+---
+
+# Phase 10.1 — Founder-Approved Partner Activation
+
+> **Status: all six partners approved and live. The moving strip renders. Two commits created.
+> Nothing pushed, nothing merged.**
+>
+> **No code change was required to activate them.** The Phase 10 system was built data-driven, so
+> the approval is entirely a data and documentation change — which is the strongest evidence that
+> the permission gate was a real gate rather than a switch.
+
+## 10.1-1. Founder approval
+
+| Field | Value |
+|---|---|
+| **Approval date** | **2026-08-05** |
+| **Decision-maker** | **Abdul** |
+| **Role** | **Founder** |
+| **Evidence reference** | *Founder instruction recorded in the Phase 10.1 implementation request on 2026-08-05.* |
+| **Scope** | Public display of all six supplied logos on the Druppr website |
+| **Website linking** | **Disabled for every partner** |
+| **Website URLs** | **`null` for every partner** |
+| **Brand-use restrictions** | **"None stated"** for every partner |
+
+The instruction itself is the written approval record, and it is cited as the evidence reference in
+both the register and every data record.
+
+## 10.1-2. Approved organizations and relationship types
+
+| # | Exact public name | Relationship recorded |
+|---|---|---|
+| 1 | General Basket Logistics Services | business relationship |
+| 2 | Haut Logistics | business relationship |
+| 3 | That Local Girl | business relationship |
+| 4 | Can-Anny | business relationship |
+| 5 | Arc Law | business relationship |
+| 6 | **The Accelerator Centre** | **program and accelerator relationship** |
+
+**The Accelerator Centre is not described as a customer** — its relationship is recorded as a
+programme and accelerator relationship, which is a materially different thing from the other five.
+
+**No organisation is described as** a paying customer · a recurring customer · an enterprise
+customer · currently active · endorsing Druppr · exclusively served by Druppr. No record supports
+any of those.
+
+**The relationship strings are not rendered.** They exist to bound what the section may claim.
+Nothing per-partner is published beyond each logo and its alt text.
+
+### "Haut Logistics" — inferred, then founder-confirmed
+
+Phase 10 withheld this name because the artwork is a **symbol-only mark carrying no text at all**,
+so unlike the other five nothing in the repository corroborated it, and the slug came from the same
+guess.
+
+**The founder has confirmed it is the correct public name, explicitly despite the symbol-only
+artwork.** That founder statement is now the evidence. The artwork still does not corroborate it
+and never did — **both halves are kept on the record**, in the register and in
+`src/data/partners.js`, so if the name is ever disputed it is clear exactly what it rests on.
+
+## 10.1-3. Permission values recorded
+
+Identical in `docs/PARTNER_LOGO_PERMISSIONS.md` and `src/data/partners.js` for all six:
+
+```
+permission.status             = 'approved'
+permission.displayAllowed     = true
+permission.date               = '2026-08-05'
+permission.approvedBy         = 'Abdul'
+permission.approverRole       = 'Founder'
+permission.websiteLinkAllowed = false
+permission.brandRestrictions  = 'None stated'
+website                       = null
+evidenceReference             = 'Founder instruction recorded in the Phase 10.1
+                                 implementation request on 2026-08-05.'
+```
+
+### ⚠️ The gate was strengthened in the same change that passed it
+
+The validator was **not** relaxed. Two required fields were **added**:
+
+| Added field | Why |
+|---|---|
+| `permission.displayAllowed` — must be exactly `true` | Splits *"an approval exists"* from *"the approval covers public display"*, which the single `status` string had been carrying alone |
+| `evidenceReference` — must be a non-empty string | Where the approval can be found later. An approval nobody can locate is not auditable, and being auditable is this section's entire defence |
+
+So the six clear a **higher** bar than the one they failed in Phase 10.
+
+**Verified the gate still bites**, by tampering with in-memory copies:
+
+| Tamper | Result |
+|---|---|
+| all six as committed | `APPROVED_PARTNERS.length === 6`, **0 missing fields each** |
+| set one `displayAllowed: false` | that partner reports missing `permission.displayAllowed === true` and drops out |
+| blank one `evidenceReference` | that partner reports missing `evidenceReference` and drops out |
+
+`PARTNER_LOGOS` remains the complete source collection and is still never rendered.
+`page.jsx` imports only `APPROVED_PARTNERS`. **No temporary test-approval logic remains** — the
+Phase 10 stub harness lived outside the repository and every state it wrote was reverted.
+
+## 10.1-4. Public rendering
+
+**Six logos rendered.** Heading: **"Business relationships"**.
+
+| Property | Result |
+|---|---|
+| Semantic logos | **6**, each announced once |
+| Visual duplicates | **6**, `aria-hidden="true"` **and** `alt=""` |
+| Total `<img>` in the strip | 12 |
+| **Anchors wrapping a logo** | **0** — verified in the served HTML and the rendered DOM |
+| Logos in the tab order | **0** |
+| Duplicate ids | none |
+| Heading | *Business relationships* |
+
+Section order, verified from the rendered DOM:
+
+1. Hero · 2. Operational Proof · 3. Platform Showcase · **4. Google Reviews *(absent — no API key
+in this environment)*** · **5. Business relationships** · 6. Medical · 7. Legal · 8. Trust and
+Accountability · 9. Footer
+
+With reviews absent the partner strip occupies slot 4 visually; the ordering in `page.jsx` is
+unchanged and puts it after reviews whenever both render — confirmed during Phase 10 with a review
+stub, where the order read *… Showcase → Rated 4.8 on Google → Business relationships → Medical …*.
+
+### Logos are not links
+
+`websiteLinkAllowed: false` and `website: null` for all six, so `canLinkPartner()` returns false
+for every record and the component renders no `<a>` at all. **No empty anchors, no stored external
+URLs, no keyboard-focusable logo.** Logos are informational images only.
+
+The linking capability is retained in the component and gated on the data — the correct place for
+it. It is off because the records say so, not because the ability was removed.
+
+## 10.1-5. Motion
+
+| Band | Direction | Measured | Duration |
+|---|---|---|---|
+| Google Reviews | **left to right** | +35.4 px/s | derived from review count |
+| Partner logos | **right to left** | **−24.5 px/s** | **54 s** at six logos |
+
+Slow, linear, seamless. **No dependency was added** — no marquee package, no carousel package, no
+bouncing, rotation, pulsing, parallax, speed change or logo scaling.
+
+### Shared pause control
+
+**One `SocialProofMotion` client boundary, one instance, one control**, governing both bands. No
+second island was created.
+
+| Interaction | Result |
+|---|---|
+| Hover the partner strip | partner **paused**; reviews unaffected (per-region) |
+| Pointer leaves | partner resumes |
+| Keyboard focus inside a moving region | that region pauses |
+| Press **Pause** | **both bands paused**, `aria-pressed="true"`, label → *Resume motion* |
+| Hover in and out while paused | **stays paused**, `aria-pressed` stays `true` — explicit pause is authoritative |
+| Press **Resume** | both running, `aria-pressed="false"` |
+
+The control's accessible name names only what is actually moving. With reviews absent it reads
+**"Pause motion for partner logos"**; with both bands live, **"Pause motion for customer reviews and
+partner logos"**.
+
+## 10.1-6. Reduced-motion results
+
+`prefers-reduced-motion: reduce` removes all movement. The track becomes a static, centred,
+wrapping block; the duplicate is removed; the pause control is hidden, because a button offering to
+pause motion that does not exist is an inert control.
+
+| Width | Logos fully on screen | Rows | Overflow |
+|---|---|---|---|
+| 1440 | **6 of 6** | 2 | none |
+| 390 | **6 of 6** | 6 | none |
+| 320 | **6 of 6** | 6 | none |
+
+## 10.1-7. JavaScript-disabled results
+
+Identical, applied by the `<noscript>` block — necessary because the pause button is the only
+control and is inert without JavaScript.
+
+| Width | Logos fully on screen | Rows | Overflow |
+|---|---|---|---|
+| 1440 | **6 of 6** | 2 | none |
+| 390 | **6 of 6** | 6 | none |
+
+**Every logo remains visible in both static fallback states.**
+
+## 10.1-8. Accessibility results
+
+| Check | Result |
+|---|---|
+| Accurate alt text, all six source logos | ✅ *"<Company> logo"* for each |
+| Duplicate logos use `alt=""` | ✅ all six |
+| Visual duplicates `aria-hidden` | ✅ |
+| Each company represented once to assistive tech | ✅ |
+| No logo is interactive | ✅ 0 anchors, no `tabindex`, no role |
+| No logo in the tab order | ✅ tab stops 20, none a logo |
+| No duplicate IDs | ✅ none anywhere on the route |
+| Pause control uses `aria-pressed` | ✅ flips `false` ↔ `true` |
+| Visible keyboard focus | ✅ 20 of 20 tab stops show a ring |
+| Reduced-motion exposes all six | ✅ |
+| JavaScript-disabled exposes all six | ✅ |
+| No clipping at 200% zoom | ✅ measured at 720×450 CSS, DPR 2 |
+| No horizontal page overflow | ✅ every width 320 → 1920 |
+| No false interactive affordances | ✅ 0 false buttons |
+| Exactly one `<h1>`, no heading skips | ✅ |
+
+## 10.1-9. Responsive results
+
+| Width | Overflow | Strip rows | Tile | Distorted | Clipped | Hero height |
+|---|---|---|---|---|---|---|
+| 320 | none | 1 | 200×80 | **0** | 0 | 968 px |
+| 360 | none | 1 | 200×80 | **0** | 0 | 906 px |
+| 390 | none | 1 | 200×80 | **0** | 0 | 912 px |
+| 430 | none | 1 | 200×80 | **0** | 0 | 897 px |
+| 768 | none | 1 | 200×80 | **0** | 0 | 1,098 px |
+| 1024 | none | 1 | 200×80 | **0** | 0 | 773 px |
+| 1280 | none | 1 | 200×80 | **0** | 0 | 696 px |
+| 1440 | none | 1 | 200×80 | **0** | 0 | 696 px |
+| 1920 | none | 1 | 200×80 | **0** | 0 | 696 px |
+| 200% zoom | none | 1 | 200×80 | **0** | 0 | 1,098 px |
+
+- **All six logos are recognisable** and none is compressed into an illegible mark.
+- **Zero distortion at every width** — measured by comparing each rendered box ratio against the
+  image's intrinsic ratio; `object-contain` letterboxes rather than stretches.
+- **The moving strip stays one row** at every width, as intended.
+- **Movement does not widen the page** — `document.scrollWidth === clientWidth` everywhere.
+- **The pause control stays reachable**, inside the 1200 px content column rather than following
+  the full-bleed track to the viewport edge.
+- **Phase 7.1 is undone by nothing**: hero heights are identical to Phase 9 and Phase 10 at every
+  width.
+- Brand presentation preserved — **That Local Girl's orange field and Arc Law's dark banner both
+  intact**, nothing recoloured, redrawn, cropped or converted to monochrome, no effects added
+  inside any logo.
+
+## 10.1-10. Performance measurements
+
+| Metric | Phase 10 | **Phase 10.1** | Δ |
+|---|---:|---:|---:|
+| `/` route type | `○ (Static)` | **`○ (Static)`** | unchanged |
+| `/` route size | 7.09 kB | **7.09 kB** | **0** |
+| **`/` First Load JS** | 101 kB | **101 kB** | **0** |
+| Shared JS | 87.2 kB | **87.2 kB** | **0** |
+| Client islands | 3 (nothing moving) | **4** (social-proof motion renders) | +1, **within the approved ceiling** |
+| Maps requests before address interaction | 0 | **0** | 0 |
+| Places requests before address interaction | 0 | **0** | 0 |
+| New dependencies | — | **none** | — |
+| Application console errors | 0 | **0** | 0 |
+
+**The section costs zero client JavaScript.** It is server-rendered, and its logos are plain
+`<img>` rather than `next/image` — a decision Phase 10 made by measurement, because the image
+runtime costs 5 kB of First Load JS whether or not the component renders.
+
+### CLS
+
+| Width | Phase 10 | **Phase 10.1** |
+|---|---:|---:|
+| 390 | 0.0020 | **0.0020** |
+| 430 | 0.00003 | **0.00003** |
+| 768 | 0.00023 | **0.00023** |
+| 1024 | 0.00023 | **0.0000** |
+| 1440 | 0.0001 | **0.00006** |
+
+**No material regression** — and none expected, because every logo declares `width`/`height`, so
+its box is reserved before the bytes arrive.
+
+### Page height
+
+The section adds ~296–328 px, which is the section existing rather than a regression:
+
+| Width | Before (no partners) | After |
+|---|---:|---:|
+| 390 | 6,223 px | 6,519 px |
+| 430 | 6,030 px | 6,326 px |
+| 768 | 5,838 px | 6,166 px |
+| 1024 | 4,125 px | 4,453 px |
+| 1440 | 3,996 px | 4,324 px |
+
+## 10.1-11. Logo transfer measurements
+
+| Logo | Source dimensions | Natural | Rendered | Encoded | Transferred | Format |
+|---|---|---|---|---:|---:|---|
+| general-basket-logistics | 253×200 → 600×240 supplied | 400×160 | 200×80 css | 14.3 kB | **14.3 kB** | `image/webp` |
+| haut-logistics | 225×225 → 600×240 | 400×160 | 200×80 | 10.1 kB | **10.1 kB** | `image/webp` |
+| that-local-girl | 225×225 → 600×240 | 400×160 | 200×80 | 2.0 kB | **2.0 kB** | `image/webp` |
+| can-anny | 1080×1080 → 600×240 | 400×160 | 200×80 | 8.9 kB | **8.9 kB** | `image/webp` |
+| arc-law | 271×65 → 600×240 | 400×160 | 200×80 | 6.2 kB | **6.2 kB** | `image/webp` |
+| accelerator-centre | 198×77 → 600×240 | 400×160 | 200×80 | 14.1 kB | **14.1 kB** | `image/webp` |
+| **Total** | | | | **55.5 kB** | **55.5 kB** | |
+
+**6 requests, 6 unique files, 55.5 kB total** — every response `200 image/webp`. The duplicate half
+re-uses the same six URLs, so the seamless loop costs **no extra bytes**.
+
+All six are `loading="lazy"` and are requested only when the section scrolls into view, so a
+visitor who never reaches it transfers **zero** logo bytes. Natural 400×160 against a 200×80
+rendered box is a 2× ratio, correct for high-DPR displays.
+
+## 10.1-12. Staging-directory cleanup
+
+`incoming/` was removed in full — the extracted `druppr-partner-logo-assets/` package **and** the
+1.45 MB ZIP.
+
+Confirmed **before** deleting that all six production assets exist and serve from
+`public/images/partners/`. Nothing was tracked by git at any point, so the removal produces no
+diff.
+
+**Retained, as required:** `public/images/partners/` · `src/data/partners.js` ·
+`docs/PARTNER_LOGO_PERMISSIONS.md` · `docs/HOMEPAGE_PHASE_10_REPORT.md`.
+
+**Never committed:** the ZIP · `preview.png` · `originals/` · `trimmed/` · the supplied 600×240
+duplicates · any temporary test state or approval stub.
+
+## 10.1-13. Regression results
+
+| Route | HTTP | H1 | Heading skips | Console errors | Overflow | Clipping |
+|---|---|---|---|---|---|---|
+| `/` | 200 | 1 | none | 0 | none | none |
+| `/medical` | 200 | 1 | none | 0 | none | none |
+| `/legal` | 200 | 1 | none | 0 | none | none |
+| `/contact-us` | 200 | 1 | none | 0 | none | none |
+| `/send` | 200 | 1 | none | 0 | none | none |
+| `/send/details` · `/send/pay` | 200 | — | — | 0 | none | none |
+| `/track/[code]` | 200 | 1 | none | 0 | none | none |
+| `/track-partner/[token]` | 200 | 1 | none | 0 | none | none |
+| `/privacy-policy` | 200 | 1 | none | 0 | none | none |
+| `/nonexistent-control` | **404** | — | — | — | — | — |
+
+The 404 control confirms the 200s are meaningful.
+
+**Booking handoff re-verified end to end** with live Google Places, using generic public landmarks
+only: 0 Maps/Places before interaction · one library bootstrap on focus · both addresses selected ·
+submit gated until both are valid · editing invalidates coordinates · re-selection re-enables ·
+`legaldrop.send-flow.v1` written with finite coordinates · **no addresses in the URL** · unrelated
+booking state preserved · zero console errors.
+
+**One known measurement artifact, unchanged from Phase 9:** the `/send` audit reports two tab stops
+without a focus ring. The indicator is a border rendered inside Google's `gmp-place-autocomplete`
+**closed** shadow root, confirmed visible by screenshot. Not a defect.
+
+## 10.1-14. Files modified
+
+| File | Change |
+|---|---|
+| `src/data/partners.js` | all six records approved; validator strengthened by two required fields |
+| `docs/PARTNER_LOGO_PERMISSIONS.md` | register updated to 6 of 6 approved; field table mapped to code fields |
+| `docs/HOMEPAGE_PHASE_10_REPORT.md` | this appendix |
+
+**No component, style or page file changed.** The Phase 10 system was built data-driven, so
+activation required no code — which is the clearest demonstration that the gate was a real gate.
+
+**No `feat(home)` commit was created**, because there was no code change to put in it. Creating one
+would have meant an empty commit.
+
+The register and `src/data/partners.js` were committed **together**, deliberately: the two must
+match exactly, and committing them in one change means they cannot be out of step at any point in
+history.
+
+## 10.1-15. Confirmation
+
+- **Nothing has been pushed. Nothing has been merged.** The branch has no upstream configured.
+- **No previous commit was amended.**
+- **No temporary test state or fake approval was committed.**
+- **The staging directory and the ZIP are gone.**
+- All six partners are approved by an explicit, dated, attributed founder decision.
+
+---
+
+**Phase 10.1 complete. Stopping here for review.**
