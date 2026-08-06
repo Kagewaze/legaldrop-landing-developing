@@ -1,5 +1,3 @@
-import { GOOGLE_PLACE_URL } from '@/lib/google-reviews'
-
 // Google Business Profile reviews. SERVER COMPONENT — the Google data never
 // crosses into the client bundle. Phase 8 added motion around this content, not
 // inside it.
@@ -154,7 +152,7 @@ function ReviewCard({ review, clamp = false }) {
 }
 
 export function Reviews({ data }) {
-  const { rating, totalCount, reviews } = data
+  const { rating, totalCount, reviews, sourceUrl } = data
   const animated = reviews.length >= MOTION_MIN_REVIEWS
 
   // One set's width, then the seconds needed to travel it at the reading speed
@@ -168,14 +166,38 @@ export function Reviews({ data }) {
       <h2 className="font-display text-3xl font-extrabold text-[#17131c]">
         Rated {rating.toFixed(1)} on Google
       </h2>
-      <a
-        href={GOOGLE_PLACE_URL}
-        target="_blank"
-        rel="noreferrer"
-        className="rounded-control text-base font-semibold text-brand-600 transition-colors hover:text-[#5d1f96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-page"
-      >
-        See all reviews
-      </a>
+      {/* RENDERED ONLY WHEN THE RESPONSE YIELDED A VERIFIED DESTINATION.
+          src/lib/google-reviews.js returns sourceUrl: null rather than guessing
+          a URL, and this is the half of that contract that matters — the
+          reviews stay on the page and simply lose their outbound link. The
+          header is a flex row, so its absence leaves the heading in place with
+          no gap and no layout change.
+
+          "View reviews on Google", not "See all reviews". Every documented
+          Maps URL lands on the place, and which tab is foregrounded varies by
+          platform and by whether the app takes the hand-off — so promising the
+          reviews tab was a promise the link could not keep. The new label
+          names the destination instead of the tab.
+
+          aria-label OPENS WITH THE VISIBLE STRING. WCAG 2.5.3 (Label in Name)
+          requires the accessible name to contain the visible text, so voice
+          control can still act on what is on screen; the suffix only adds the
+          new-tab warning that target="_blank" otherwise gives with no notice.
+
+          rel="noopener noreferrer" — noopener severs window.opener on the
+          destination, noreferrer withholds the referrer. It was previously
+          noreferrer alone. */}
+      {sourceUrl && (
+        <a
+          href={sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="View reviews on Google (opens in a new tab)"
+          className="rounded-control text-base font-semibold text-brand-600 transition-colors hover:text-[#5d1f96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-page"
+        >
+          View reviews on Google
+        </a>
+      )}
     </div>
   )
 

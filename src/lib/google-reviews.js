@@ -20,16 +20,49 @@ import 'server-only'
 // The business's Google Place ID.
 const PLACE_ID = 'ChIJ6bQwlukxK4gRFaB2nvrNqWw'
 
-// Public Google Maps listing for this place — the "See all reviews" target.
-// Built from the Place ID so it cannot drift from the reviews being shown.
-export const GOOGLE_PLACE_URL = `https://www.google.com/maps/place/?q=place_id:${PLACE_ID}`
+// ⚠️ THE OUTBOUND LINK IS NO LONGER BUILT FROM THE PLACE ID BY HAND.
+//
+// This module used to export:
+//
+//   GOOGLE_PLACE_URL = `https://www.google.com/maps/place/?q=place_id:${PLACE_ID}`
+//
+// and that URL landed on Google Maps' "No results found" screen in production.
+// Two faults, either of which is sufficient on its own:
+//
+//   1. `/maps/place/?q=place_id:` is a LEGACY, UNDOCUMENTED form that predates
+//      the Maps URLs API. It carries no `api=1`, so Google is under no
+//      commitment to resolve it, and its handling differs across desktop, the
+//      mobile web and the app hand-off. The documented cross-platform form is
+//      `/maps/search/?api=1&query=…&query_place_id=…`.
+//
+//   2. A hand-built URL cannot follow a place ID that Google has superseded.
+//      The Places API transparently forwards a retired ID to its replacement
+//      when SERVING the details request — which is why the reviews kept
+//      arriving while the link died. A string built locally gets no such
+//      forwarding.
+//
+// The fix is to stop constructing the destination and take the canonical one
+// from the SAME response that supplies the reviews, so the link and the content
+// can never describe different places. `googleMapsUri` is Google's own current
+// URL for the resolved place.
+//
+// Only used to disambiguate the FALLBACK search query below; the authoritative
+// part of that URL is always `query_place_id`. Not used when `googleMapsUri` is
+// present, which is the normal path.
+const PLACE_CITY = 'Toronto'
 
 // Places API (New): the place ID goes in the PATH, not a query parameter.
 const PLACE_DETAILS_ENDPOINT = `https://places.googleapis.com/v1/places/${PLACE_ID}`
 
 // Field mask is REQUIRED by the new API — an unmasked request is rejected, and
-// the mask determines the billing SKU. Request only what is rendered.
-const FIELD_MASK = 'rating,userRatingCount,reviews'
+// the mask determines the billing SKU. Request only what is rendered, plus the
+// two fields the outbound link needs.
+//
+// `displayName` never reaches the browser: it is read here to build the
+// fallback query and is then discarded. Only the finished URL string crosses to
+// the client.
+const FIELD_MASK =
+  'rating,userRatingCount,reviews,googleMapsUri,displayName'
 
 // 24 hours.
 //
@@ -71,7 +104,55 @@ function readAuthorName(review) {
   return null
 }
 
-// Returns { rating, totalCount, reviews[] } or null.
+// The outbound "View reviews on Google" destination, derived from the response.
+//
+// Returns a URL string, or null — and null is a legitimate outcome, not an
+// error. The caller renders no link at all in that case rather than shipping a
+// guess: a link that lands on "No results found" is worse than no link, which
+// is the entire defect this function exists to close.
+//
+// PREFERRED: googleMapsUri, Google's canonical URL for the place it actually
+// resolved. Nothing is built, so nothing can drift.
+//
+// FALLBACK: the documented Maps URLs search form, assembled with
+// URLSearchParams so every value is encoded exactly once and no separator is
+// ever hand-written. It uses the API's own displayName — NOT 'Druppr' (the
+// consumer brand) and NOT 'LegalDrop' (the legal entity), either of which may
+// differ from the name on the Business Profile and would reproduce the same
+// "No results found" failure. `query_place_id` is the same PLACE_ID that
+// fetched the reviews, so the link and the content stay bound together.
+function readSourceUrl(payload) {
+  const canonical = payload?.googleMapsUri
+
+  if (typeof canonical === 'string' && canonical.startsWith('https://')) {
+    return canonical
+  }
+
+  // displayName is a localised { text, languageCode } object in this API.
+  const name = readLocalizedText(payload?.displayName).trim()
+
+  if (!name) {
+    // Dev-only, and server-side only — this module is `server-only`. Silent in
+    // production: a missing link is a degraded section, not a page failure, and
+    // logging it per render would be noise on every ISR regeneration.
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn(
+        '[google-reviews] Places response carried neither googleMapsUri nor displayName; rendering reviews without an outbound link.',
+      )
+    }
+    return null
+  }
+
+  const params = new URLSearchParams({
+    api: '1',
+    query: `${name} ${PLACE_CITY}`,
+    query_place_id: PLACE_ID,
+  })
+
+  return `https://www.google.com/maps/search/?${params.toString()}`
+}
+
+// Returns { rating, totalCount, reviews[], sourceUrl } or null.
 //
 // null on EVERY failure path — missing key, network error, non-200, error body,
 // malformed body, no reviews. The caller renders nothing at all when this is
@@ -160,6 +241,8 @@ export async function getGoogleReviews() {
       rating: numericRating,
       totalCount: numericTotal,
       reviews: usable,
+      // May be null. The section renders without an outbound link in that case.
+      sourceUrl: readSourceUrl(payload),
     }
   } catch (error) {
     // Network failure, DNS, timeout, invalid JSON — all handled identically.
