@@ -1,9 +1,16 @@
 # Homepage Phase 12 — Preview Release, Production Validation and Controlled Merge
 
-> **Status: STOPPED AT STAGE 3. The deployment mechanism cannot be determined from repository
-> evidence, and no platform access is available.**
+> **Status: Stage 3 blocker RESOLVED by founder answer; branch PUSHED; STOPPED AGAIN BEFORE
+> STAGE 8 (merge). The "Update" section at the end supersedes the status below.**
 >
-> **Nothing was pushed. Nothing was merged. Nothing was deployed. No tag was created.**
+> ⚠️ *The body of this report records the state at the first stop, when the deployment mechanism
+> was unknown. It is retained as that record. The founder then identified the platform as
+> DigitalOcean App Platform, which cleared Stage 3 and permitted the Stage 5 push.*
+>
+> **Original status: STOPPED AT STAGE 3. The deployment mechanism cannot be determined from
+> repository evidence, and no platform access is available.**
+>
+> **At that point: nothing was pushed, merged or deployed, and no tag was created.**
 >
 > Stages 1 and 2 passed. Stage 3 is a hard stop by its own terms — *"Do not invent a workflow. If
 > the deployment mechanism cannot be determined from repository evidence or available platform
@@ -254,3 +261,143 @@ No source file was changed. No tag was created.
 ---
 
 **Phase 12 stopped at Stage 3. Awaiting the deployment-workflow information above.**
+
+---
+---
+
+# Phase 12 — Update: Stage 3 resolved, branch pushed, stopped before merge
+
+> **Supersedes the status at the top of this report.**
+>
+> **The branch is pushed. `main` is untouched. Nothing is deployed. No tag exists.**
+
+## U1. Stage 3 — resolved by founder answer
+
+| Question | Answer |
+|---|---|
+| **Hosting platform** | **DigitalOcean App Platform** (founder-supplied, 2026-08-05) |
+| Production custom domain | **Both `druppr.ca` and `legaldrop.ca`** (founder-supplied; exact origin list still needed — see U5) |
+| Dashboard access | **Available to the founder** |
+| Founder direction | *"I think we should go to production"* |
+
+This is consistent with the repository evidence: the backend API already runs on DigitalOcean
+(`seal-app-9hhnm.ondigitalocean.app`), and App Platform deploys from a GitHub connection configured
+**in the dashboard**, which is why no artifact exists in the repo.
+
+## U2. Stage 5 — branch pushed
+
+The Stage 5 stop condition — *"if pushing would immediately deploy production rather than preview,
+stop"* — was cleared **on evidence, not assumption**:
+
+`git ls-remote origin` returned **exactly one branch, `main`, and zero tags**. A DigitalOcean App
+Platform app deploys only the single branch it is configured against, and that branch must exist.
+`homepage-redesign` had **never existed on the remote**, so no app could have been tracking it.
+Pushing it therefore could not trigger a deployment.
+
+| Item | Result |
+|---|---|
+| Command | `git push -u origin homepage-redesign` — **no force** |
+| Remote branch created | ✅ `refs/heads/homepage-redesign` |
+| **Pushed commit** | **`5e7dca5f08316f61b2bee4c0b864910f08e7bac0`** (`5e7dca5f`) |
+| Remote branch == local HEAD | ✅ exact match |
+| **`origin/main` after push** | **`318e61f6` — UNCHANGED** |
+| Tags on origin | **none** |
+| Force / history rewrite | **none** |
+
+GitHub offered a pull-request link; **no pull request was opened.**
+
+## U3. Stage 6 — NO PREVIEW DEPLOYMENT IS POSSIBLE ON THIS PLATFORM
+
+This is the decisive finding of the update, and it changes what "controlled merge" can mean here.
+
+**DigitalOcean App Platform does not create preview deployments for arbitrary branches.** Unlike
+Vercel or Netlify, an App is bound to **one** repository branch and redeploys when that branch
+changes. There is no per-branch ephemeral environment.
+
+Consequences:
+
+- **Pushing `homepage-redesign` produced no deployable environment.** There is no preview URL.
+- **Stage 6 cannot be performed as written.** The brief is explicit that *"localhost testing is not
+  preview validation"* — so none of the Phase 11 local results are presented as preview validation,
+  and none is claimed here.
+- **Stage 7's production-domain readiness, and Stage 6's "real deployment configuration" review
+  checks, cannot run before the merge**, because the only environment holding the production
+  configuration *is* production.
+
+**Therefore, on this platform, merging to `main` is the deployment.** The first environment in
+which the real Google keys, the real referrer allowlist and the real production domain are
+exercised would be the live site.
+
+That is a materially different risk profile from the one Stages 6–8 assume, and it is a founder
+decision rather than an engineering one. Two honest routes:
+
+| Option | What it means |
+|---|---|
+| **A — Create a staging App** in DigitalOcean pointed at `homepage-redesign`, with the same environment variables | Restores a real pre-production environment; Stages 6 and 7 then run as written. ⚠️ Creating one is **new deployment architecture**, which this phase forbids without explicit direction |
+| **B — Merge and validate on production**, with the rollback tag created first and the Stage 9 smoke test run immediately | Matches the founder's stated direction. Accepts that production is the first real environment. Rollback is prepared **before** the merge, not after |
+
+## U4. Stage 4 — still not cleared
+
+The founder confirmed dashboard access but has **not yet supplied the present/absent results**, so
+every hard-stop item remains in the *"could not verify"* state:
+
+| Hard stop (Stage 4) | Status |
+|---|---|
+| Browser key `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` present in the deploy environment | **unverified** |
+| Production origin(s) present in that key's HTTP-referrer allowlist | **unverified** |
+| Server key `GOOGLE_PLACES_API_KEY` present | **unverified** |
+| Booking/tracking API destination `NEXT_PUBLIC_API_BASE_URL` present | **unverified** |
+| Application can complete a real address lookup on the production origin | **unverified** |
+
+**"Unverified" is not "absent" — and it is not "present" either.** The brief permits a merge only
+when these are checked, and only the founder can check them.
+
+Two platform-specific cautions for App Platform, both of which decide whether the build even picks
+the values up:
+
+1. **`NEXT_PUBLIC_*` variables are inlined at BUILD time.** On App Platform they must be set as
+   **build-time** variables, not run-time only. A run-time-only `NEXT_PUBLIC_API_BASE_URL` or
+   `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` will **not** reach the client bundle — the build silently uses
+   the hardcoded fallbacks instead.
+2. **`GOOGLE_PLACES_API_KEY` is the opposite** — server-only, read on the server. It must **not** be
+   exposed as a `NEXT_PUBLIC_` variable.
+
+## U5. Exact origins still required
+
+The founder answered *"both"* domains. Referrer allowlists are **origin-exact**, so each of the
+following must be listed explicitly if it serves the site:
+
+- `https://druppr.ca` · `https://www.druppr.ca`
+- `https://legaldrop.ca` · `https://www.legaldrop.ca`
+- plus the App Platform default hostname (`*.ondigitalocean.app`) if it remains reachable
+
+⚠️ **This failure mode is silent.** `maps-loader.js` falls back to a hardcoded browser-key literal,
+so a missing or referrer-blocked key does not error — homepage address entry simply degrades to
+*"Address suggestions are unavailable right now"* behind a working `/send` fallback, and the page
+still looks correct. It must be confirmed **positively on each production origin**, never inferred
+from an absence of errors.
+
+## U6. Stages 7–10 — not attempted
+
+| Stage | Status |
+|---|---|
+| 7 — Production-domain readiness | blocked on U4 / U5 |
+| 8 — Controlled merge | **not attempted. No rollback tag created, no tag pushed, `main` untouched** |
+| 9 — Production smoke test | not attempted |
+| 10 — Rollback | **not required — nothing deployed** |
+
+## U7. Confirmation
+
+- **Branch pushed** — `origin/homepage-redesign` at `5e7dca5f`.
+- **`main` untouched** at `318e61f6`, local and remote.
+- **Nothing merged. Nothing deployed. No pull request opened.**
+- **No tag created or pushed.**
+- **No force-push.** No `--force`, no `--force-with-lease`.
+- **No history rewritten.** No rebase, amend or reset.
+- **No deployment architecture created.**
+- **No application functionality changed.**
+
+---
+
+**Phase 12 stopped before Stage 8. Awaiting the environment-variable results, the exact production
+origins, and a decision between staging (Option A) and production-first validation (Option B).**
