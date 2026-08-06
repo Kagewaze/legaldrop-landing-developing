@@ -8,176 +8,200 @@
 > an email thread, or the fact that the file sits in this repository. Publication permission is a
 > named person, in a stated role, granting it on a stated date, in writing.
 >
-> A partner becomes publishable only when **all eight required fields below are complete** and
+> A partner becomes publishable only when **every required field below is complete** and
 > `Permission status` reads **Approved**. Setting the status without the fields does nothing: the
 > data module validates every field independently and will keep the partner out of
 > `APPROVED_PARTNERS` regardless of what the status says.
 
-**Audit date: 2026-08-05 · Result: 0 of 6 approved · The public section does not render.**
+**Approval date: 2026-08-05 · Result: 6 of 6 APPROVED · The public section renders.**
 
-That is the system working as designed, not a defect.
+All six were approved for public display by the founder. Superseding the Phase 10 audit, which
+recorded 0 of 6 with every field blank.
 
 ---
 
 ## Required fields
 
-Each partner needs all eight. Fields are listed in the order the audit reports them.
+Each partner needs all nine. Every row maps to a check in `src/data/partners.js`, so this table and
+the validator cannot drift.
 
-| # | Field | Why it is required |
-|---|---|---|
-| 1 | **Exact public company name** | The legal or trading name the company wants shown. Must not be inferred from artwork |
-| 2 | **Relationship type** | Determines what the section may claim. An unstated relationship cannot be described |
-| 3 | **Permission to display publicly** | The permission itself. Must be **Yes**, in writing |
-| 4 | **Permission date** | When it was granted. An undated permission cannot be reviewed or expired |
-| 5 | **Approver name** | Who granted it. A company cannot consent; a person does |
-| 6 | **Approver role** | Whether that person could grant it |
-| 7 | **Website-link permission** | Linking a mark is a further use beyond displaying it |
-| 8 | **Brand restrictions** | Clear space, minimum size, background rules, prohibited treatments. Record **"None stated"** explicitly rather than leaving it blank — blank means *not asked* |
+| # | Field | Code field | Why it is required |
+|---|---|---|---|
+| 1 | **Exact public company name** | `name` | The legal or trading name the company wants shown. Must not be inferred from artwork |
+| 2 | **Relationship type** | `relationship` | Determines what the section may claim. An unstated relationship cannot be described |
+| 3 | **Permission to display publicly** | `permission.status` + `permission.displayAllowed` | The permission itself. Must be **Yes**, in writing. Two fields, because an approval on file and an approval that covers *public display* are not the same thing |
+| 4 | **Permission date** | `permission.date` | When it was granted. An undated permission cannot be reviewed or expired |
+| 5 | **Approver name** | `permission.approvedBy` | Who granted it. A company cannot consent; a person does |
+| 6 | **Approver role** | `permission.approverRole` | Whether that person could grant it |
+| 7 | **Website-link permission** | `permission.websiteLinkAllowed` | Linking a mark is a further use beyond displaying it. A boolean — `false` is a complete answer; only `null` means nobody asked |
+| 8 | **Brand restrictions** | `permission.brandRestrictions` | Clear space, minimum size, background rules, prohibited treatments. Record **"None stated"** explicitly rather than leaving it blank — blank means *not asked* |
+| 9 | **Evidence reference** | `evidenceReference` | Where the approval can be found later. An approval nobody can locate is not auditable, and this section's whole defence is that it is auditable |
 
-**Also record:** approved website URL (only if field 7 is Yes) and the evidence location.
+**Also record:** the approved website URL, but only when field 7 is **Yes**.
+
+*Fields 3 and 9 were added in Phase 10.1. The bar went up in the same change that approved the six —
+the records pass because the values were supplied, not because the gate was loosened.*
 
 ---
 
-## Audit summary — 2026-08-05
+## Approval summary — 2026-08-05
 
-| Partner | Name corroborated by artwork? | Fields complete | Status |
-|---|---|---:|---|
-| General Basket Logistics Services | ✅ name appears in the mark | **0 / 8** | ⛔ Pending |
-| Haut Logistics | ❌ **no name in the artwork at all** | **0 / 8** | ⛔ Pending |
-| That Local Girl | ✅ name appears in the mark | **0 / 8** | ⛔ Pending |
-| Can-Anny | ✅ name appears in the mark | **0 / 8** | ⛔ Pending |
-| Arc Law | ✅ name appears in the mark | **0 / 8** | ⛔ Pending |
-| The Accelerator Centre | ✅ name appears in the mark | **0 / 8** | ⛔ Pending |
+| Partner | Relationship | Display | Linking | Status |
+|---|---|:--:|:--:|---|
+| General Basket Logistics Services | business relationship | ✅ | ❌ | **Approved** |
+| Haut Logistics | business relationship | ✅ | ❌ | **Approved** |
+| That Local Girl | business relationship | ✅ | ❌ | **Approved** |
+| Can-Anny | business relationship | ✅ | ❌ | **Approved** |
+| Arc Law | business relationship | ✅ | ❌ | **Approved** |
+| The Accelerator Centre | **program and accelerator relationship** | ✅ | ❌ | **Approved** |
 
-**Every supplied permission record arrived as a blank template.** No name, relationship,
-permission, date, approver, role, linking decision or restriction was supplied for any of the six.
+**Decision-maker: Abdul, Founder · 2026-08-05.**
+**Evidence:** Founder instruction recorded in the Phase 10.1 implementation request on 2026-08-05.
 
-### ⚠️ "Haut Logistics" is an inferred name and is not corroborated
+**Website linking is disabled for every partner and no website URL is stored for any of them.**
+No logo is wrapped in a link, and no logo enters the keyboard tab order.
 
-The supplied artwork is a **symbol-only mark** — a circular monogram with a stylised letterform and
-an aircraft. **No company name appears anywhere in it.** The other five marks contain their own
-names as artwork, so those five at least corroborate the spelling used in the asset pack; this one
-does not.
+### ⚠️ The Accelerator Centre is NOT described as a customer
 
-The name therefore rests on nothing verifiable in this repository. Field 1 must be filled in from
-the company itself, not from the file name, and the slug `haut-logistics` must not be treated as
-evidence of the name. If the name is wrong, publishing it misnames a real business on a commercial
-page.
+Its relationship is recorded as a **program and accelerator relationship**, which is a materially
+different thing from the other five. None of the six is described as a paying customer, a recurring
+customer, an enterprise customer, currently active, endorsing Druppr, or exclusively served by
+Druppr — no record supports any of those.
+
+The relationship strings are **not rendered on the page**. They constrain what the section may
+claim; the heading is the only claim made, and "Business relationships" accommodates both an
+accelerator programme and five ordinary business relationships without asserting either is a sale.
+
+### ⚠️ "Haut Logistics" — inferred, then founder-confirmed
+
+Phase 10 withheld this name because the artwork is a **symbol-only mark carrying no text at all**,
+so unlike the other five nothing in the repository corroborated it, and the slug came from the same
+guess.
+
+**The founder confirmed on 2026-08-05 that "Haut Logistics" is the correct public name, explicitly
+despite the symbol-only artwork.** That founder statement is what the name now rests on. The
+artwork still does not corroborate it and never did — both halves are kept on the record, so if the
+name is ever disputed it is clear exactly what the evidence is.
 
 ---
 
 ## General Basket Logistics Services
 
 - Asset slug: `general-basket-logistics`
-- Asset: `public/images/partners/general-basket-logistics.png` (600×240, transparent canvas)
-- **Permission status: Pending**
-- Exact public company name:
-- Relationship: paying customer / pilot customer / business partner / approved logistics collaboration / other:
-- Permission to display name and logo publicly: Yes / No
-- Permission date:
-- Approved by — name:
-- Approver role:
-- Website linking allowed: Yes / No
-- Approved website URL:
-- Brand-use restrictions:
-- Evidence location or reference:
+- Asset: `public/images/partners/general-basket-logistics.webp` (400×160 WebP, 2× the 200×80 rendered tile)
+- **Permission status: APPROVED**
+- Exact public company name: **General Basket Logistics Services**
+- Relationship: **business relationship**
+- Permission to display name and logo publicly: **Yes**
+- Permission date: **2026-08-05**
+- Approved by — name: **Abdul**
+- Approver role: **Founder**
+- Website linking allowed: **No**
+- Approved website URL: **none — not applicable, linking is disabled**
+- Brand-use restrictions: **None stated**
+- Evidence location or reference: **Founder instruction recorded in the Phase 10.1 implementation request on 2026-08-05.**
 
 ## Haut Logistics
 
-> ⚠️ **Name inferred, not corroborated.** The mark carries no company name. Confirm the exact
-> public name with the company before this row can be completed.
+> ⚠️ **Name was inferred from a symbol-only mark, then confirmed by the founder on 2026-08-05.**
+> The artwork does not corroborate it; the founder statement does. See the note above.
 
 - Asset slug: `haut-logistics`
-- Asset: `public/images/partners/haut-logistics.png` (600×240, transparent canvas)
-- **Permission status: Pending**
-- Exact public company name:
-- Relationship: paying customer / pilot customer / business partner / approved logistics collaboration / other:
-- Permission to display name and logo publicly: Yes / No
-- Permission date:
-- Approved by — name:
-- Approver role:
-- Website linking allowed: Yes / No
-- Approved website URL:
-- Brand-use restrictions:
-- Evidence location or reference:
+- Asset: `public/images/partners/haut-logistics.webp` (400×160 WebP, 2× the 200×80 rendered tile)
+- **Permission status: APPROVED**
+- Exact public company name: **Haut Logistics**
+- Relationship: **business relationship**
+- Permission to display name and logo publicly: **Yes**
+- Permission date: **2026-08-05**
+- Approved by — name: **Abdul**
+- Approver role: **Founder**
+- Website linking allowed: **No**
+- Approved website URL: **none — not applicable, linking is disabled**
+- Brand-use restrictions: **None stated**
+- Evidence location or reference: **Founder instruction recorded in the Phase 10.1 implementation request on 2026-08-05.**
 
 ## That Local Girl
 
+> Note: the mark sits on its own **orange field**, part of the supplied artwork and preserved. It
+> must not be knocked out, recoloured or flattened to match neighbouring logos.
+
 - Asset slug: `that-local-girl`
-- Asset: `public/images/partners/that-local-girl.png` (600×240, transparent canvas)
-- **Permission status: Pending**
-- Note: the mark sits on its own **orange field**, which is part of the supplied artwork and is
-  preserved. It must not be knocked out, recoloured or flattened to match neighbouring logos.
-- Exact public company name:
-- Relationship: paying customer / pilot customer / business partner / approved logistics collaboration / other:
-- Permission to display name and logo publicly: Yes / No
-- Permission date:
-- Approved by — name:
-- Approver role:
-- Website linking allowed: Yes / No
-- Approved website URL:
-- Brand-use restrictions:
-- Evidence location or reference:
+- Asset: `public/images/partners/that-local-girl.webp` (400×160 WebP, 2× the 200×80 rendered tile)
+- **Permission status: APPROVED**
+- Exact public company name: **That Local Girl**
+- Relationship: **business relationship**
+- Permission to display name and logo publicly: **Yes**
+- Permission date: **2026-08-05**
+- Approved by — name: **Abdul**
+- Approver role: **Founder**
+- Website linking allowed: **No**
+- Approved website URL: **none — not applicable, linking is disabled**
+- Brand-use restrictions: **None stated**
+- Evidence location or reference: **Founder instruction recorded in the Phase 10.1 implementation request on 2026-08-05.**
 
 ## Can-Anny
 
 - Asset slug: `can-anny`
-- Asset: `public/images/partners/can-anny.png` (600×240, transparent canvas)
-- **Permission status: Pending**
-- Exact public company name:
-- Relationship: paying customer / pilot customer / business partner / approved logistics collaboration / other:
-- Permission to display name and logo publicly: Yes / No
-- Permission date:
-- Approved by — name:
-- Approver role:
-- Website linking allowed: Yes / No
-- Approved website URL:
-- Brand-use restrictions:
-- Evidence location or reference:
+- Asset: `public/images/partners/can-anny.webp` (400×160 WebP, 2× the 200×80 rendered tile)
+- **Permission status: APPROVED**
+- Exact public company name: **Can-Anny**
+- Relationship: **business relationship**
+- Permission to display name and logo publicly: **Yes**
+- Permission date: **2026-08-05**
+- Approved by — name: **Abdul**
+- Approver role: **Founder**
+- Website linking allowed: **No**
+- Approved website URL: **none — not applicable, linking is disabled**
+- Brand-use restrictions: **None stated**
+- Evidence location or reference: **Founder instruction recorded in the Phase 10.1 implementation request on 2026-08-05.**
 
 ## Arc Law
 
+> Note: the mark sits on its own **dark banner**, part of the supplied artwork and preserved. It
+> must not be inverted or placed on a light knockout.
+
 - Asset slug: `arc-law`
-- Asset: `public/images/partners/arc-law.png` (600×240, transparent canvas)
-- **Permission status: Pending**
-- Note: the mark sits on its own **dark banner**, part of the supplied artwork and preserved. It
-  must not be inverted or placed on a light knockout.
-- Exact public company name:
-- Relationship: paying customer / pilot customer / business partner / approved logistics collaboration / other:
-- Permission to display name and logo publicly: Yes / No
-- Permission date:
-- Approved by — name:
-- Approver role:
-- Website linking allowed: Yes / No
-- Approved website URL:
-- Brand-use restrictions:
-- Evidence location or reference:
+- Asset: `public/images/partners/arc-law.webp` (400×160 WebP, 2× the 200×80 rendered tile)
+- **Permission status: APPROVED**
+- Exact public company name: **Arc Law**
+- Relationship: **business relationship**
+- Permission to display name and logo publicly: **Yes**
+- Permission date: **2026-08-05**
+- Approved by — name: **Abdul**
+- Approver role: **Founder**
+- Website linking allowed: **No**
+- Approved website URL: **none — not applicable, linking is disabled**
+- Brand-use restrictions: **None stated**
+- Evidence location or reference: **Founder instruction recorded in the Phase 10.1 implementation request on 2026-08-05.**
 
 ## The Accelerator Centre
 
+> ⚠️ **Not a customer.** Recorded as a program and accelerator relationship, and must not be
+> described otherwise.
+
 - Asset slug: `accelerator-centre`
-- Asset: `public/images/partners/accelerator-centre.png` (600×240, transparent canvas)
-- **Permission status: Pending**
-- Exact public company name:
-- Relationship: paying customer / pilot customer / business partner / approved logistics collaboration / other:
-- Permission to display name and logo publicly: Yes / No
-- Permission date:
-- Approved by — name:
-- Approver role:
-- Website linking allowed: Yes / No
-- Approved website URL:
-- Brand-use restrictions:
-- Evidence location or reference:
+- Asset: `public/images/partners/accelerator-centre.webp` (400×160 WebP, 2× the 200×80 rendered tile)
+- **Permission status: APPROVED**
+- Exact public company name: **The Accelerator Centre**
+- Relationship: **program and accelerator relationship**
+- Permission to display name and logo publicly: **Yes**
+- Permission date: **2026-08-05**
+- Approved by — name: **Abdul**
+- Approver role: **Founder**
+- Website linking allowed: **No**
+- Approved website URL: **none — not applicable, linking is disabled**
+- Brand-use restrictions: **None stated**
+- Evidence location or reference: **Founder instruction recorded in the Phase 10.1 implementation request on 2026-08-05.**
 
 ---
 
 ## How to approve a partner
 
 1. Obtain **written** permission from a named person who can grant it.
-2. Fill in all eight fields above, plus the evidence location. Record `Brand-use restrictions` as
-   **"None stated"** if genuinely none were given — blank is read as *not asked*.
-3. Mirror the same values into that partner's entry in `src/data/partners.js`, and set
-   `permission.status` to `'approved'`.
+2. Fill in all nine fields above. Record `Brand-use restrictions` as **"None stated"** if genuinely
+   none were given — blank is read as *not asked*.
+3. Mirror the same values into that partner's entry in `src/data/partners.js`, and set BOTH
+   `permission.status` to `'approved'` AND `permission.displayAllowed` to `true`.
 4. Rebuild. The partner appears in `APPROVED_PARTNERS` only if the validator finds every field
    present; otherwise it is silently excluded and a development-time warning names the missing
    fields.
@@ -186,23 +210,31 @@ page.
 
 ## What the section may claim
 
-The heading and any supporting line are constrained by the **relationship** field, not by
-enthusiasm. With relationships unrecorded, nothing can be claimed at all, which is one more reason
-the section stays hidden.
+The heading is constrained by the **relationship** field, not by enthusiasm.
+
+**In use: "Business relationships".** It is the only claim the section makes. It accommodates five
+plain business relationships and one accelerator programme without asserting that any of them is a
+sale — which is exactly why it, and not a warmer alternative, is the heading.
 
 **Prohibited** unless the completed records explicitly support them: *Trusted by* · *Leading
-companies* · *Enterprise customers* · *Powering these businesses* · *Our client network*.
+companies* · *Enterprise customers* · *Powering these businesses* · *Our client network* ·
+*Our customers*.
 
-**Permitted, narrow:** *Business relationships* · *Companies we have worked with*.
+**The relationship strings are not rendered.** They exist to bound what may be said, and nothing
+per-partner is published beyond each logo and its alt text.
 
 The section must never imply that an organisation is a paying customer, a recurring account,
-currently active, an enterprise customer, or publicly endorsing Druppr, unless its record says so.
+currently active, an enterprise customer, exclusively served by Druppr, or publicly endorsing it,
+unless its record says so. **No record currently says so for any of the six.**
 
 ## Moving-strip threshold
 
 A moving strip requires **at least three distinct approved partners**. One or two are never
 duplicated to simulate a larger network — with fewer than three the loop's duplicate is on screen
 beside the original and a visitor simply sees the same logos twice.
+
+**Six are approved, so the moving strip renders.** If approvals are ever withdrawn below three, the
+section reverts to a compact static row on its own, with no code change.
 
 ## Asset notes
 
