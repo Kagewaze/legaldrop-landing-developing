@@ -1,10 +1,20 @@
 import { GOOGLE_PLACE_URL } from '@/lib/google-reviews'
-import { ReviewMotion } from '@/components/home/ReviewMotion'
 
 // Google Business Profile reviews. SERVER COMPONENT — the Google data never
 // crosses into the client bundle. Phase 8 added motion around this content, not
-// inside it: ReviewMotion is a client wrapper that receives the rendered cards
-// as `children`.
+// inside it.
+//
+// ⚠️ PHASE 10 MOVED THE MOTION WRAPPER OUT OF THIS FILE. It used to render
+// <ReviewMotion> around its own track. The wrapper is now SocialProofMotion,
+// mounted ONCE at page level around both this section and the partner strip,
+// because the approved island ceiling is 3 (or 4 with that wrapper) and a
+// second, partner-only island would have been a fifth.
+//
+// The consequence for this file: it renders the track and the `data-review-
+// track` hook, and nothing about pausing. The <noscript> suppression moved to
+// page level too, since one block now covers both tracks and the shared
+// control. This section no longer knows whether it is moving — the band decides
+// that from the review count, using the same MOTION_MIN_REVIEWS below.
 //
 // Everything here renders from the API response. The design's "4.9",
 // "Sarah A.", "Michael K." and their quotes were placeholders and are not in
@@ -29,6 +39,14 @@ import { ReviewMotion } from '@/components/home/ReviewMotion'
 // difference between a four/five-review track and a one-to-three-review grid.
 // It is not a preference — with three the repetition is simply visible.
 const MOTION_MIN_REVIEWS = 4
+
+// Exported so the band can decide whether to mount the shared motion wrapper
+// and render a pause control, WITHOUT duplicating the threshold at the call
+// site. One definition, two readers — the section and the band can never
+// disagree about whether this section is moving.
+export function reviewsWillMove(data) {
+  return Boolean(data) && Array.isArray(data.reviews) && data.reviews.length >= MOTION_MIN_REVIEWS
+}
 
 // Track geometry. The card width is fixed in the track (the grid keeps its
 // fluid columns) because a seamless loop needs a predictable total width.
@@ -202,62 +220,42 @@ export function Reviews({ data }) {
     <section className="py-16 sm:py-24">
       <div className="mx-auto max-w-[1200px] px-8">{header}</div>
 
-      {/* ── NO-JAVASCRIPT SUPPRESSION ──────────────────────────────────────
-          Identical declarations to the prefers-reduced-motion block in
-          src/styles/tailwind.css, applied by a mechanism that needs no
-          scripting. Without this the CSS animation would keep running with no
-          way to stop it — the pause button is the only control and it is inert
-          without JavaScript — which would leave moving content a visitor
-          cannot pause. Change both copies together.
+      {/* Full-bleed so the track runs to the viewport edges rather than
+          stopping inside the 1200px column, which is what makes it read as a
+          continuous strip rather than a box of sliding cards. overflow-hidden
+          is what keeps the off-screen half from widening the page. */}
+      <div className="overflow-hidden">
+        <ul
+          data-review-track
+          style={{
+            '--review-duration': `${duration}s`,
+            gap: GAP,
+          }}
+          className="flex w-max list-none px-8"
+        >
+          {cards}
 
-          ⚠️ PHASE 9 added the width release and the li override. `flex-wrap`
-          on its own never fired, because `w-max` below sizes this track to
-          max-content and a max-content flex container always fits its items on
-          one line. Without JavaScript that left 1 of 5 reviews readable at 390
-          with no scroll and no motion to reach the rest. See the full note in
-          src/styles/tailwind.css — the two copies must not drift. */}
-      <noscript>
-        <style>{`[data-review-track]{animation:none!important;transform:none!important;flex-wrap:wrap!important;width:auto!important;max-width:1200px!important;margin-left:auto!important;margin-right:auto!important}[data-review-track]>li{width:auto!important;flex:1 1 300px!important;max-width:100%!important}[data-review-duplicate]{display:none!important}[data-review-motion-control]{display:none!important}`}</style>
-      </noscript>
-
-      <ReviewMotion label="customer reviews">
-        {/* Full-bleed so the track runs to the viewport edges rather than
-            stopping inside the 1200px column, which is what makes it read as a
-            continuous strip rather than a box of sliding cards. overflow-hidden
-            is what keeps the off-screen half from widening the page. */}
-        <div className="overflow-hidden">
-          <ul
-            data-review-track
-            style={{
-              '--review-duration': `${duration}s`,
-              gap: GAP,
-            }}
-            className="flex w-max list-none px-8"
-          >
-            {cards}
-
-            {/* THE SEAMLESS HALF.
-                aria-hidden, so assistive technology reads each review exactly
-                once. Every descendant is inert to the keyboard too — the cards
-                contain no links, so there is nothing to remove from the tab
-                order, and `inert` is not needed to achieve it. Keys are
-                namespaced so no React key or DOM id is duplicated. */}
-            <li aria-hidden="true" data-review-duplicate className="contents">
-              <ul className="flex list-none" style={{ gap: GAP }}>
-                {reviews.map((review, index) => (
-                  <li
-                    key={`dup-${review.authorName}-${index}`}
-                    className="flex-none"
-                    style={{ width: CARD_W }}
-                  >
-                    <ReviewCard review={review} clamp />
-                  </li>
-                ))}
-              </ul>
-            </li>
-          </ul>
-        </div>
-      </ReviewMotion>
+          {/* THE SEAMLESS HALF.
+              aria-hidden, so assistive technology reads each review exactly
+              once. Every descendant is inert to the keyboard too — the cards
+              contain no links, so there is nothing to remove from the tab
+              order, and `inert` is not needed to achieve it. Keys are
+              namespaced so no React key or DOM id is duplicated. */}
+          <li aria-hidden="true" data-review-duplicate className="contents">
+            <ul className="flex list-none" style={{ gap: GAP }}>
+              {reviews.map((review, index) => (
+                <li
+                  key={`dup-${review.authorName}-${index}`}
+                  className="flex-none"
+                  style={{ width: CARD_W }}
+                >
+                  <ReviewCard review={review} clamp />
+                </li>
+              ))}
+            </ul>
+          </li>
+        </ul>
+      </div>
 
       <div className="mx-auto max-w-[1200px] px-8">{attribution}</div>
     </section>

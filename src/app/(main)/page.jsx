@@ -1,8 +1,11 @@
 import { getGoogleReviews } from '@/lib/google-reviews'
+import { APPROVED_PARTNERS } from '@/data/partners'
 import { HeroNetwork } from '@/components/home/HeroNetwork'
 import { OperationalProof } from '@/components/home/OperationalProof'
+import { PartnerStrip } from '@/components/home/PartnerStrip'
 import { PlatformShowcase } from '@/components/home/PlatformShowcase'
-import { Reviews } from '@/components/home/Reviews'
+import { Reviews, reviewsWillMove } from '@/components/home/Reviews'
+import { SocialProofMotion } from '@/components/home/SocialProofMotion'
 import { TrustAndAccountability } from '@/components/home/TrustAndAccountability'
 import {
   LEGAL_VERTICAL,
@@ -51,6 +54,80 @@ export default async function Home() {
   // an empty state advertises that something is broken or unfinished.
   const showReviews = reviews !== null && reviews.totalCount > 0
 
+  // ── THE SOCIAL-PROOF BAND ───────────────────────────────────────────────────
+  //
+  // Reviews and partner logos are composed together because ONE client wrapper
+  // governs both. Phase 9.1 fixed the approved ceiling at three client islands,
+  // or four while that wrapper renders; a separate partner island would have
+  // been a fifth. So SocialProofMotion is mounted at most ONCE, here, and owns
+  // the single pause boolean for both tracks.
+  //
+  // ⚠️ PARTNERS ARE PERMISSION-GATED, NOT FEATURE-FLAGGED. APPROVED_PARTNERS is
+  // filtered in src/data/partners.js on a COMPLETE permission record — every one
+  // of eight fields, not just a status string. It is currently EMPTY, because
+  // all six supplied records arrived blank, so no partner section renders and
+  // there is no gap where one would be. Nothing here needs changing when
+  // permissions land: fill in the register, mirror it into the data module, and
+  // the section appears at the right size on its own.
+  const partners = APPROVED_PARTNERS
+  const showPartners = partners.length > 0
+
+  // Whether each band actually MOVES, which is a different question from
+  // whether it renders. Reviews move at 4+, partners at 3+; below those counts
+  // each renders a static layout.
+  const reviewsMove = showReviews && reviewsWillMove(reviews)
+  const partnersMove = showPartners && partners.length >= 3
+  const anyMotion = reviewsMove || partnersMove
+
+  // The accessible name of the shared control names only what is actually
+  // moving, so it never offers to pause something static.
+  const motionLabel = [
+    reviewsMove ? 'customer reviews' : null,
+    partnersMove ? 'partner logos' : null,
+  ]
+    .filter(Boolean)
+    .join(' and ')
+
+  const reviewsSection = showReviews ? <Reviews data={reviews} /> : null
+  const partnersSection = showPartners ? <PartnerStrip partners={partners} /> : null
+
+  const socialProof = anyMotion ? (
+    <>
+      {/* ── NO-JAVASCRIPT SUPPRESSION ────────────────────────────────────────
+          Identical declarations to the prefers-reduced-motion block in
+          src/styles/tailwind.css, applied by a mechanism that needs no
+          scripting. Without it the CSS animations would keep running with no
+          way to stop them — the pause button is the only control and it is
+          inert without JavaScript — which would leave moving content a visitor
+          cannot pause. CHANGE BOTH COPIES TOGETHER.
+
+          It lives here rather than inside either section because one block now
+          covers both tracks and the one shared control.
+
+          The width releases are not cosmetic: `flex-wrap` alone never fires,
+          because `w-max` sizes each track to max-content and a max-content flex
+          container always fits its items on one line. Phase 9 measured the
+          consequence on the review track — 1 of 5 reviews readable at 390 with
+          no scroll and no motion to reach the rest. The partner track has the
+          same construction and therefore the same failure mode. */}
+      <noscript>
+        <style>{`[data-review-track]{animation:none!important;transform:none!important;flex-wrap:wrap!important;width:auto!important;max-width:1200px!important;margin-left:auto!important;margin-right:auto!important}[data-review-track]>li{width:auto!important;flex:1 1 300px!important;max-width:100%!important}[data-partner-track]{animation:none!important;transform:none!important;flex-wrap:wrap!important;justify-content:center!important;width:auto!important;max-width:1200px!important;margin-left:auto!important;margin-right:auto!important}[data-review-duplicate],[data-partner-duplicate]{display:none!important}[data-social-motion-control]{display:none!important}`}</style>
+      </noscript>
+
+      <SocialProofMotion label={motionLabel}>
+        {reviewsSection}
+        {partnersSection}
+      </SocialProofMotion>
+    </>
+  ) : (
+    // Nothing moves, so no client island is mounted at all and no pause control
+    // is rendered. Whatever exists renders as plain static server HTML.
+    <>
+      {reviewsSection}
+      {partnersSection}
+    </>
+  )
+
   return (
     // surface.page — a warm off-white, not #fff. Cards on this page are pure
     // white, so they sit ON the ground rather than dissolving into it.
@@ -82,8 +159,15 @@ export default async function Home() {
           colour beat. Reassess when the remaining sections are rebuilt. */}
       <PlatformShowcase />
       {/* Reviews moved below the showcase: product evidence outranks consumer
-          social proof, and this keeps the narrative claim → proof → product. */}
-      {showReviews && <Reviews data={reviews} />}
+          social proof, and this keeps the narrative claim → proof → product.
+
+          PHASE 10 placed approved partner logos immediately after the reviews,
+          as one social-proof band: both are third-party corroboration, and
+          keeping them adjacent is what lets a single motion wrapper govern the
+          pair. Either, both or neither may be absent — when both are, this
+          renders nothing at all and the medical vertical follows the showcase
+          directly, with no gap. */}
+      {socialProof}
       {/* The two account-based verticals. Copy for each is constrained — see
           the block in VerticalSection.jsx.
 
