@@ -232,6 +232,11 @@ relationship that the records do not establish.
 is one more reason the section stays hidden. When completed records support something narrower and
 truer, change it in `PartnerStrip.jsx` and record why in the register.
 
+> ⚠️ **Superseded by Phase 10.1 — all six founder-confirmed partner records are now approved and
+> the section renders.** Relationships are recorded (five *business relationship*, one *program and
+> accelerator relationship*), and the heading remains **"Business relationships"** because that is
+> still the narrowest wording those records support. The relationship strings are not rendered.
+
 ---
 
 ## 12. Motion architecture

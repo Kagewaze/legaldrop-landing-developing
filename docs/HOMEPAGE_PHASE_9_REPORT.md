@@ -1617,7 +1617,7 @@ deployment checklist in Phase 9 §5 stands.
 | 1 | **Formal five-second test** | 🟣 **Founder-deferred** | **Post-launch positioning validation.** Not run, no result, nothing fabricated. Deferred 2026-08-05 by Abdul. Protocol ready in §4; scoring commitment in §9.2-3 |
 | 2 | **Production Google Reviews validation** | 🟡 **Deployment verification** | No credentials or deployment access. Contract verified; **production not validated**. Ten-step checklist in §5 |
 | 3 | **Privacy-policy security wording** | ✅ **Decided** | Founder accepts publication pending professional review, 2026-08-05. Route public, sentence unchanged. **Site not claimed legally reviewed** |
-| 4 | **Partner logos** | 🔒 **Permission-gated** | Engineering complete (Phase 10); **zero partners approved**, so the section does not render. See `HOMEPAGE_PHASE_10_REPORT.md` |
+| 4 | **Partner logos** | ✅ **Closed** | ⚠️ *This row read "zero partners approved, so the section does not render" until 2026-08-05.* **Superseded by Phase 10.1 — all six founder-confirmed partner records are now approved and the section renders.** Logos are not links. See `HOMEPAGE_PHASE_10_REPORT.md` → Phase 10.1 |
 | 5 | **Client-island ceiling** | ✅ **Closed** | Phase 9.1, Option A. E5 raised to ≤ 3, or ≤ 4 with the shared social-proof motion wrapper |
 | 6 | **Site title wording** | ✅ **Closed** | *"Same-day logistics infrastructure for the GTA"* |
 | 7 | **Metric review date** | ✅ **Closed** | Owner Abdul; next review **2026-11-03** or before the next release. **Time-bounded — this expires** |
