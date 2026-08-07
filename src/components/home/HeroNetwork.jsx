@@ -61,7 +61,36 @@ const CTA_SECONDARY =
 
 export function HeroNetwork() {
   return (
-    <section className="bg-surface-ink text-white">
+    // PHASE 13B — GLOSSY GROUND. The flat surface-ink fill is replaced by a
+    // layered charcoal-to-purple treatment defined in src/styles/tailwind.css
+    // under [data-hero-glossy]; read the block at the top of that file before
+    // changing any of it.
+    //
+    // WHY AN ATTRIBUTE AND NOT CLASSES: the treatment is four gradient layers,
+    // a vignette, grain and a keyframe. As arbitrary values that is a ~900
+    // character class attribute that cannot be read or tuned. The stylesheet
+    // already owns the page's other keyframes for the same reason.
+    //
+    // `isolate` gives the section its own stacking context, which is what lets
+    // the two pseudo-elements sit at z-index:-1 — behind the content, but
+    // trapped inside this section rather than sliding under the whole page. No
+    // wrapper was added and no child needed a z-index.
+    //
+    // `overflow-hidden` is what contains the glow: the bloom layer is
+    // deliberately oversized so the drift never exposes an edge, and this is
+    // what stops that overflow painting past the section boundary.
+    //
+    // `rounded-b-card` is the existing 20px radius token, bottom corners only —
+    // the top edge meets the header and has nothing to round against. The glow
+    // is clipped by the radius rather than crossing it.
+    //
+    // bg-surface-ink is GONE from here, not merely overridden: the stylesheet
+    // sets its own background-color fallback, and leaving the utility on would
+    // mean two rules fighting over the same property.
+    <section
+      data-hero-glossy
+      className="relative isolate overflow-hidden rounded-b-card text-white"
+    >
       {/* py-10 while stacked, not py-16. The section rhythm elsewhere on the
           page is py-16 sm:py-24, but the hero is the one section whose height
           is measured against the first viewport rather than against its
