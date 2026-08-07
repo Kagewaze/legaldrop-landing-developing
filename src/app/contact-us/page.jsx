@@ -2,7 +2,7 @@
 import { EnvelopeIcon, PhoneIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form';
-import { useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import axios from "axios"
 
 import { Layout } from '@/components/Layout'
@@ -44,6 +44,61 @@ const LABEL = 'mb-1.5 block text-start text-sm font-semibold text-[#17131c]'
 const ERROR = 'mt-1.5 text-sm text-[#b42318]'
 
 const CONTACT_LINK = 'transition-colors hover:text-[#17131c]'
+
+// ── WHAT THE BACKEND ACTUALLY CONFIRMS, AND WHY THE COPY IS WORDED AS IT IS ──
+//
+// POST /contact-form answers 201 with:
+//
+//   { success: true,
+//     data: { …fields, id, createdAt, updatedAt, deletedAt },
+//     message: 'Contact form created successfully' }
+//
+// That is a DATABASE WRITE RECEIPT. There is no messageId, no provider status
+// and no delivery field anywhere in it — the backend does not distinguish a
+// message it merely stored from one that reached a human.
+//
+// So this form must not say "sent". It previously alerted 'Message sent
+// successfully!' on any 2xx, which asserted delivery the response never
+// claimed; while mail delivery was broken the page cheerfully confirmed a
+// send that never happened. The success copy below therefore confirms RECEIPT,
+// which is exactly what a row id evidences and no more, and the fallback
+// contact route stays on screen in BOTH outcomes so nobody is left with a
+// confirmation as their only option.
+//
+// If the backend ever returns real delivery evidence, tighten SUCCESS_MESSAGE
+// then — not before.
+const SUCCESS_MESSAGE =
+  'Thanks — we have your message and will get back to you.'
+
+const ERROR_MESSAGE =
+  'Your message could not be submitted. Nothing was lost — your details are still in the form, so you can try again.'
+
+// Bounds the textarea. The backend publishes no limit, so this is a client-side
+// guard against a paste that would be rejected downstream with no useful error.
+const MESSAGE_MAX = 2000
+
+// Long enough to exclude an accidental keypress, short enough not to lecture
+// someone with a genuinely brief question.
+const MESSAGE_MIN = 10
+
+// Accepts what people actually type: 4167201043, 416-720-1043, (416) 720-1043,
+// +1 416 720 1043, 416.720.1043.
+//
+// The old rule was /^\d{10}$/ against the raw input, which rejected every one
+// of those but the first — a valid customer with a correctly written number was
+// told it was invalid. Validation runs on the DIGITS, and normalisePhone below
+// is what the backend receives, so presentation and payload cannot disagree.
+function phoneDigits(value) {
+  const digits = String(value ?? '').replace(/\D/g, '')
+  return digits.length === 11 && digits.startsWith('1') ? digits.slice(1) : digits
+}
+
+// The backend was verified to accept a bare 10-digit string, so that is what it
+// keeps receiving. This normalisation changes what the USER may type, not the
+// request contract.
+function normalisePhone(value) {
+  return phoneDigits(value)
+}
 
 // The two "Other ways to reach us" links, extracted so the identical recipe is
 // not typed twice in the branch below.
@@ -92,40 +147,131 @@ const OTHER_WAYS = [
   },
 ]
 
+// ALWAYS RENDERED WITH BOTH OUTCOMES, success as well as failure.
+//
+// On failure it is the obvious need: the form did not go through, so there has
+// to be another way through. On SUCCESS it matters for a subtler reason — the
+// backend confirms storage, not delivery, so "we have your message" is the
+// honest ceiling. Someone who needs an answer today should not have to guess
+// whether that is enough, and a second route costs nothing to show.
+//
+// Reads the same SUPPORT_* constants as the page header and the footer, so
+// when a real number lands in navigation.js it appears here with no edit. While
+// they are null this degrades to the routes that do exist.
+function FallbackContact() {
+  return (
+    <p className="mt-2 text-sm text-[#5f5868]">
+      {SUPPORT_PHONE || SUPPORT_EMAIL ? (
+        <>
+          If it is urgent, reach us directly
+          {SUPPORT_PHONE && (
+            <>
+              {' '}on{' '}
+              <a href={`tel:${SUPPORT_PHONE}`} className="font-semibold text-brand-600 underline underline-offset-4">
+                {formatPhone(SUPPORT_PHONE)}
+              </a>
+            </>
+          )}
+          {SUPPORT_PHONE && SUPPORT_EMAIL && ' or'}
+          {SUPPORT_EMAIL && (
+            <>
+              {' '}at{' '}
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="font-semibold text-brand-600 underline underline-offset-4">
+                {SUPPORT_EMAIL}
+              </a>
+            </>
+          )}
+          .
+        </>
+      ) : (
+        <>
+          You can also{' '}
+          <Link href={ROUTES.send.href} className="font-semibold text-brand-600 underline underline-offset-4">
+            book a delivery directly
+          </Link>
+          .
+        </>
+      )}
+    </p>
+  )
+}
+
 export default function ContactUs() {
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
-   const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  // null | 'success' | 'error' — drives the polite live region below.
+  const [status, setStatus] = useState(null);
+  const baseId = useId();
+
+  // DUPLICATE-SUBMIT GUARD. The disabled button stops the ordinary double
+  // click, but not Enter held down in a field, and not a click that lands in
+  // the same tick as the state update. A ref is checked and set synchronously,
+  // so the second call returns before it can reach the network.
+  const inFlight = useRef(false);
 
   const onSubmit = async (contactData) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setStatus(null);
     setLoading(true);
-    let data = JSON.stringify(contactData);
 
+    try {
+      // HONEYPOT. A field no human sees and no assistive technology reaches;
+      // anything in it means a bot filled every input on the page. The
+      // submission is dropped WITHOUT a network call and the ordinary success
+      // state is shown, because telling a bot it was detected only teaches the
+      // next attempt what to avoid.
+      if (String(contactData.company ?? '').trim() !== '') {
+        setStatus('success');
+        reset();
+        return;
+      }
 
-    let config = {
-      method: 'post',
-      maxBodyLength: Infinity,
-      url: `${API_BASE_URL}/contact-form`,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      data : data
-    };
+      const response = await axios.post(
+        `${API_BASE_URL}/contact-form`,
+        {
+          firstName: contactData.firstName,
+          lastName: contactData.lastName,
+          email: contactData.email,
+          // Digits only — see normalisePhone.
+          phoneNumber: normalisePhone(contactData.phoneNumber),
+          message: contactData.message,
+        },
+        { headers: { 'Content-Type': 'application/json' } },
+      );
 
-    axios.request(config)
-    .then((response) => {
-      console.log(JSON.stringify(response.data));
-      alert('Message sent successfully!');
+      // ⚠️ SUCCESS IS NOT "the request did not throw".
+      //
+      // axios resolves for any 2xx, and the old handler treated that alone as
+      // proof. It is not: a 200 carrying { success: false }, an empty body, or
+      // an HTML error page from a proxy all resolve. The one thing that
+      // evidences the message was stored is the row id the API returns with
+      // success: true, so that — and only that — flips the success state.
+      const body = response?.data;
+      const stored = body?.success === true && Boolean(body?.data?.id);
 
+      if (!stored) {
+        throw new Error('Contact endpoint did not confirm storage');
+      }
+
+      setStatus('success');
+      // Cleared only on a confirmed write. On any failure the typed content
+      // survives, which is the whole point of not resetting in `finally`.
       reset();
-    })
-    .catch((error) => {
-      console.log(error);
-      alert('Failed to send the form. Something went wrong.');
-    })
-    .finally(() => {
+    } catch (error) {
+      // ACTIONABLE WITHOUT THE MESSAGE BODY. Status, endpoint and the API's own
+      // error text are enough to diagnose; the visitor's message is their
+      // content and is deliberately not written to the console.
+      console.error('[contact-form] submission failed', {
+        status: error?.response?.status ?? null,
+        endpoint: `${API_BASE_URL}/contact-form`,
+        apiMessage: error?.response?.data?.message ?? error?.message ?? null,
+      });
+      setStatus('error');
+    } finally {
       setLoading(false);
+      inFlight.current = false;
     }
-  );
   };
 
   // Both null today. The whole <dl> is skipped rather than left as an empty
@@ -244,14 +390,22 @@ export default function ContactUs() {
                     <label htmlFor="firstName" className={LABEL}>
                       First Name
                     </label>
+                    {/* aria-invalid marks the field itself as failing, and
+                        aria-describedby binds the message to it — without the
+                        pair, a screen-reader user tabbing back into the input
+                        hears the label and no indication anything is wrong.
+                        role="alert" alone only announces once, at the moment
+                        the message appears. */}
                     <input
                       id="firstName"
                       type="text"
                       autoComplete="given-name"
+                      aria-invalid={errors.firstName ? 'true' : undefined}
+                      aria-describedby={errors.firstName ? `${baseId}-firstName-error` : undefined}
                       className={FIELD}
                       {...register('firstName', { required: 'First name is required' })}
                     />
-                    {errors.firstName && <p role="alert" className={ERROR}>{errors.firstName.message}</p>}
+                    {errors.firstName && <p id={`${baseId}-firstName-error`} role="alert" className={ERROR}>{errors.firstName.message}</p>}
                   </div>
 
                   {/* Last Name */}
@@ -263,10 +417,12 @@ export default function ContactUs() {
                       id="lastName"
                       type="text"
                       autoComplete="family-name"
+                      aria-invalid={errors.lastName ? 'true' : undefined}
+                      aria-describedby={errors.lastName ? `${baseId}-lastName-error` : undefined}
                       className={FIELD}
                       {...register('lastName', { required: 'Last name is required' })}
                     />
-                    {errors.lastName && <p role="alert" className={ERROR}>{errors.lastName.message}</p>}
+                    {errors.lastName && <p id={`${baseId}-lastName-error`} role="alert" className={ERROR}>{errors.lastName.message}</p>}
                   </div>
 
                   {/* Email */}
@@ -278,36 +434,56 @@ export default function ContactUs() {
                       id="email"
                       type="email"
                       autoComplete="email"
+                      aria-invalid={errors.email ? 'true' : undefined}
+                      aria-describedby={errors.email ? `${baseId}-email-error` : undefined}
                       className={FIELD}
                       {...register('email', {
                         required: 'Email is required',
                         pattern: {
-                          value: /^\S+@\S+$/i,
-                          message: 'Invalid email format',
+                          // Requires a dot in the domain, which the previous
+                          // /^\S+@\S+$/ did not — it accepted "a@b". Still
+                          // deliberately loose: the only real test of an
+                          // address is sending to it, and an over-strict
+                          // pattern rejects valid addresses.
+                          value: /^\S+@\S+\.\S+$/,
+                          message: 'Enter a valid email address, like name@example.com',
                         },
                       })}
                     />
-                    {errors.email && <p role="alert" className={ERROR}>{errors.email.message}</p>}
+                    {errors.email && <p id={`${baseId}-email-error`} role="alert" className={ERROR}>{errors.email.message}</p>}
                   </div>
 
                   <div className="sm:col-span-2">
                     <label htmlFor="phoneNumber" className={LABEL}>
                       Phone Number
                     </label>
+                    {/* maxLength={10} IS GONE, and it had to be: it capped the
+                        input at ten CHARACTERS, so "(416) 720-1043" was
+                        physically untypeable — the field silently stopped
+                        accepting keystrokes mid-number. Validation now runs on
+                        the extracted digits instead. */}
                     <input
                       id="phoneNumber"
                       type="tel"
                       autoComplete="tel"
-                      maxLength={10}
+                      maxLength={20}
+                      aria-invalid={errors.phoneNumber ? 'true' : undefined}
+                      aria-describedby={`${baseId}-phoneNumber-${errors.phoneNumber ? 'error' : 'hint'}`}
                       className={FIELD}
-                      {...register('phoneNumber', { required: 'Phone Number is required',
-                    pattern: {
-                          value: /^\d{10}$/,
-                          message: 'Phone number must be 10 digits',
-                    },
-                    })}
+                      {...register('phoneNumber', {
+                        required: 'Phone number is required',
+                        validate: (value) =>
+                          phoneDigits(value).length === 10 ||
+                          'Enter a 10-digit phone number, like (416) 720-1043',
+                      })}
                     />
-                    {errors.phoneNumber && <p role="alert" className={ERROR}>{errors.phoneNumber.message}</p>}
+                    {errors.phoneNumber ? (
+                      <p id={`${baseId}-phoneNumber-error`} role="alert" className={ERROR}>{errors.phoneNumber.message}</p>
+                    ) : (
+                      <p id={`${baseId}-phoneNumber-hint`} className="mt-1.5 text-sm text-[#5f5868]">
+                        Any format is fine.
+                      </p>
+                    )}
                   </div>
 
                   {/* Message */}
@@ -315,13 +491,88 @@ export default function ContactUs() {
                     <label htmlFor="message" className={LABEL}>
                       Message
                     </label>
+                    {/* WAS UNVALIDATED AND OPTIONAL. An empty message
+                        submitted happily, producing a stored contact record
+                        with nothing to respond to. */}
                     <textarea
                       id="message"
                       rows={4}
+                      maxLength={MESSAGE_MAX}
+                      aria-invalid={errors.message ? 'true' : undefined}
+                      aria-describedby={`${baseId}-message-${errors.message ? 'error' : 'hint'}`}
                       className={FIELD}
-                      {...register('message')}
+                      {...register('message', {
+                        required: 'Please tell us how we can help',
+                        validate: (value) =>
+                          String(value ?? '').trim().length >= MESSAGE_MIN ||
+                          `Please write at least ${MESSAGE_MIN} characters so we can help.`,
+                        maxLength: {
+                          value: MESSAGE_MAX,
+                          message: `Please keep your message under ${MESSAGE_MAX} characters.`,
+                        },
+                      })}
+                    />
+                    {errors.message ? (
+                      <p id={`${baseId}-message-error`} role="alert" className={ERROR}>{errors.message.message}</p>
+                    ) : (
+                      <p id={`${baseId}-message-hint`} className="mt-1.5 text-sm text-[#5f5868]">
+                        Up to {MESSAGE_MAX.toLocaleString()} characters.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* HONEYPOT. Not `display:none` — some bots skip hidden
+                      fields, and some browsers skip them on autofill. It is
+                      pushed off-screen instead, then removed from the tab order
+                      and from the accessibility tree, so no keyboard or screen
+                      reader user can land on it. tabIndex={-1} and
+                      autoComplete="off" stop a password manager filling it. */}
+                  <div aria-hidden="true" className="absolute left-[-9999px] top-0 h-px w-px overflow-hidden">
+                    <label htmlFor={`${baseId}-company`}>Company</label>
+                    <input
+                      id={`${baseId}-company`}
+                      type="text"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      {...register('company')}
                     />
                   </div>
+                </div>
+
+                {/* ── OUTCOME, ANNOUNCED POLITELY ──────────────────────────
+                    This replaces two alert() calls. alert() is a modal that
+                    steals focus, cannot be styled, is dismissed before a
+                    screen-reader user can review it, and on failure destroyed
+                    the one thing that mattered — the chance to read the error
+                    beside the form still holding your text.
+
+                    aria-live="polite", never "assertive": the visitor has just
+                    pressed a button and is waiting: the result is expected, so
+                    it should be spoken at the next natural pause rather than
+                    interrupting whatever is being read.
+
+                    The container is ALWAYS in the DOM, empty when idle.
+                    A live region injected at the same moment as its text is
+                    frequently not announced at all — the region has to be
+                    present and observed before the content arrives. */}
+                <div aria-live="polite" className="mt-6 empty:mt-0">
+                  {status === 'success' && (
+                    <div className="rounded-control border-[1.5px] border-[#bfe3c9] bg-[#f2faf4] px-4 py-3">
+                      <p className="text-base font-semibold text-[#17131c]">
+                        {SUCCESS_MESSAGE}
+                      </p>
+                      <FallbackContact />
+                    </div>
+                  )}
+
+                  {status === 'error' && (
+                    <div className="rounded-control border-[1.5px] border-[#f0c5c0] bg-[#fdf4f3] px-4 py-3">
+                      <p className="text-base font-semibold text-[#b42318]">
+                        {ERROR_MESSAGE}
+                      </p>
+                      <FallbackContact />
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-8 flex justify-end">
