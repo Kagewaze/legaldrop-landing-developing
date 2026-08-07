@@ -84,7 +84,18 @@ export function OperationalProof() {
     // four sections. Hero and evidence read as one console: the claim, then
     // what backs it. The hairline is on the content column, not full-bleed, so
     // it reads as a dashboard divider rather than a page seam.
-    <section aria-labelledby="operational-proof" className="bg-surface-ink text-white">
+    //
+    // ⚠️ PHASE 13B.1 REMOVED bg-surface-ink FROM HERE, and that is what makes
+    // the sentence above literally true rather than merely intended. This
+    // section and the hero now sit on ONE painted surface — the glossy wrapper
+    // in src/app/(main)/page.jsx. While this element carried its own #1a1421 it
+    // was roughly 17 points lighter than where the hero's ramp ended, so the
+    // "continuation" was a visible step across the full width of the page.
+    //
+    // Do not give this section a background again. The hairline below is the
+    // only divider that belongs between the two, and it is deliberately inset
+    // to the content column so it reads as a dashboard rule, not a page seam.
+    <section aria-labelledby="operational-proof" className="text-white">
       <div className="mx-auto max-w-[1200px] border-t border-white/10 px-8 py-10 sm:py-12">
         <h2
           id="operational-proof"
@@ -92,7 +103,19 @@ export function OperationalProof() {
         >
           Operational record
         </h2>
-        <p className="mt-1 text-sm text-white/60">Accurate as of {AS_OF}.</p>
+        {/* ⚠️ OPACITIES ON THIS SECTION ARE CONTRAST-TUNED AGAINST THE BLOOM,
+            not picked for hierarchy alone. Phase 13B.1 put the strongest part
+            of the purple under this band, so the ground here is markedly
+            lighter than the flat #1a1421 these tones were originally set
+            against: white/60 measured 5.60:1 on it and white/70 measured
+            5.99:1 — both still AA, but both below the 7:1 the rest of this
+            surface holds.
+
+            The bloom was NOT dimmed to fix that. The text was raised to meet
+            it: this line 60 → 75, the labels below 70 → 80. If the bloom is
+            ever retuned, re-measure these two against the new ground rather
+            than assuming the tokens still clear. */}
+        <p className="mt-1 text-sm text-white/75">Accurate as of {AS_OF}.</p>
 
         {/* A description list, because that is what this is: three terms and
             their values. Three columns at every width — the values are two or
@@ -104,7 +127,8 @@ export function OperationalProof() {
             // "Completed deliveries, 50+" — a sentence. flex-col-reverse puts
             // the numeral on top visually without disturbing that order.
             <div key={metric.label} className="flex flex-col-reverse">
-              <dt className="mt-2 text-sm text-white/70">{metric.label}</dt>
+              {/* white/80, not white/70 — see the contrast note above. */}
+              <dt className="mt-2 text-sm text-white/80">{metric.label}</dt>
               <dd className="font-display text-4xl font-extrabold tabular-nums text-white sm:text-5xl">
                 {metric.value}
               </dd>

@@ -61,36 +61,24 @@ const CTA_SECONDARY =
 
 export function HeroNetwork() {
   return (
-    // PHASE 13B — GLOSSY GROUND. The flat surface-ink fill is replaced by a
-    // layered charcoal-to-purple treatment defined in src/styles/tailwind.css
-    // under [data-hero-glossy]; read the block at the top of that file before
-    // changing any of it.
+    // ⚠️ THIS SECTION CARRIES NO BACKGROUND OF ITS OWN, DELIBERATELY.
     //
-    // WHY AN ATTRIBUTE AND NOT CLASSES: the treatment is four gradient layers,
-    // a vignette, grain and a keyframe. As arbitrary values that is a ~900
-    // character class attribute that cannot be read or tuned. The stylesheet
-    // already owns the page's other keyframes for the same reason.
+    // PHASE 13B put the glossy charcoal-to-purple treatment here. PHASE 13B.1
+    // moved it UP to a wrapper in src/app/(main)/page.jsx that encloses this
+    // section and OperationalProof, so the two read as one continuous surface.
+    // Keeping it here meant the treatment stopped at this section's bottom
+    // edge and the metrics band below started a new, lighter dark — a seam
+    // exactly where the surface was meant to be unbroken.
     //
-    // `isolate` gives the section its own stacking context, which is what lets
-    // the two pseudo-elements sit at z-index:-1 — behind the content, but
-    // trapped inside this section rather than sliding under the whole page. No
-    // wrapper was added and no child needed a z-index.
+    // So do not reintroduce bg-surface-ink, a gradient, or data-hero-glossy on
+    // this element. Two backgrounds stacked here would fight, and scoping the
+    // treatment back to this section would restore the seam. The ground is the
+    // wrapper's job; this section only supplies text colour and layout.
     //
-    // `overflow-hidden` is what contains the glow: the bloom layer is
-    // deliberately oversized so the drift never exposes an edge, and this is
-    // what stops that overflow painting past the section boundary.
-    //
-    // `rounded-b-card` is the existing 20px radius token, bottom corners only —
-    // the top edge meets the header and has nothing to round against. The glow
-    // is clipped by the radius rather than crossing it.
-    //
-    // bg-surface-ink is GONE from here, not merely overridden: the stylesheet
-    // sets its own background-color fallback, and leaving the utility on would
-    // mean two rules fighting over the same property.
-    <section
-      data-hero-glossy
-      className="relative isolate overflow-hidden rounded-b-card text-white"
-    >
+    // The gradient stack itself lives in src/styles/tailwind.css under
+    // [data-hero-glossy], and its bloom is composed against the height of that
+    // wrapper — not this section.
+    <section className="text-white">
       {/* py-10 while stacked, not py-16. The section rhythm elsewhere on the
           page is py-16 sm:py-24, but the hero is the one section whose height
           is measured against the first viewport rather than against its

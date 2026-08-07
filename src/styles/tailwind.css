@@ -74,36 +74,60 @@
     linear-gradient(155deg, #15101c 0%, #110d18 38%, #0e0b14 68%, #09070d 100%);
 }
 
-/* THE BLOOMS. Inset by -25% on every side so the drift below can never pull a
-   gradient edge into view — the layer is always larger than what is shown. */
+/* THE BLOOMS.
+ *
+ * ⚠️ COMPOSED AGAINST THE FULL HERO + METRICS HEIGHT (Phase 13B.1), not the
+ * hero alone. Every percentage below resolves against this layer's own box, so
+ * when the surface grew by the metrics band the old geometry no longer meant
+ * what it said: a 78% vertical radius over a ~900px surface is a ~700px bloom
+ * that peaks around the hero's lower third and is spent well before the metrics
+ * text. The bloom was stretched and diffuse in exactly the region it was
+ * supposed to be strongest.
+ *
+ * Recomposed so the purple still reads as rising from the LOWER REGION OF THE
+ * COMBINED SURFACE: the centre sits near the bottom-right corner of the whole
+ * wrapper and the vertical radius is tightened, which concentrates the light
+ * across the metrics band rather than smearing it over both sections.
+ *
+ * INSET IS NOW -12%, NOT -25%. Its only job is to guarantee the drift can never
+ * pull a gradient edge into view, and the drift travels 2.6%. -25% was
+ * arbitrary headroom that also made every percentage here harder to reason
+ * about, since each one resolves against a box 1.5x the visible surface. At
+ * -12% the box is 1.24x and the numbers are close to what they appear to say.
+ */
 [data-hero-glossy]::before {
   content: '';
   position: absolute;
-  inset: -25%;
+  inset: -12%;
   z-index: -1;
   pointer-events: none;
   background-image:
-    /* PRIMARY — bottom-right, strongest at the corner, falling off toward the
-       upper-left. Capped at 0.82 alpha rather than solid: at full strength the
-       corner reads as a flat purple block instead of light inside black. */
+    /* PRIMARY — bottom-right of the COMBINED surface, falling off toward the
+       upper-left.
+       ⚠️ PEAK ALPHA IS 0.82 BY DECISION, NOT BY DEFAULT. It was briefly eased
+       to 0.70 to buy contrast headroom once the bloom moved under the metrics
+       numerals; that was the wrong trade and was reverted. The coverage is the
+       design. Text was lifted to meet the brighter ground instead — see the
+       opacity note in OperationalProof.jsx. Do not dim this to fix a contrast
+       finding; raise the text instead. */
     radial-gradient(
-      95% 78% at 88% 96%,
+      86% 58% at 87% 88%,
       rgba(123, 47, 190, 0.82) 0%,
-      rgba(123, 47, 190, 0.6) 14%,
-      rgba(84, 33, 128, 0.44) 28%,
-      rgba(42, 16, 61, 0.55) 44%,
-      rgba(42, 16, 61, 0.26) 62%,
-      rgba(42, 16, 61, 0) 80%
+      rgba(123, 47, 190, 0.58) 15%,
+      rgba(84, 33, 128, 0.38) 29%,
+      rgba(42, 16, 61, 0.48) 45%,
+      rgba(42, 16, 61, 0.22) 63%,
+      rgba(42, 16, 61, 0) 82%
     ),
-    /* SECONDARY — the offset violet reflection. Lower opacity, wider, pushed
-       left and slightly higher so it reads as a second light source rather
-       than a halo around the first. */
+    /* SECONDARY — the offset violet reflection. Lower opacity, pushed left and
+       kept low so it lifts the bottom-left of the metrics band slightly and
+       stops the surface going dead black under the first numeral. */
     radial-gradient(
-      72% 62% at 54% 104%,
-      rgba(142, 67, 208, 0.26) 0%,
-      rgba(142, 67, 208, 0.15) 30%,
-      rgba(101, 37, 157, 0.08) 55%,
-      rgba(101, 37, 157, 0) 76%
+      64% 44% at 46% 99%,
+      rgba(142, 67, 208, 0.22) 0%,
+      rgba(142, 67, 208, 0.13) 32%,
+      rgba(101, 37, 157, 0.07) 56%,
+      rgba(101, 37, 157, 0) 78%
     );
   animation: hero-bloom-drift 42s ease-in-out infinite;
   /* Promotes the layer so the drift is a compositor transform rather than a
