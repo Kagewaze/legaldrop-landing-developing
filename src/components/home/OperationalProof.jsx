@@ -97,25 +97,40 @@ export function OperationalProof() {
     // to the content column so it reads as a dashboard rule, not a page seam.
     <section aria-labelledby="operational-proof" className="text-white">
       <div className="mx-auto max-w-[1200px] border-t border-white/10 px-8 py-10 sm:py-12">
+        {/* white/80 — see the contrast note below. */}
         <h2
           id="operational-proof"
-          className="text-sm font-semibold uppercase tracking-label text-white/70"
+          className="text-sm font-semibold uppercase tracking-label text-white/80"
         >
           Operational record
         </h2>
-        {/* ⚠️ OPACITIES ON THIS SECTION ARE CONTRAST-TUNED AGAINST THE BLOOM,
-            not picked for hierarchy alone. Phase 13B.1 put the strongest part
-            of the purple under this band, so the ground here is markedly
-            lighter than the flat #1a1421 these tones were originally set
-            against: white/60 measured 5.60:1 on it and white/70 measured
-            5.99:1 — both still AA, but both below the 7:1 the rest of this
-            surface holds.
+        {/* ⚠️ THE THREE OPACITIES IN THIS SECTION ARE CONTRAST-TUNED AGAINST
+            THE BLOOM, not picked for hierarchy alone. DO NOT LOWER THEM TO
+            RESTORE A VISUAL HIERARCHY — the hierarchy here is carried by size
+            and weight, and these were measured.
 
-            The bloom was NOT dimmed to fix that. The text was raised to meet
-            it: this line 60 → 75, the labels below 70 → 80. If the bloom is
-            ever retuned, re-measure these two against the new ground rather
-            than assuming the tokens still clear. */}
-        <p className="mt-1 text-sm text-white/75">Accurate as of {AS_OF}.</p>
+            Phase 13B.1 put the strongest part of the purple under this band,
+            so the ground is far lighter than the flat #1a1421 these tones were
+            originally set against. Measured at 768 — the worst case, where the
+            stacked hero is tallest and this band sits deepest in the bloom —
+            against each element's ACTUAL composited colour:
+
+              h2  'Operational record'   70 -> 6.48:1     80 -> 8.01:1
+              p   'Accurate as of'       75 -> 6.89:1     80 -> 7.61:1
+              dt  metric labels          80 -> 6.22:1     90 -> 7.44:1
+
+            The dt labels are the floor for the whole surface: the third one
+            sits furthest into the bloom, on #672a9c.
+
+            THE BLOOM WAS NOT DIMMED TO ACHIEVE THIS, and must not be. Its
+            0.82 peak is the design; the text was raised to meet it.
+
+            THE VALUES ARE DELIBERATELY ABOVE THE MINIMUM. The computed floors
+            were 74 / 76 / 87, which clear 7:1 by hundredths — any future bloom
+            adjustment would push them straight back under without anyone
+            noticing. 80 / 80 / 90 leaves real headroom. If the bloom is
+            retuned, re-measure these three rather than assuming they hold. */}
+        <p className="mt-1 text-sm text-white/80">Accurate as of {AS_OF}.</p>
 
         {/* A description list, because that is what this is: three terms and
             their values. Three columns at every width — the values are two or
@@ -127,8 +142,9 @@ export function OperationalProof() {
             // "Completed deliveries, 50+" — a sentence. flex-col-reverse puts
             // the numeral on top visually without disturbing that order.
             <div key={metric.label} className="flex flex-col-reverse">
-              {/* white/80, not white/70 — see the contrast note above. */}
-              <dt className="mt-2 text-sm text-white/80">{metric.label}</dt>
+              {/* white/90 — the lowest-contrast element on this surface, since
+                  the third label sits directly in the bloom. See the note. */}
+              <dt className="mt-2 text-sm text-white/90">{metric.label}</dt>
               <dd className="font-display text-4xl font-extrabold tabular-nums text-white sm:text-5xl">
                 {metric.value}
               </dd>
