@@ -1,6 +1,8 @@
 import React from "react";
 import Layout from "../(main)/layout";
 
+import { SUPPORT_PHONE, formatPhone } from '@/lib/navigation'
+
 // ⚠️ PHASE 9.1 REMOVED A DEAD next/head BLOCK. It was:
 //
 //   <Head>
@@ -148,10 +150,30 @@ const PrivacyPolicy = () => {
           <p className="text-lg">
             If you have questions about this Privacy Policy, please contact us:
           </p>
+          {/* THE NUMBER USED TO BE HARDCODED HERE as the raw string
+              "+13435984928" — an unformatted, unlinked, stale number on the one
+              page a regulator or a privacy complainant reads. It was also the
+              last hardcoded contact detail on any public route, and the reason
+              the site could disagree with itself about how to reach it.
+
+              It now reads SUPPORT_PHONE from src/lib/navigation.js, the single
+              source the footer and /contact-us already use, so this page cannot
+              drift from them again. Gated on the constant so a future null
+              removes the row rather than printing "Phone:" with nothing after
+              it. */}
           <p className="text-lg">
             <strong>Email:</strong> legaldropeng@gmail.com
-            <br />
-            <strong>Phone:</strong>+13435984928
+            {SUPPORT_PHONE && (
+              <>
+                <br />
+                <strong>Phone:</strong>{' '}
+                <a href={`tel:${SUPPORT_PHONE}`} className="underline underline-offset-4">
+                  {/* Explicit trailing space — see the same note in Footer.jsx. */}
+                  <span className="sr-only">{'Telephone: '}</span>
+                  {formatPhone(SUPPORT_PHONE)}
+                </a>
+              </>
+            )}
           </p>
         </section>
       </div>

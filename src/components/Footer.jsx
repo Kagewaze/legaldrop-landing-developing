@@ -120,9 +120,37 @@ export function Footer() {
                   1.55 is body-copy leading, and this is a stacked contact block
                   of one-line items where the looser rhythm is what separates
                   them. Not a leftover. */}
+              {/* THE NUMBER IS A tel: LINK, not plain text. It rendered as
+                  unlinked text while it was null and nothing showed, so the
+                  omission never surfaced — on a phone, where most of this
+                  traffic is, an unlinked support number has to be transcribed
+                  by hand.
+
+                  Same pattern as /contact-us: the raw constant is the href and
+                  formatPhone supplies the label, with an sr-only word naming
+                  what the number is. Without it a screen reader announces only
+                  the digits, and "+1 (416) 720-1043, link" does not say whether
+                  it dials, faxes or texts.
+
+                  href takes the stored E.164 digits — a tel: URI with brackets
+                  and spaces is not something to rely on. */}
               {section.id === 'support' && hasContact && (
                 <div className="mt-[22px] text-sm leading-[1.8] text-[#e5dfea]">
-                  {SUPPORT_PHONE && <div>{formatPhone(SUPPORT_PHONE)}</div>}
+                  {SUPPORT_PHONE && (
+                    <div>
+                      <a
+                        href={`tel:${SUPPORT_PHONE}`}
+                        className="rounded-control transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                      >
+                        {/* Explicit trailing space in a string expression, not
+                            bare JSX text: without it the accessible name
+                            concatenates to "Telephone+1 (416) 720-1043" and is
+                            announced as one run. */}
+                        <span className="sr-only">{'Telephone: '}</span>
+                        {formatPhone(SUPPORT_PHONE)}
+                      </a>
+                    </div>
+                  )}
                   {SUPPORT_EMAIL && <div>{SUPPORT_EMAIL}</div>}
                 </div>
               )}

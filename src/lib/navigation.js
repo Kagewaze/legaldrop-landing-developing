@@ -173,32 +173,31 @@ export const FOOTER_SECTIONS = [
 
 // --- Unconfirmed content ----------------------------------------------------
 
-// UNCONFIRMED — must stay null until real values are supplied.
+// SUPPORT_PHONE IS NOW CONFIRMED. SUPPORT_EMAIL IS STILL NOT.
 //
-// The design's footer prints 1-855-378-7477 and hello@druppr.ca. Neither has
-// been verified as a working, monitored channel, and publishing a support phone
+// The design's footer printed 1-855-378-7477 and hello@druppr.ca. Neither was
+// ever verified as a working, monitored channel, and publishing a support phone
 // number or address that nobody answers is worse than publishing none: it looks
 // like an outage to the customer and it is the number that ends up in receipts,
-// screenshots and complaints.
+// screenshots and complaints. That reasoning still governs SUPPORT_EMAIL, which
+// stays null until a monitored mailbox is confirmed.
 //
-// Footer skips the entire contact block while these are null, and /contact-us
-// skips the matching row. Set them here and both appear — no component change
-// required.
+// Footer skips the entire contact block while BOTH are null, and each row is
+// gated independently — so setting the phone alone lights up the phone row on
+// the footer and /contact-us with no component change, and no empty email row.
 //
-// THESE ARE NOW THE ONLY SOURCE. /contact-us used to hardcode its own phone and
+// THESE ARE THE ONLY SOURCE. /contact-us used to hardcode its own phone and
 // Gmail address, so the footer printed nothing while that page printed values
-// nobody had signed off on. Both hardcoded values are gone; do not reintroduce
-// a contact detail at a call site.
+// nobody had signed off on. Do not reintroduce a contact detail at a call site.
 //
-// SUPPORT_PHONE STORES DIGITS, NOT A FORMATTED STRING — E.164, e.g.
-// '+13435984928'. It is used verbatim as a `tel:` href, and a tel: URI
-// containing brackets and spaces is not something to rely on. Display
-// formatting is formatPhone()'s job, below, so the value and its presentation
-// cannot drift apart.
-export const SUPPORT_PHONE = null
+// SUPPORT_PHONE STORES DIGITS, NOT A FORMATTED STRING — E.164. It is used
+// verbatim as a `tel:` href, and a tel: URI containing brackets and spaces is
+// not something to rely on. Display formatting is formatPhone()'s job, below,
+// so the value and its presentation cannot drift apart.
+export const SUPPORT_PHONE = '+14167201043'
 export const SUPPORT_EMAIL = null
 
-// Renders SUPPORT_PHONE for humans: '+13435984928' -> '+1 (343) 598-4928'.
+// Renders SUPPORT_PHONE for humans: '+14167201043' -> '+1 (416) 720-1043'.
 //
 // Every surface that PRINTS the number goes through this; every surface that
 // LINKS it uses the raw constant. That split is the whole point — one stored
@@ -208,6 +207,11 @@ export const SUPPORT_EMAIL = null
 // Returns the input untouched when it is not a 10- or 11-digit NANP number,
 // which covers both null (nothing renders anyway) and a future non-North
 // American number, which this format would otherwise mangle into a lie.
+//
+// THE '+1' IN THE OUTPUT IS DELIBERATE AND IS NOT A COSMETIC DEFAULT. Every
+// surface that prints the number goes through here, so changing the shape
+// changes the footer and /contact-us together. Do not edit this formatter to
+// suit one call site's preferred styling.
 export function formatPhone(value) {
   if (!value) {
     return value
