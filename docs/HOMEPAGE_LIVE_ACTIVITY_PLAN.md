@@ -27,15 +27,23 @@ fill a gap.
 
 ## 1. Status
 
-**Phase: architecture and evidence gathering complete. NOT APPROVED FOR BUILD.**
+**Phase: Workstream A SHIPPED. Workstreams B and C NOT APPROVED FOR BUILD.**
 
-- **Backend destination-city work is approved to proceed.** It is independently
-  valuable and is not gated on this feature — see **D1**.
-- **Homepage consumption is deferred**, pending order volume — see **B6** and the
-  volume threshold item in §11.
+- ✅ **Backend destination-city work is SHIPPED.** `delivery_point.city` exists,
+  the migration ran in production, and the app is healthy. This was approved under
+  **D1** as independently valuable and not gated on this feature. See **B1** and
+  **§9**.
+- ⛔ **Homepage consumption remains deferred**, pending order volume — see **B6**
+  and the volume threshold item in §11.
+- ⛔ **Publication is blocked on B2**, which is still open: no column
+  distinguishes a test order from a real one.
 
-No production order data is connected. No homepage file has been modified. See
-§12.
+**Blocker movement since this document was written:** B1 ✅ closed · B3 ✅ closed ·
+B4 ⚠️ amended (null rate now expected *higher*) · B2, B5, B6 ⛔ still open.
+
+**The data now exists to produce `{ origin, destination }`. Nothing consumes it,
+and nothing publishes it.** No production order data is connected to any public
+surface. No homepage file has been modified. See §12.
 
 ---
 
@@ -69,13 +77,22 @@ currently unused.
 The write is already additive and failure-tolerant. That existing shape is the
 template for the destination-city write — see the warning in §9.
 
-### 2.3 Destination city — DOES NOT EXIST
+### 2.3 Destination city — ~~DOES NOT EXIST~~ → **SHIPPED**
 
-**This is the primary gap.** `delivery_point` has no `city` or `locality` column
-anywhere in its definition (`delivery_point.entity.ts:25-102`).
+> **As originally investigated:** *"This is the primary gap. `delivery_point` has
+> no `city` or `locality` column anywhere in its definition
+> (`delivery_point.entity.ts:25-102`). There is therefore no destination half of a
+> city-to-city pair today. Every other part of this feature is blocked behind
+> closing that gap."*
 
-There is therefore no destination half of a city-to-city pair today. Every other
-part of this feature is blocked behind closing that gap.
+**This gap is now closed.** `delivery_point.city` shipped as a nullable `varchar`
+via migration `AddDeliveryPointCity1783900800000`, executed in production and
+populated at order creation. Full detail and the resolution record are under
+**B1**; the shipped file list is in **§9**.
+
+The original text is preserved above because the rest of this document was
+written against it, and because D1's two-workstream split exists precisely
+*because* this was the primary gap.
 
 ### 2.4 Route exposure and public precedent
 
@@ -114,6 +131,63 @@ codebase; nothing new is introduced.
 > predictable from prior values. Public event IDs use `randomBytes` only — see
 > §8.
 
+### 2.10 Activity classification — **DERIVED, NOT STORED** *(shipped)*
+
+**There is no `activityType` column, and one was deliberately not added.**
+
+`deriveActivityType(order)` is a **pure function** at
+`src/modules/order/constants/activity-type.ts`. It reads only `orderCategory` and
+`section` — two columns that already exist — and returns a value; it persists
+nothing.
+
+**Why derived rather than stored:**
+
+1. A stored copy of two existing columns **denormalizes without benefit at
+   current volume.** There is no query load that a materialised column would
+   relieve.
+2. It **drifts silently** if `section` is ever corrected on an existing order.
+   The stored value would keep the old classification with nothing to flag the
+   divergence, and the two columns it was derived from would disagree with it.
+
+A pure function cannot drift: it is recomputed from the current row every time.
+
+**Internal values — 10, full fidelity:**
+
+| `orderCategory` | `section` | → `activityType` |
+|---|---|---|
+| `delivery` | `medical_supply` | `medical` |
+| `delivery` | `legal_document` | `legal` |
+| `delivery` | any other, or `null` | `package` |
+| `marketplace_delivery` | — | `marketplace` |
+| `ride` | — | `ride` |
+| `tow` | — | `tow` |
+| `designated` | — | `designated` |
+| `pet` | — | `pet` |
+| `inspection` | — | `inspection` |
+| `rental` | — | `rental` |
+
+Every `orderCategory` other than `delivery` and `marketplace_delivery` passes
+through **verbatim**.
+
+> ⚠️ **These are INTERNAL values. They are not public labels and must never be
+> emitted on the public contract.** `medical` and `legal` in particular are
+> exactly what §5's exclusion list bans. The public projection is a separate,
+> deliberately lossy mapping — see §5, *V1 public projection*.
+
+#### No `dropbatch` value — and why that is correct
+
+**DropBatch does not create `Order` rows.** It has its own tables
+(`dropBatch_trip`, `dropBatch_booking`, `dropBatch_message`), its own service and
+its own pricing, and **never calls `OrderService.create`**.
+
+A `dropbatch` value on a function that reads `Order` would therefore be
+unreachable — dead code asserting a classification that could never be produced.
+
+**Classification for DropBatch would belong on `dropBatch_booking`, and is
+DEFERRED to a later phase.** Recorded as deferred with its reason, not dropped:
+the requirement is real, it simply lives on a different entity and cannot be
+satisfied from `Order` at all.
+
 ---
 
 ## 3. Blockers
@@ -124,7 +198,24 @@ other backend citation here, they are **recorded as reported and not re-verified
 from this repository** — see *On citations* above. B6 is landing-side and was
 verified here.
 
-### B1 — Destination city does not exist in the database
+> **STATUS UPDATE — backend workstream shipped.** B1 and B3 are now **CLOSED**;
+> B4 is **AMENDED**; B2, B5 and B6 remain **OPEN**. The migration ran in
+> production and the app is healthy.
+>
+> **The original blocker text is preserved verbatim in every case.** Resolution is
+> recorded *beneath* each quote, never by editing it — the record of what was
+> blocked, and why, is the reason this document exists.
+
+| Blocker | Status |
+|---|---|
+| **B1** — destination city missing | ✅ **CLOSED** — `delivery_point.city` shipped |
+| **B2** — no test/demo exclusion | ⛔ **OPEN** — `createdEnv` proposed, not built |
+| **B3** — dev/prod DB separation unknown | ✅ **CLOSED** — verified from the console |
+| **B4** — `order.city` nullable | ⚠️ **AMENDED** — null rate now expected *higher* |
+| **B5** — boroughs not derivable | ⛔ **OPEN** — unchanged; basis for D2 |
+| **B6** — order volume | ⛔ **OPEN** — unchanged; the reason consumption is deferred |
+
+### B1 — Destination city does not exist in the database — ✅ CLOSED
 
 > The destination city does not exist in the database. `delivery_point` has no
 > city/locality/municipality column (§2, grep confirms). Only `receiverAddress`
@@ -140,7 +231,27 @@ grounds: cost (a billed Google call per request) and exposure (on an
 unauthenticated route, i.e. a metered external dependency any caller can drive).
 D4 — Redis-only reads — is the direct consequence.
 
-### B2 — No way to exclude test, demo, or internal orders
+#### ✅ RESOLVED — `delivery_point.city` shipped
+
+| Property | Detail |
+|---|---|
+| Column | `delivery_point.city` — nullable `varchar` |
+| Migration | `AddDeliveryPointCity1783900800000` |
+| Execution | **Run in production.** App verified healthy afterwards |
+| Population | Inline best-effort reverse-geocode at order creation |
+| Concurrency | Bounded, limit **4** |
+| Failure mode | **`null` on any failure. Never fails order creation.** |
+
+The write follows the pattern §2.2 identified as the template and the §9 warning
+required: additive, non-throwing, `null` on failure. The path the blocker text
+rejected — per-request reverse-geocoding on a public endpoint — was **not** taken;
+geocoding happens once at write time, which is what keeps D4's Redis-only read
+model intact.
+
+**The `{ origin, destination }` shape is now producible.** Both halves exist:
+`order.city` for pickup, `delivery_point.city` for destination.
+
+### B2 — No way to exclude test, demo, or internal orders — ⛔ STILL OPEN
 
 > No way to exclude test, demo, or internal orders. No `isTest`/`isDemo`/
 > `environment`/`source` column exists on `Order` (§3), and no convention filters
@@ -153,7 +264,35 @@ D4 — Redis-only reads — is the direct consequence.
 > record it as blocked rather than satisfied. **B2 must be closed before any
 > publication job runs**, and it compounds B3 — see below.
 
-### B3 — Unknown whether dev/staging share the production database
+#### ⛔ STILL OPEN — `createdEnv` is PROPOSED, NOT BUILT
+
+**Nothing shipped for B2.** No `isTest`, `isDemo`, `environment` or `source`
+column exists on `Order`. Every order in the database is still a candidate.
+
+The approach discussed, recorded so it is not re-derived:
+
+| Property | Proposal |
+|---|---|
+| Column | `createdEnv` — `varchar` on `Order` |
+| Written | Env-stamped at creation |
+| Default | `'unknown'` |
+| Failure posture | **Fails closed** — rather than requiring every caller to opt in |
+
+The fail-closed default is the load-bearing part: an order whose environment
+cannot be established is `'unknown'` and is therefore **not publishable**, rather
+than defaulting to production and leaking. A column requiring callers to opt in
+would leak by omission on every path that forgot it.
+
+> ⚠️ **This is a proposal, not a decision.** It has no D-number in §4, no
+> migration, and no code. It is recorded at this level of detail only so the
+> reasoning is not lost — **do not read this table as a specification of shipped
+> behaviour.**
+
+B3 closing does *not* close B2. B3 establishes that developer orders are not
+arriving from a shared non-production app; it says nothing about orders created
+against production by the team, by manual testing, or by a future staging deploy.
+
+### B3 — Unknown whether dev/staging share the production database — ✅ CLOSED
 
 > Unknown whether dev/staging share the production database. No `.env`, no
 > `.env.example`, no deployment manifest exists in the repo (§3). `DATABASE_URL`
@@ -170,7 +309,41 @@ The final clause is the one that matters: B2 and B3 are individually serious and
 jointly unmitigable. If the answer is "yes, they share", there is no column to
 filter developer orders out with.
 
-### B4 — `order.city` is nullable and lowercased
+#### ✅ RESOLVED — verified from the DigitalOcean console
+
+| App | Holds `DATABASE_URL`? |
+|---|---|
+| `legal-drop` | **Yes** — the only one |
+| `legaldrop-landing-new` | No |
+| `legaldrop-admin` | No |
+
+**No staging deploy exists.** Only `legal-drop` holds a `DATABASE_URL`, so
+**developer orders are not arriving from a shared non-production app.**
+
+The answer to the blocker's conditional is therefore "no, they do not share" —
+which defuses the *jointly unmitigable* concern recorded above. **B2 remains open
+on its own terms**, but it is no longer compounded by an unknown database
+topology.
+
+> ### ⚠️ SECURITY FINDING — unrelated to this feature, recorded because it belongs
+>
+> While answering B3 it was found that **the database had NO trusted sources
+> configured and was accepting connections from any IP on the internet.**
+>
+> **Trusted sources are now restricted to the `legal-drop` app.**
+>
+> This has nothing to do with live activity, and it would not have been found
+> except by asking B3's question. It is recorded here rather than dropped because
+> the investigation that surfaced it is this one, and a finding of this severity
+> should be traceable to the work that produced it.
+>
+> Two things worth noting for whoever reads this later. First, the exposure
+> predates this document — it was not introduced by any change described here.
+> Second, it is a reminder that **B3 was worth asking as a blocker**: the question
+> was scoped to "could developer orders reach the homepage," and the answer
+> arrived with something considerably more serious attached.
+
+### B4 — `order.city` is nullable and lowercased — ⚠️ AMENDED
 
 > `order.city` is nullable and lowercased. NULL whenever the geocode fails
 > (`order.entity.ts:139-141`; `getCity` returns null on any error,
@@ -183,7 +356,41 @@ Consistent with §6 rule 3 (display casing derived from the allowlist) and §7
 (both cities must resolve). The backfill script is new information relative to
 §2.2 and is noted in §9.
 
-### B5 — Toronto's former boroughs are not derivable
+#### ⚠️ AMENDED — the null rate is now expected to be HIGHER
+
+`order.city` remains nullable and lowercased. What changed is the failure budget
+on the call that populates it.
+
+| | Before | **Now** |
+|---|---|---|
+| Per-call timeout | inherited **10 s** | **3000 ms** |
+| retry-axios retries | **2 automatic** | **`retry: 0`** |
+| No-response retries | inherited | **`noResponseRetries: 0`** |
+| **Worst case on the order-creation path** | **~32 s** | **~3 s** |
+
+**The trade is deliberate: a bounded money path in exchange for more nulls.** A
+32-second worst case sat directly on order creation — the revenue path — to
+populate a field whose only consumer is a marketing panel that does not yet
+exist. Three seconds and a `null` is the correct exchange, and it is consistent
+with the rule in §9 that geocoding must never be able to prevent an order from
+being created.
+
+**Consequences for this feature, stated plainly:**
+
+- More orders will have `city = null`, on **both** halves of the pair.
+- §7 requires **both** cities to resolve, so a null on either side excludes the
+  event entirely. The exclusion rate compounds across the two fields.
+- This makes **B6** worse, not better: fewer eligible events from an already
+  small pool. It is a further argument for D1's deferral, not against it.
+
+> ⚠️ **The compensating control has NOT been run.** `backfill-delivery-point-city.ts`
+> shipped (§9) but has not been executed, and the pickup-side
+> `backfill-order-city.ts` is likewise unrun. Until both are run, historical rows
+> hold `null` regardless of the timeout change. **Any estimate of eligible-event
+> volume taken before the backfills run will understate it** — relevant to §11's
+> instrumentation item, which must not be measured against un-backfilled data.
+
+### B5 — Toronto's former boroughs are not derivable — ⛔ OPEN (unchanged)
 
 > Toronto's former boroughs are not derivable from the current `getCity` logic. It
 > selects `locality` → `postal_town` → `administrative_area_level_2`
@@ -207,7 +414,7 @@ precision the geocoder did not supply.
 > this document; it is a standing constraint rather than one of the backend
 > report's blockers, and is retained here so it is not lost in renumbering.
 
-### B6 — Order volume
+### B6 — Order volume — ⛔ OPEN (unchanged, and now slightly worse)
 **~50 completed deliveries on record** — `src/components/home/OperationalProof.jsx:67`:
 
 ```js
@@ -221,6 +428,17 @@ event list is expected to be empty the large majority of the time.**
 This is the reason homepage consumption is deferred rather than built. It is not
 a defect to engineer around; it is the honest state of the business today, and
 D5 is the design response to it.
+
+> ⚠️ **B4's amendment makes this worse.** The `getCity` timeout dropped from ~10 s
+> with two retries to a hard 3000 ms with retries disabled, so more orders will
+> carry `city = null` — on **both** halves of the pair — and §7 excludes an event
+> if either side is missing. Neither backfill script has been run.
+>
+> **B6 is now the binding constraint on this feature**, more clearly than when it
+> was written: B1 and B3 have closed, B2 is narrower than it was, and volume is
+> what remains. That is the correct order for it to fail in — the blockers that
+> could be engineered away have been, and the one that cannot be is the one left
+> standing.
 
 ### B7 — dev/prod database separation → **see B3**
 
@@ -237,10 +455,16 @@ than deleted.
 
 ## 4. Decisions
 
-### D1 — Two workstreams, decoupled
+### D1 — Two workstreams, decoupled — ✅ **VALIDATED BY OUTCOME**
 
 **The backend destination-city column proceeds independently. Homepage
 consumption is deferred.**
+
+> **This decision has now played out as intended.** Workstream A shipped —
+> `delivery_point.city`, the derivation function, the concurrency helper and two
+> timeout fixes (§9) — while Workstreams B and C remain unbuilt. A useful piece of
+> schema landed without waiting on B2, B6, or a volume threshold that still cannot
+> be set. Had the column been coupled to the panel, none of it would exist.
 
 *Reasoning.* Closing B1 has value well beyond this feature — dispatch routing,
 coverage analytics, and per-city operational reporting all want a destination
@@ -498,6 +722,77 @@ four-field contract now genuinely contains no prohibited field. **Under the
 previous spec it did not** — the contract and its own exclusion list were in
 direct conflict, and the exclusion list is the one that governs.
 
+### V1 public projection
+
+> ⚠️ **SPECIFIED, NOT IMPLEMENTED.** No public DTO, no endpoint, and no Redis
+> payload exists. Nothing in this subsection has been built. It is written down so
+> that whoever builds it does not have to re-derive it — and so that the derivation
+> is reviewable *before* it is code rather than after.
+
+**Internal classification is full-fidelity. Public classification is a separate,
+deliberately lossy projection.** §2.10's `deriveActivityType` returns ten distinct
+internal values; the public surface collapses them to almost nothing. That gap is
+the design, not an oversight.
+
+#### V1 mapping
+
+| Internal `activityType` | Public outcome |
+|---|---|
+| `package` | `"New parcel request"` |
+| `medical` | `"Recent delivery request"` — **generic; vertical never exposed** |
+| `legal` | `"Recent delivery request"` — **generic; vertical never exposed** |
+| `marketplace` | Distinct Marketplace label **only when server-side publication policy marks the event eligible**; otherwise generic, or not published |
+| `dropbatch` | Same policy gate. **Not reachable in V1** — see §2.10 |
+| `ride`, `tow`, `designated`, `pet`, `inspection`, `rental` | **NOT PUBLISHED AT ALL** |
+
+`medical` and `legal` collapsing to the same generic string as everything else is
+the whole point: it is what makes the contract comply with its own exclusion list
+and with the direction quoted above. **Two events, one medical and one legal, are
+indistinguishable on the public surface.**
+
+#### The last row is an ELIGIBILITY rule, not a labelling one
+
+**`ride`, `tow`, `designated`, `pet`, `inspection` and `rental` must never enter
+the feed — regardless of how they would be labelled.**
+
+This is not "label them generically." A ride is not a delivery request. A tow is
+not a delivery request. Publishing one under *any* wording would misrepresent what
+the platform did, and no label — however generic — fixes that. They are excluded
+at the **eligibility** stage in §7, before labelling is reached at all.
+
+The distinction matters because the two stages fail differently. A labelling
+mistake shows the wrong words for a real delivery; an eligibility mistake puts a
+non-delivery into a feed that claims to show deliveries. **Only the second is a
+false claim about the business.**
+
+#### `vehicleType` is NEVER exposed publicly in V1
+
+It remains **fully available internally** — nothing about the internal model
+changes. It is simply **omitted from the public DTO**.
+
+This is not a new restriction: §5's prohibited-field list already bans
+**"vehicle"** outright. Recorded here because `vehicleType` is a natural thing to
+reach for when building a public row, and its internal availability makes the
+omission look like an oversight rather than a rule.
+
+#### Publication eligibility is a SERVER-OWNED POLICY
+
+Eligibility is **deliberately not a hardcoded threshold.** The marketplace and
+dropbatch rows above defer to a server-side policy decision rather than to a
+constant in this document.
+
+**No volume threshold is invented in this phase.** One can be introduced when
+actual transaction volume supports it — and it will be a better number for having
+been set against real data instead of guessed here.
+
+> **This reconciles with §11's open item on volume: the hook exists, the number
+> does not.** That item asks for a threshold to be defined and instrumented before
+> the consumption side is built. This subsection is the other half of the answer —
+> the *mechanism* for applying such a threshold is specified, so defining the
+> number later is a configuration change rather than a redesign. The two are
+> consistent: §11 says *do not invent the number yet*, and this says *leave a
+> place to put it.*
+
 ### Terminology
 
 Quoted from the founder direction.
@@ -607,6 +902,16 @@ unintended disclosure.
 | Status | **NOT** in `cancelled`, `failed`, `refunded`, `awaiting_seller_confirmation` |
 | Deletion | Not soft-deleted |
 | Test data | `isTest` is false — ⚠️ **BLOCKED, NOT IMPLEMENTABLE TODAY. See B2.** |
+| **Activity type** | `deriveActivityType(order)` (§2.10) is **`package`, `medical`, `legal`, or `marketplace`**. Everything else is excluded — see below |
+
+**Activity-type exclusion.** `ride`, `tow`, `designated`, `pet`, `inspection` and
+`rental` are **excluded at this stage**, before labelling is reached. This is an
+eligibility rule, not a labelling one: a ride is not a delivery request and must
+never enter a feed that claims to show deliveries, regardless of wording. See §5,
+*V1 public projection*.
+
+`marketplace` is eligible here but gated again at publication by server-owned
+policy (§5). Eligibility is necessary, not sufficient.
 
 > ⚠️ **The test-data rule cannot be satisfied as written.** B2 records that no
 > `isTest`/`isDemo`/`environment`/`source` column exists on `Order`, and no
@@ -615,10 +920,20 @@ unintended disclosure.
 > intent.
 >
 > **B2 must be closed before any publication job runs.** Until then every order in
-> the database is a candidate for the marketing homepage, and per B3 it is not
-> even established that developer orders live in a different database. This pair
-> is the hardest blocker in this document: B6 defers the feature for lack of
-> volume, but B2+B3 would make it *unsafe* even at volume.
+> the database is a candidate for the marketing homepage.
+>
+> **UPDATE — B3 is now closed and this warning is narrower than it was.** It
+> previously read that "per B3 it is not even established that developer orders
+> live in a different database," and called B2+B3 jointly unmitigable. The console
+> check has since established that only `legal-drop` holds a `DATABASE_URL` and no
+> staging deploy exists, so developer orders are **not** arriving from a shared
+> non-production app.
+>
+> **B2 still stands alone**, and still blocks publication: nothing distinguishes a
+> manual test order created against production from a customer's. But it is no
+> longer compounded by an unknown database topology, and the "unsafe even at
+> volume" framing now overstates it. **B6 — volume — is once again the primary
+> reason consumption is deferred.**
 
 The excluded statuses come from the product's real status model, which the
 landing repo already documents at `NetworkDemo.jsx:29-42`.
@@ -714,17 +1029,64 @@ only; it addresses nothing and grants nothing.
 
 ## 9. Files expected to change
 
-### Workstream A — Backend destination city (**approved to proceed**, D1)
+### Workstream A — Backend destination city — ✅ **SHIPPED**
+
+**This table records what actually shipped**, replacing the anticipated list this
+document originally carried. The migration ran in production and the app is
+healthy.
 
 | File | Status |
 |---|---|
-| `delivery_point.entity.ts` | **CHANGED** — add nullable `city` column, mirroring `order.entity.ts:142-143` |
-| Migration (new) | **CHANGED** — additive, nullable, no backfill in the migration itself |
-| Backfill script (new) | **CHANGED** — mirroring `src/scripts/backfill-order-city.ts`, which B4 confirms already exists for the pickup side. Run out-of-band, never inside the migration |
-| `order.service.ts` (~`:200-207` region) | **CHANGED** — additive city write. See the warning below |
-| `googlemaps.service.ts` | **UNTOUCHED** — D2; `getCity` is not modified |
+| `delivery_point.entity.ts` — `city` column | ✅ **SHIPPED** — nullable `varchar` |
+| Migration `AddDeliveryPointCity1783900800000` | ✅ **SHIPPED, EXECUTED IN PRODUCTION** |
+| `order.service.ts` — enrichment in `create()` **and** `createOrderGroup()` | ✅ **SHIPPED** — bounded concurrency **4** |
+| `googlemaps.service.ts` — per-call timeout **3000 ms** + `raxConfig` retries disabled on `getCity`'s `reverseGeocode` | ✅ **SHIPPED** — ⚠️ **per-call, NOT client-level.** See below |
+| `constants/activity-type.ts` — `deriveActivityType` | ✅ **SHIPPED** — pure function, §2.10 |
+| `utils/concurrency.utils.ts` — `mapWithConcurrency` | ✅ **SHIPPED** |
+| `scripts/backfill-delivery-point-city.ts` | ⚠️ **SHIPPED, NOT RUN** |
+| `order.entity.ts` — `activityType` column | ❌ **NOT BUILT** — derived instead, §2.10 |
+
+> ⚠️ **The timeout is PER-CALL, not client-level, and that distinction is
+> load-bearing.**
+>
+> The Google Maps `Client` extends a **process-wide shared
+> `defaultAxiosInstance`**. Setting a timeout on the client would therefore change
+> the timeout for **every** Maps call in the process — including ones on paths
+> that have nothing to do with this feature and were never assessed for it.
+>
+> The 3000 ms bound and the disabled retries are applied **on the individual
+> `reverseGeocode` call inside `getCity`**, so the blast radius is exactly the
+> call this feature depends on. **Do not "tidy" this by hoisting it to the
+> client.**
+
+> ⚠️ **Two entries in the table above are deliberate non-events. Read them.**
+>
+> - **`backfill-delivery-point-city.ts` is SHIPPED but NOT RUN.** Historical rows
+>   still hold `null`. Per B4 this compounds with the tightened timeout, and any
+>   volume measurement taken now will understate eligible events.
+> - **`order.entity.ts` was NOT changed.** No `activityType` column was added, by
+>   decision rather than omission — §2.10 records why. Do not add one.
+
+#### Unrelated fix shipped alongside — OSRM routing timeout
+
+A **per-call 4000 ms timeout** was added to the OSRM routing call, which runs on
+the **order-creation and get-fee** paths.
+
+Raw `axios` defaults to `timeout: 0` — *no timeout*. The Haversine fallback
+written to handle OSRM failure could therefore **never fire on a stalled socket**:
+the request would hang indefinitely rather than fail, so the fallback had no
+failure to catch. A fallback that cannot be reached is not a fallback.
+
+Recorded here because it shipped in the same change and touches the
+order-creation path this document repeatedly warns about (§9 load-bearing
+warning) — **not** because it is part of this feature. It is not.
 
 > ### ⚠️ LOAD-BEARING WARNING — `OrderService.create` is shared
+>
+> **The shipped write satisfies every constraint below.** This warning is retained
+> in full because it governs the enrichment that now runs on this path, and any
+> future change to it — including the un-run backfill, and any attempt to make the
+> city a required field once the panel exists.
 >
 > `order.service.ts:96` is the creation path for **every order in the system**,
 > not only ones eligible for this feature. It already runs nine inline side
@@ -769,8 +1131,8 @@ only; it addresses nothing and grants nothing.
 | `src/app/(main)/page.jsx` | **DEFERRED** — server fetch at the page level |
 | `docs/HOMEPAGE.md` | **UNTOUCHED** — E5 reconciliation is separate (§11) |
 
-**Every file in Workstreams B and C is untouched today.** Only Workstream A is
-approved to begin.
+**Every file in Workstreams B and C is untouched today.** Workstream A is
+**shipped**; B and C remain unbuilt and unapproved.
 
 ---
 
@@ -789,17 +1151,29 @@ Risks from the investigation not eliminated by D3, and where they now sit:
 
 ## 11. Unresolved
 
-1. **Owner — confirm dev/prod database separation** from the DigitalOcean
-   console. **B7.** Blocks any publication job: a shared database means
-   development activity publishing to the production homepage.
+1. ~~**Owner — confirm dev/prod database separation** from the DigitalOcean
+   console.~~ ✅ **RESOLVED — see B3.**
 
-2. **Owner — confirm municipality-only granularity.** **D2.** The founder
+   Verified from the console: three apps exist (`legal-drop`,
+   `legaldrop-landing-new`, `legaldrop-admin`), only `legal-drop` holds a
+   `DATABASE_URL`, and no staging deploy exists. Developer orders are not arriving
+   from a shared non-production app.
+
+   A **security finding** surfaced while answering this and is recorded under B3:
+   the database had no trusted sources configured and was accepting connections
+   from any IP on the internet. Trusted sources are now restricted to the
+   `legal-drop` app. Unrelated to this feature; recorded because this
+   investigation is what found it.
+
+2. **Owner — confirm municipality-only granularity.** **D2.** ⛔ **STILL OPEN —
+   awaiting explicit founder acknowledgement.** The founder
    direction's "North York → Brampton" example is not producible; "Toronto →
    Brampton" is the truthful output (`googlemaps.service.ts:90-93`). This
    decision is recorded as made, but it contradicts a worked example in the
    direction and should be acknowledged explicitly rather than absorbed silently.
 
-3. **Island budget — E5 needs reconciling independently.** `docs/HOMEPAGE.md:76`:
+3. **Island budget — E5 needs reconciling independently.** ⛔ **UNCHANGED — still
+   4 of 4.** `docs/HOMEPAGE.md:76`:
 
    > | E5 | Client JS on the home route | **≤ 3 interactive islands, or ≤ 4 while the verified Google Reviews motion wrapper renders** |
 
@@ -814,25 +1188,74 @@ Risks from the investigation not eliminated by D3, and where they now sit:
    creates. It should be resolved on its own terms — not folded into this
    feature's approval, and not by editing the gate to match the code.
 
-4. **Volume threshold — define and instrument before building consumption.**
-   Decide the eligible-event rate that would justify enabling real mode, and
-   **instrument for it first.** Per B6 and §7 the current expected rate is
-   approximately zero, and that estimate is inferred rather than measured. The
-   publication job can be built and left un-consumed to produce this measurement
-   — which is a further argument for D1's split.
+4. **Volume threshold — the hook is specified, the number is deliberately
+   undefined.** ⚠️ **REFRAMED.**
+
+   This item previously read "define and instrument before building consumption,"
+   which implied a number was owed now. It is not. §5's *V1 public projection*
+   makes publication eligibility a **server-owned policy** rather than a hardcoded
+   constant, so the *mechanism* for applying a threshold is specified and the
+   *value* is left open until real transaction volume exists to set it against.
+
+   **No threshold is invented in this phase, and that is the decision — not an
+   omission.** A number guessed here would be worse than no number: it would look
+   authoritative, and it would be set against zero data.
+
+   What is still owed is **instrumentation**, not a value. Per B6 and §7 the
+   current expected eligible-event rate is approximately zero, and that remains
+   *inferred rather than measured*. The publication job can be built and left
+   un-consumed to produce the measurement — a further argument for D1's split.
+
+   ⚠️ **Do not measure before the backfills run.** Per B4, `order.city` and
+   `delivery_point.city` are `null` on historical rows, both backfill scripts are
+   un-run, and the tightened 3000 ms timeout raises the null rate going forward.
+   Any measurement taken now will **understate** eligible volume.
+
+5. **B2 remains open — `createdEnv` is proposed, not built.** ⛔ **NEW.**
+
+   Until it exists there is **no column distinguishing test orders from real
+   ones**. Per D3 the feed is deferred anyway, so this is **not urgent** — but it
+   **must be closed before any publication job runs.**
+
+   B3 closing narrowed this but did not resolve it. Developer orders are not
+   arriving from a shared non-production app, which was the acute risk; a manual
+   test order created against production is still indistinguishable from a
+   customer's, which is the remaining one.
+
+   The proposal — an env-stamped `createdEnv varchar` defaulting to `'unknown'`
+   and failing closed — is recorded under B2. It has no D-number, no migration and
+   no code, and should not be read as a decision.
 
 ---
 
 ## 12. Phase boundary
 
-- **No production order data is connected.** Nothing reads, writes, or publishes
-  any real delivery.
+**Updated to reflect Workstream A shipping.** The boundary moved; it did not
+disappear.
+
+**What HAS happened:**
+
+- **Backend schema and enrichment shipped** (§9). `delivery_point.city` exists,
+  the migration ran in production, and orders are enriched at creation.
+- **Two unrelated reliability fixes shipped alongside** — the `getCity` per-call
+  timeout (B4) and the OSRM routing timeout (§9).
+- **A security finding was remediated** — database trusted sources restricted to
+  the `legal-drop` app (B3).
+
+**What has NOT happened, and this is the boundary:**
+
+- **No production order data is connected to any public surface.** The data now
+  exists in the database; **nothing reads it, nothing publishes it, and nothing
+  renders it.**
+- **No public DTO, endpoint, or Redis payload exists.** §5's V1 projection is
+  specified, not implemented.
 - **No homepage file is modified.** `NetworkDemo.jsx`, `HeroNetwork.jsx`,
   `page.jsx`, `config.js` and `HOMEPAGE.md` are untouched.
-- **No implementation code has been written** in either repository.
-- **Nothing is deployed. Nothing is pushed.**
+- **No publication job exists**, and none may be built until **B2** is closed.
 - The homepage continues to render the synthetic demonstration with
   `DEMO_LABEL` (`NetworkDemo.jsx:75`), the `"Sample data"` chip (`:183`) and the
   sr-only disclaimer (`:355-364`) intact and accurate.
 
-This document records decisions. It authorises **Workstream A only** (D1).
+This document records decisions. It authorised **Workstream A only** (D1), which
+is now **shipped**. **Workstreams B and C remain unapproved** — B2, B5 and B6 are
+open, and D2 still awaits founder acknowledgement (§11).
