@@ -42,6 +42,67 @@
     );
 }
 
+/* ── CONNECTED SYSTEM — HOMEPAGE ─────────────────────────────────────────────
+ *
+ * Motion for the hexagonal system in ConnectedSystem.jsx. Transform and
+ * stroke-dashoffset only; nothing here triggers layout.
+ *
+ * The modules are NOT controls — no href, no handler, no tab stop — so this is
+ * decorative and both rules below are removed wholesale under reduced motion.
+ * The network is drawn complete and static underneath: the pulse travels over a
+ * base path that is always visible, so suppressing it removes motion, never
+ * information.
+ *
+ * Duration and delay are set per module inline in the component so each drifts
+ * out of phase with its neighbours. A single shared cycle would make seven
+ * modules bob in unison, which reads as a carousel rather than as objects
+ * floating in a system.
+ */
+@keyframes system-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(0, -4px, 0) rotate(0.9deg);
+  }
+}
+
+/* ⚠️ NO `will-change` HERE, DELIBERATELY. It was set to `transform` on first
+ * draft and removed: seven permanently promoted layers cost memory for the
+ * whole life of the page, and a plain transform animation is one the compositor
+ * already promotes for its duration and then releases. `will-change` is for
+ * animations that begin on an unpredictable event and need the layer ready
+ * BEFORE the first frame; these start on load and never stop, so there is
+ * nothing to prepare for. Do not add it back without a measured jank problem.
+ *
+ * DESKTOP ONLY. Below lg the cluster is a compact 2x2 grid where five modules
+ * sit close together — drift there reads as instability rather than as objects
+ * floating in a system, and it competes with the page's own scroll. The float
+ * is scoped to the width where the composition is actually spacious. */
+@media (min-width: 1024px) {
+  [data-system-module] {
+    animation: system-float 16s ease-in-out infinite;
+  }
+}
+
+/* A short dash travelling the length of the connector. pathLength="1" in the
+ * markup normalises every path to a 0-1 range, so one dash spec works on curves
+ * of different real lengths. */
+@keyframes system-pulse {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+[data-system-pulse] {
+  stroke-dasharray: 0.14 0.86;
+  animation: system-pulse 7s linear infinite;
+}
+
 /* ── REVIEW TRACK MOTION ─────────────────────────────────────────────────────
  *
  * Phase 8. The only bespoke CSS in this project, and it lives here rather than
@@ -169,6 +230,19 @@
 @media (prefers-reduced-motion: reduce) {
   /* No hero rule here: [data-hero-light] is static, so reduced-motion and
    * ordinary rendering are already identical. */
+
+  /* The connected system stops entirely. Both are decorative: the modules sit
+   * at their resting position and the connector network stays fully drawn, so
+   * the composition is identical and no information is lost. */
+  [data-system-module],
+  [data-system-pulse] {
+    animation: none;
+    transform: none;
+  }
+
+  [data-system-pulse] {
+    stroke-dasharray: none;
+  }
 
   [data-review-track] {
     animation: none;

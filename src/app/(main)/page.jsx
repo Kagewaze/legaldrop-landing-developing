@@ -3,7 +3,7 @@ import { APPROVED_PARTNERS } from '@/data/partners'
 import { HeroNetwork } from '@/components/home/HeroNetwork'
 import { OperationalProof } from '@/components/home/OperationalProof'
 import { PartnerStrip } from '@/components/home/PartnerStrip'
-import { PlatformShowcase } from '@/components/home/PlatformShowcase'
+import { ConnectedSystem } from '@/components/home/ConnectedSystem'
 import { Reviews, reviewsWillMove } from '@/components/home/Reviews'
 import { SocialProofMotion } from '@/components/home/SocialProofMotion'
 import { TrustAndAccountability } from '@/components/home/TrustAndAccountability'
@@ -151,23 +151,21 @@ export default async function Home() {
             OperationalProof.jsx. Nothing else on the page moved. */}
         <OperationalProof />
       </div>
-      {/* Phase 4: the claim, the evidence, then the product itself.
-          PlatformShowcase REPLACES home/Services.jsx and home/HowItWorks.jsx.
-          Both are retained on disk, unimported, as rollback targets — restoring
-          them is a two-line change here. They are removed in a later phase once
-          this one has settled.
+      {/* The claim, the evidence, then the product itself — shown as one
+          connected system rather than as a stack of dense frames.
 
-          Services was a catalogue in which 8 of 11 entries were not bookable
-          (Phase 0, D7). HowItWorks was the generic courier funnel — enter
-          addresses, see price, pay, track — which `HOMEPAGE.md` rules out
-          because every competitor prints it. The showcase replaces both with
-          the actual product.
+          ConnectedSystem REPLACES home/PlatformShowcase.jsx, which joins
+          home/Services.jsx and home/HowItWorks.jsx as a retained, unimported
+          rollback target. Restoring it is a two-line change here.
 
-          CONSEQUENCE WORTH KNOWING: HowItWorks was the page's only brand-600
-          band. Purple now appears only on CTAs and status chips, which is
-          closer to what VISION.md asks for, but the page has lost a strong
-          colour beat. Reassess when the remaining sections are rebuilt. */}
-      <PlatformShowcase />
+          Each replaced the last for the same reason: too much reading for the
+          job the section does. Services was a catalogue in which 8 of 11
+          entries were not bookable (Phase 0, D7); HowItWorks was the generic
+          courier funnel `HOMEPAGE.md` rules out by name; PlatformShowcase was
+          three frames carrying twenty-plus label/value rows between them.
+
+          This is the ONE tinted band in the page's central rhythm. */}
+      <ConnectedSystem />
       {/* Reviews moved below the showcase: product evidence outranks consumer
           social proof, and this keeps the narrative claim → proof → product.
 
