@@ -171,15 +171,15 @@ export function NetworkDemo() {
   return (
     <div
       ref={rootRef}
-      className="rounded-card border border-white/10 bg-white/[0.04] p-3 shadow-lift sm:p-6"
+      className="rounded-card border border-[#eeebf1] bg-surface-raised p-3 shadow-card sm:p-6"
     >
       {/* THE HONESTY LABEL. Visible, adjacent to the visual, not a footnote.
           Phase 0 D4 makes this a condition of shipping a simulated network. */}
       <div className="flex items-center justify-between gap-4">
-        <span className="text-xs font-semibold uppercase tracking-label text-white/70">
+        <span className="text-xs font-semibold uppercase tracking-label text-[#5f5868]">
           {DEMO_LABEL}
         </span>
-        <span className="whitespace-nowrap rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold text-white/70">
+        <span className="whitespace-nowrap rounded-full bg-surface-tint px-2.5 py-1 text-xs font-semibold text-[#5f5868]">
           Sample data
         </span>
       </div>
@@ -207,7 +207,7 @@ export function NetworkDemo() {
           className="-mt-[42px] block w-full sm:mt-0"
         >
         {/* Faint grid — a control-surface texture, not a street map. */}
-        <g stroke="currentColor" className="text-white/[0.06]" strokeWidth="1">
+        <g stroke="currentColor" className="text-[#17131c]/[0.07]" strokeWidth="1">
           {[45, 95, 145].map((y) => (
             <line key={y} x1="0" y1={y} x2="400" y2={y} />
           ))}
@@ -222,7 +222,7 @@ export function NetworkDemo() {
           d={PATH_D}
           fill="none"
           stroke="currentColor"
-          className="text-white/20"
+          className="text-[#17131c]/[0.14]"
           strokeWidth="2.5"
           strokeLinecap="round"
         />
@@ -243,8 +243,8 @@ export function NetworkDemo() {
         />
 
         {/* Pickup */}
-        <circle cx={P0[0]} cy={P0[1]} r="7" className="fill-white" />
-        <circle cx={P0[0]} cy={P0[1]} r="3" className="fill-surface-ink" />
+        <circle cx={P0[0]} cy={P0[1]} r="7" className="fill-[#17131c]" />
+        <circle cx={P0[0]} cy={P0[1]} r="3" className="fill-surface-raised" />
 
         {/* Destination */}
         <rect
@@ -254,7 +254,7 @@ export function NetworkDemo() {
           height="12"
           rx="2"
           className={
-            step === SEQUENCE.length - 1 ? 'fill-brand-500' : 'fill-white/40'
+            step === SEQUENCE.length - 1 ? 'fill-brand-500' : 'fill-[#17131c]/25'
           }
         />
 
@@ -284,9 +284,9 @@ export function NetworkDemo() {
 
           aria-hidden for the same reason as the diagram: the equivalent text
           follows once, below. */}
-      <div aria-hidden="true" className="mt-3 border-t border-white/10 pt-2.5 sm:mt-4 sm:pt-3">
+      <div aria-hidden="true" className="mt-3 border-t border-[#eeebf1] pt-2.5 sm:mt-4 sm:pt-3">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
-          <span className="text-sm font-semibold text-white">{category}</span>
+          <span className="text-sm font-semibold text-[#17131c]">{category}</span>
           <span className="rounded-full bg-brand-600 px-2.5 py-1 text-xs font-semibold text-white">
             {current.label}
           </span>
@@ -299,14 +299,11 @@ export function NetworkDemo() {
             and is the one that should survive; the captions are kept in the
             data and surface in the screen-reader description below, where the
             plain-English gloss is actually useful. */}
-        <div className="mt-1 flex items-center gap-1.5 text-sm text-white/70">
+        <div className="mt-1 flex items-center gap-1.5 text-sm text-[#5f5868]">
           <span>{ROUTE_LABELS.from}</span>
-          {/* white/50, not white/30. At 30% this composites to 2.70:1 on the
-              ink ground — an AA failure that Phase 2.1 reported as passing
-              because that probe compared the raw rgba() colour without
-              compositing its alpha. 50% measures 5.26:1 and still reads as the
-              quietest element in the row. */}
-          <span aria-hidden="true" className="text-white/50">
+          {/* #5f5868, 6.81:1 — the panel's secondary tone. Keep every element
+              in this row above the AA floor. */}
+          <span aria-hidden="true" className="text-[#5f5868]">
             →
           </span>
           <span>{ROUTE_LABELS.to}</span>
@@ -317,7 +314,7 @@ export function NetworkDemo() {
             <span
               key={s.status}
               className={`h-1 flex-1 rounded-full transition-colors duration-base motion-reduce:transition-none ${
-                i <= step ? 'bg-brand-500' : 'bg-white/15'
+                i <= step ? 'bg-brand-500' : 'bg-[#17131c]/12'
               }`}
             />
           ))}
@@ -332,18 +329,17 @@ export function NetworkDemo() {
             phone the second row costs ~26px of the first viewport. From sm the
             full queue returns. The row set still rotates with the primary, so
             the queue is never stale. */}
-        <ul className="mt-2.5 space-y-1.5 border-t border-white/10 pt-2.5 sm:mt-3 sm:pt-3">
+        <ul className="mt-2.5 space-y-1.5 border-t border-[#eeebf1] pt-2.5 sm:mt-3 sm:pt-3">
           {SECONDARY_STATUSES.map((status, i) => (
             <li
               key={status}
-              className={`items-center justify-between gap-3 text-sm text-white/50 ${
+              className={`items-center justify-between gap-3 text-sm text-[#5f5868] ${
                 i === 0 ? 'flex' : 'hidden sm:flex'
               }`}
             >
               <span>{CATEGORIES[(categoryIndex + i + 1) % CATEGORIES.length]}</span>
-              {/* white/50, not white/40 — 40% composites to 3.82:1 at 12px on
-                  the ink ground. Same measurement flaw as the arrow above. */}
-              <span className="text-xs font-semibold text-white/50">{status}</span>
+              {/* Must clear AA at 12px. */}
+              <span className="text-xs font-semibold text-[#5f5868]">{status}</span>
             </li>
           ))}
         </ul>

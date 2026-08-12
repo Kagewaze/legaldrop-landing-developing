@@ -31,21 +31,21 @@ import { NetworkDemo } from '@/components/home/NetworkDemo'
 //   verified number instead of a gradient that had to be re-measured whenever
 //   the crop moved.
 //
-// WHAT DID NOT CHANGE: the section is still server-rendered, still ships no
-// Maps SDK, and still opens the page on a dark ground.
+// WHAT DID NOT CHANGE: the section is still server-rendered and still ships no
+// Maps SDK.
 
-// Ring inverted for the dark ground — brand-600 on surface-ink is too close in
-// value to read. Same shape and weight as the site recipe.
+// The standard site focus recipe: brand-600 ring on a surface.page offset.
 const FOCUS =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-surface-ink'
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-page'
 
 const CTA_PRIMARY =
   `inline-flex items-center justify-center rounded-control bg-brand-600 px-[30px] py-4 text-base font-semibold text-white transition-colors duration-base motion-reduce:transition-none hover:bg-brand-700 ${FOCUS}`
 
 // Secondary is a bordered ghost, not a second filled button: two solid CTAs of
 // equal weight is how a page fails to have a primary action at all.
+// Underlined link below sm, bordered button from sm.
 const CTA_SECONDARY =
-  `inline-flex min-h-11 items-center justify-center rounded-control px-0 py-2 text-base font-semibold text-white underline decoration-white/40 underline-offset-4 transition-colors duration-base motion-reduce:transition-none hover:decoration-white sm:border sm:border-white/25 sm:px-[30px] sm:py-4 sm:no-underline sm:hover:bg-white/10 ${FOCUS}`
+  `inline-flex min-h-11 items-center justify-center rounded-control px-0 py-2 text-base font-semibold text-[#17131c] underline decoration-[#17131c]/30 underline-offset-4 transition-colors duration-base motion-reduce:transition-none hover:decoration-[#17131c] sm:border sm:border-[#e3dfe8] sm:px-[30px] sm:py-4 sm:no-underline sm:hover:bg-surface-tint ${FOCUS}`
 
 // THE CATEGORY ROW WAS REMOVED IN PHASE 2.1, and its removal is the single
 // largest saving in the mobile hero.
@@ -61,37 +61,20 @@ const CTA_SECONDARY =
 
 export function HeroNetwork() {
   return (
-    // ⚠️ THIS SECTION CARRIES NO BACKGROUND OF ITS OWN, DELIBERATELY.
-    //
-    // PHASE 13B put the glossy charcoal-to-purple treatment here. PHASE 13B.1
-    // moved it UP to a wrapper in src/app/(main)/page.jsx that encloses this
-    // section and OperationalProof, so the two read as one continuous surface.
-    // Keeping it here meant the treatment stopped at this section's bottom
-    // edge and the metrics band below started a new, lighter dark — a seam
-    // exactly where the surface was meant to be unbroken.
-    //
-    // So do not reintroduce bg-surface-ink, a gradient, or data-hero-glossy on
-    // this element. Two backgrounds stacked here would fight, and scoping the
-    // treatment back to this section would restore the seam. The ground is the
-    // wrapper's job; this section only supplies text colour and layout.
-    //
-    // The gradient stack itself lives in src/styles/tailwind.css under
-    // [data-hero-glossy], and its bloom is composed against the height of that
-    // wrapper — not this section.
-    <section className="text-white">
-      {/* py-10 while stacked, not py-16. The section rhythm elsewhere on the
-          page is py-16 sm:py-24, but the hero is the one section whose height
-          is measured against the first viewport rather than against its
-          neighbours — 48px of symmetric padding is 48px of proposition pushed
-          below the fold. Full rhythm returns from sm. */}
-      <div className="mx-auto max-w-[1200px] px-8 py-7 sm:py-20 lg:py-24">
-        {/* The visual is capped rather than given a free 1fr: the proposition
-            has to stay the larger thing on the screen. A 520px ceiling holds
-            the demo at roughly 45% of the column at 1440 and stops it growing
-            into a billboard on wide displays. */}
-        <div className="grid grid-cols-1 items-center gap-5 sm:gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,520px)] lg:gap-14">
+    // ⚠️ NO BACKGROUND ON THIS SECTION. The ground is the [data-hero-light]
+    // wrapper in src/app/(main)/page.jsx, which spans this section AND
+    // OperationalProof so the two read as one surface. Adding a background
+    // here reintroduces the seam that wrapper exists to remove.
+    <section className="text-[#17131c]">
+      {/* Padding is deliberately asymmetric: the hero is measured against the
+          first viewport, so mobile padding is proposition pushed below the
+          fold. Keep mobile tight; spend the room on desktop. */}
+      <div className="mx-auto max-w-[1200px] px-8 py-8 sm:py-24 lg:py-32">
+        {/* items-start, not items-center: with a tall booking surface on the
+            left, vertical centring drops the visual into dead space. */}
+        <div className="grid grid-cols-1 items-start gap-6 sm:gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16">
           <div>
-            <h1 className="text-balance font-display text-3xl font-extrabold text-white sm:text-5xl lg:text-6xl">
+            <h1 className="text-balance font-display text-3xl font-extrabold text-[#17131c] sm:text-5xl lg:text-6xl 2xl:text-7xl">
               Same-day logistics infrastructure for the GTA
             </h1>
 
@@ -108,7 +91,9 @@ export function HeroNetwork() {
                 18px setting runs to four lines and costs ~35px of the first
                 viewport. 16px holds it to three lines and stays a full step
                 above body minimum. The measure is unchanged. */}
-            <p className="mt-3.5 max-w-[560px] text-base text-white/85 sm:mt-5 sm:text-lg">
+            {/* #5f5868 is 6.81:1 on surface.page. NOT #8d8695 — 3.51:1, fails
+                AA for normal text. */}
+            <p className="mt-4 max-w-[560px] text-base text-[#5f5868] sm:mt-5 sm:text-lg">
               Specimens, filings, business deliveries and parcels — dispatched,
               tracked and recorded on one platform.
             </p>
@@ -132,7 +117,20 @@ export function HeroNetwork() {
                 to the form on mount — was rejected: the swap is a ~150px height
                 change at hydration, i.e. a CLS regression on the largest
                 element of the first screen. */}
-            <div data-hero-entry>
+            {/* THE BOOKING SURFACE. Visual wrapper only — HeroAddressEntry owns
+                every part of the booking behaviour and is untouched by it.
+
+                shadow-hero is used ONLY here; reusing it elsewhere flattens the
+                elevation hierarchy. The hairline ring terminates the white
+                against surface.page, which the shadow alone cannot do.
+
+                ⚠️ data-hero-entry MUST STAY ON THIS ELEMENT, not on an inner
+                div. The noscript rule below hides this hook; if it sat inside,
+                the form would hide and an empty white card would remain. */}
+            <div
+              data-hero-entry
+              className="mt-6 rounded-[28px] bg-surface-raised p-5 shadow-hero ring-1 ring-[#17131c]/[0.06] sm:mt-10 sm:p-8"
+            >
               <HeroAddressEntry />
             </div>
 
@@ -166,11 +164,11 @@ export function HeroNetwork() {
               hero ran 1194px, 1.41 viewports, and the panel read as a billboard
               under the proposition rather than as its companion.
 
-              520px is not a new number — it is exactly the ceiling the lg grid
-              already gives this column (minmax(0,520px)), so capping below lg
-              makes the two ranges agree instead of introducing a second rule.
-              At lg and above nothing changes. */}
-          <div className="max-w-[520px] lg:max-w-none">
+              The lg grid is proportional, so this restates the ceiling: 560px
+              stops the visual growing without bound on very wide displays.
+              lg:mt-2 nudges it down against the headline's cap height, since
+              items-start aligns the two columns on their box tops. */}
+          <div className="max-w-[520px] lg:mt-2 lg:max-w-[560px]">
             <NetworkDemo />
           </div>
         </div>

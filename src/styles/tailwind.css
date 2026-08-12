@@ -2,192 +2,44 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── GLOSSY HERO — PHASE 13B ─────────────────────────────────────────────────
+/* HOMEPAGE HERO ENVIRONMENT.
  *
- * The homepage hero's ground: near-black across the top and upper-left with a
- * purple bloom rising from the bottom-right. It lives here rather than in
- * arbitrary-value classes for the same reason the marquees do — it is four
- * coordinated layers plus a keyframe, and as Tailwind arbitrary values it would
- * be one unreadable 900-character class attribute nobody could tune.
+ * The ground shared by the hero and the operational-proof band. Both sections
+ * carry NO background of their own — giving either one back a background
+ * reintroduces the seam this exists to remove.
  *
- * ⚠️ SERVER-RENDERED, ZERO JAVASCRIPT. HeroNetwork.jsx stays a server component
- * and the island count stays at 3. Everything below is paint.
+ * STATIC BY DESIGN. There is no keyframe here and none should be added:
+ * docs/HOMEPAGE.md -> Motion Philosophy prohibits background gradient drift,
+ * and a static ground means reduced-motion rendering is already identical.
  *
- * ── THE LAYER STACK, BACK TO FRONT ──────────────────────────────────────────
+ * Literals, not tokens: a plain stylesheet cannot reach the Tailwind theme.
+ * #fbf9f8 is surface.page and rgb(123 47 190) is brand-600 expressed in
+ * channels so it can carry an alpha. Keep both in step with
+ * tailwind.config.js.
  *
- *   element    base charcoal ramp + a cool-black highlight in the upper region
- *   ::before   the purple blooms — primary bottom-right, secondary offset.
- *              This is the ONLY layer that moves.
- *   ::after    edge vignette + grain. Static, and deliberately on top so the
- *              vignette contains the bloom no matter where the drift puts it.
- *
- * Both pseudo-elements are z-index:-1 inside the section's own stacking context
- * (`isolate` on the element), so they paint behind the content without the
- * content needing a z-index of its own — no wrapper markup was added.
- *
- * ── BANDING ─────────────────────────────────────────────────────────────────
- *
- * A 1900px-wide ramp between two near-black tones crosses only a handful of
- * 8-bit steps, so each step is ~200px wide and the eye reads them as contour
- * lines. Three things fight it here:
- *
- *   1. EXTRA STOPS. Every ramp carries intermediate stops rather than
- *      interpolating end to end, so the browser interpolates over short
- *      distances where quantisation is invisible.
- *   2. CHROMA, NOT JUST LUMA. The stops shift hue as well as lightness
- *      (charcoal → violet-black → purple). Banding is far more visible in a
- *      pure luminance ramp; moving through chroma spreads the quantisation
- *      error across three channels instead of stacking it in one.
- *   3. GRAIN. The repeating-linear-gradient in ::after is a 3px diagonal comb
- *      at ~1.4% white. It is below the threshold of being seen as texture, but
- *      it perturbs the rounding at each band boundary and dithers the contour
- *      away. This is also the "subtle texture" the brief allows — it is pure
- *      CSS, NOT an image, so nothing is downloaded for it.
- *
- * ── COLOUR SOURCES ──────────────────────────────────────────────────────────
- *
- * The purples are the brand tokens: #7B2FBE is brand-600, #8E43D0 is brand-500,
- * #65259D is brand-700. They are written as literals ONLY because this is a
- * plain stylesheet with no access to the Tailwind theme; they are the token
- * values, not new colours, and must be kept in step with tailwind.config.js.
- *
- * The near-blacks (#15101c, #0e0b14, #09070d, #2a103d) ARE new literals. No
- * token covers them: surface.ink (#1a1421) is the flat dark this treatment
- * replaces and is too light to sit at the top of a ramp whose whole point is
- * that the bloom reads as light emerging from something darker.
+ * Two offset hazes rather than one centred one: a single centred haze reads as
+ * an inverted vignette and pulls the eye to the middle of the section, where
+ * nothing is.
  */
-[data-hero-glossy] {
-  /* Painted first and never removed: if a browser drops the gradients it still
-     gets a deep charcoal hero rather than a transparent one. */
-  background-color: #0b0810;
+[data-hero-light] {
+  background-color: #fbf9f8;
   background-image:
-    /* Upper region — a cool-black highlight, deliberately very low contrast.
-       It stops well before the midpoint so the top stays near-black. */
-    linear-gradient(
-      168deg,
-      rgba(52, 46, 72, 0.5) 0%,
-      rgba(34, 29, 48, 0.3) 14%,
-      rgba(20, 17, 29, 0.14) 30%,
-      rgba(11, 8, 16, 0) 46%
-    ),
-    /* Base charcoal ramp, upper-left to lower-right. */
-    linear-gradient(155deg, #15101c 0%, #110d18 38%, #0e0b14 68%, #09070d 100%);
-}
-
-/* THE BLOOMS.
- *
- * ⚠️ COMPOSED AGAINST THE FULL HERO + METRICS HEIGHT (Phase 13B.1), not the
- * hero alone. Every percentage below resolves against this layer's own box, so
- * when the surface grew by the metrics band the old geometry no longer meant
- * what it said: a 78% vertical radius over a ~900px surface is a ~700px bloom
- * that peaks around the hero's lower third and is spent well before the metrics
- * text. The bloom was stretched and diffuse in exactly the region it was
- * supposed to be strongest.
- *
- * Recomposed so the purple still reads as rising from the LOWER REGION OF THE
- * COMBINED SURFACE: the centre sits near the bottom-right corner of the whole
- * wrapper and the vertical radius is tightened, which concentrates the light
- * across the metrics band rather than smearing it over both sections.
- *
- * INSET IS NOW -12%, NOT -25%. Its only job is to guarantee the drift can never
- * pull a gradient edge into view, and the drift travels 2.6%. -25% was
- * arbitrary headroom that also made every percentage here harder to reason
- * about, since each one resolves against a box 1.5x the visible surface. At
- * -12% the box is 1.24x and the numbers are close to what they appear to say.
- */
-[data-hero-glossy]::before {
-  content: '';
-  position: absolute;
-  inset: -12%;
-  z-index: -1;
-  pointer-events: none;
-  background-image:
-    /* PRIMARY — bottom-right of the COMBINED surface, falling off toward the
-       upper-left.
-       ⚠️ PEAK ALPHA IS 0.82 BY DECISION, NOT BY DEFAULT. It was briefly eased
-       to 0.70 to buy contrast headroom once the bloom moved under the metrics
-       numerals; that was the wrong trade and was reverted. The coverage is the
-       design. Text was lifted to meet the brighter ground instead — see the
-       opacity note in OperationalProof.jsx. Do not dim this to fix a contrast
-       finding; raise the text instead. */
+    /* Upper right, behind the hero visual. */
     radial-gradient(
-      86% 58% at 87% 88%,
-      rgba(123, 47, 190, 0.82) 0%,
-      rgba(123, 47, 190, 0.58) 15%,
-      rgba(84, 33, 128, 0.38) 29%,
-      rgba(42, 16, 61, 0.48) 45%,
-      rgba(42, 16, 61, 0.22) 63%,
-      rgba(42, 16, 61, 0) 82%
+      82% 62% at 88% 4%,
+      rgb(123 47 190 / 0.05) 0%,
+      rgb(123 47 190 / 0.03) 34%,
+      rgb(123 47 190 / 0.012) 58%,
+      rgb(123 47 190 / 0) 76%
     ),
-    /* SECONDARY — the offset violet reflection. Lower opacity, pushed left and
-       kept low so it lifts the bottom-left of the metrics band slightly and
-       stops the surface going dead black under the first numeral. */
+    /* Lower left, under the booking surface and the metrics. Weaker, so the
+       two do not overlap into a single wash. */
     radial-gradient(
-      64% 44% at 46% 99%,
-      rgba(142, 67, 208, 0.22) 0%,
-      rgba(142, 67, 208, 0.13) 32%,
-      rgba(101, 37, 157, 0.07) 56%,
-      rgba(101, 37, 157, 0) 78%
+      68% 54% at 6% 96%,
+      rgb(123 47 190 / 0.035) 0%,
+      rgb(123 47 190 / 0.02) 38%,
+      rgb(123 47 190 / 0) 72%
     );
-  animation: hero-bloom-drift 42s ease-in-out infinite;
-  /* Promotes the layer so the drift is a compositor transform rather than a
-     repaint of a full-viewport gradient every frame. */
-  will-change: transform;
-}
-
-/* VIGNETTE + GRAIN. On top of the blooms on purpose: the vignette's job is to
-   stop the glow running flat into the container edge, which it can only do if
-   it is painted after the glow. */
-[data-hero-glossy]::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image:
-    /* Grain — see the banding note above. 3px diagonal comb at 1.4% white. */
-    repeating-linear-gradient(
-      45deg,
-      rgba(255, 255, 255, 0.014) 0 1px,
-      rgba(255, 255, 255, 0) 1px 3px
-    ),
-    /* Soft edge vignette. Transparent through the middle 58% so it darkens only
-       the perimeter and never dims the text block. */
-    radial-gradient(
-      128% 108% at 50% 46%,
-      rgba(0, 0, 0, 0) 58%,
-      rgba(6, 4, 10, 0.3) 82%,
-      rgba(6, 4, 10, 0.62) 100%
-    );
-}
-
-/* AMBIENT DRIFT.
- *
- * A slow translate of the bloom layer — no scale, no rotation, no opacity
- * pulse, nothing that flashes. 42s for a ~3% travel is roughly 1px every two
- * seconds: felt rather than watched, and far too slow to pull the eye away
- * from the booking form.
- *
- * TRANSFORM ONLY, so it runs on the compositor and cannot cause layout shift.
- * The layer is oversized (inset:-25%), so no edge is ever exposed.
- *
- * ⚠️ docs/HOMEPAGE.md → Motion Philosophy lists "gradient drift" under
- * PROHIBITED MOTION, and the homepage's one-orchestrated-moment budget is
- * already spent on NetworkDemo. This ships on an explicit founder instruction
- * in Phase 13B. If that decision is revisited, deleting this keyframe and the
- * `animation` line above removes it completely and leaves the static
- * composition intact — which is exactly what reduced-motion already renders.
- */
-@keyframes hero-bloom-drift {
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-  50% {
-    transform: translate3d(-2.6%, -1.9%, 0);
-  }
-  100% {
-    transform: translate3d(0, 0, 0);
-  }
 }
 
 /* ── REVIEW TRACK MOTION ─────────────────────────────────────────────────────
@@ -315,15 +167,8 @@
  * deliberate and both copies must be changed together.
  */
 @media (prefers-reduced-motion: reduce) {
-  /* THE HERO DRIFT STOPS DEAD. Only the animation is removed — the layer, its
-   * gradients and the vignette all stay, so the composition is identical and
-   * nothing about the layout, the contrast or the content changes. The bloom
-   * simply sits at its 0% position, which is the frame the treatment was
-   * designed around. */
-  [data-hero-glossy]::before {
-    animation: none;
-    transform: none;
-  }
+  /* No hero rule here: [data-hero-light] is static, so reduced-motion and
+   * ordinary rendering are already identical. */
 
   [data-review-track] {
     animation: none;

@@ -62,8 +62,10 @@ const DEBOUNCE_MS = 250
 // legitimate supported deliveries.
 const REGION_CODES = ['ca']
 
+// Placeholder is #5f5868 (6.81:1 on the white field), NOT #8d8695 — that tone
+// measures 3.51:1 here and fails AA for normal text. Keep it above the floor.
 const FIELD_BASE =
-  'w-full rounded-control border-[1.5px] bg-white px-4 py-3 text-base text-[#17131c] placeholder:text-[#8d8695] transition-colors focus:outline-none focus:ring-0'
+  'w-full rounded-control border-[1.5px] bg-white px-4 py-3 text-base text-[#17131c] placeholder:text-[#5f5868] transition-colors focus:outline-none focus:ring-0'
 
 // A prediction rendered as two lines: the place name and the rest of the
 // address. Google returns exactly this split, so no parsing is invented.
@@ -263,7 +265,7 @@ function AddressField({
     <div className="relative">
       <label
         htmlFor={id}
-        className="mb-1 block text-sm font-semibold text-white sm:mb-1.5"
+        className="mb-1 block text-sm font-semibold text-[#17131c] sm:mb-1.5"
       >
         {label}
       </label>
@@ -322,7 +324,7 @@ function AddressField({
       {(status === 'no-results' ||
         status === 'failed' ||
         loaderState === 'failed') && (
-        <p className="mt-1.5 text-sm text-[#ffd9d4]">
+        <p className="mt-1.5 text-sm text-[#b42318]">
           {loaderState === 'failed' || status === 'failed'
             ? 'Address suggestions are unavailable right now.'
             : 'No matching addresses.'}
@@ -488,7 +490,9 @@ export function HeroAddressEntry() {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="mt-4 sm:mt-8">
+    // No top margin: the booking surface in HeroNetwork.jsx supplies the
+    // padding this form sits inside.
+    <form onSubmit={handleSubmit} noValidate>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
         <AddressField
           id={`${baseId}-pickup`}
@@ -532,20 +536,20 @@ export function HeroAddressEntry() {
         <button
           type="submit"
           disabled={!ready}
-          className="inline-flex min-h-11 w-full items-center justify-center rounded-control bg-brand-600 px-[30px] py-3 text-base sm:py-4 font-semibold text-white transition-colors motion-reduce:transition-none hover:bg-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:bg-white/25 disabled:text-white/70 sm:w-auto"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-control bg-brand-600 px-[30px] py-3 text-base sm:py-4 font-semibold text-white transition-colors motion-reduce:transition-none hover:bg-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:bg-[#ece7f1] disabled:text-[#6b6474] sm:w-auto"
         >
           Continue to booking
         </button>
 
         <Link
           href={ROUTES.contact.href}
-          className="inline-flex min-h-11 w-full items-center justify-center rounded-control px-2 text-base font-semibold text-white underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:w-auto sm:px-0"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-control px-2 text-base font-semibold text-[#17131c] underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 sm:w-auto sm:px-0"
         >
           Talk to our team
         </Link>
       </div>
 
-      <p className="mt-2 text-sm text-white/70 sm:mt-3">
+      <p className="mt-3 text-sm text-[#5f5868] sm:mt-3.5">
         {ready
           // PHASE 7.1: both helper strings are kept to ONE line at 390. The
           // ready message previously wrapped to two, so selecting the second
@@ -567,10 +571,10 @@ export function HeroAddressEntry() {
           of a form that currently cannot complete. No configuration detail or
           key name is exposed. */}
       {(degraded || loaderState === 'failed') && (
-        <p className="mt-2 text-sm text-white/70">
+        <p className="mt-2 text-sm text-[#5f5868]">
           <Link
             href={ROUTES.send.href}
-            className="rounded-control font-semibold text-white underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            className="rounded-control font-semibold text-brand-600 underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
           >
             Continue on the full booking page
           </Link>{' '}

@@ -132,36 +132,15 @@ export default async function Home() {
     // surface.page — a warm off-white, not #fff. Cards on this page are pure
     // white, so they sit ON the ground rather than dissolving into it.
     <div className="bg-surface-page">
-      {/* ── THE GLOSSY SURFACE — PHASE 13B.1 ────────────────────────────────
-          The charcoal-to-purple treatment moved from the hero <section> up to
-          this wrapper so it spans the hero AND the metrics band as ONE surface.
+      {/* Keeps the hero and the metrics band on ONE continuous surface. Both
+          sections carry no background of their own; giving either one back a
+          background reintroduces the seam this removes.
 
-          It used to sit on the hero alone, which produced two seams at their
-          boundary: `rounded-b-card` let the warm page ground (#fbf9f8) show
-          through at the hero's bottom corners, and OperationalProof's flat
-          bg-surface-ink (#1a1421) was ~17 points lighter than where the glossy
-          ramp ends (#09070d) — a visible step exactly where the surface was
-          supposed to be continuous. Both are gone: the hero and the metrics
-          band now carry NO background of their own and simply sit on this.
-
-          This wrapper is a plain block box around two block-level sections, so
-          it changes no layout — each section keeps its own padding, its own
-          content column and its own spacing. It is a paint surface, nothing
-          more, and it adds no client JavaScript.
-
-          The radius stays on the OUTER bottom edge, where it terminates the
-          whole dark surface against the page. It is no longer between the two
-          sections, which is where it was doing harm.
-
-          The gradient stack lives in src/styles/tailwind.css under
-          [data-hero-glossy] — read the block at the top of that file before
-          changing any of it. Its bloom is composed against the height of THIS
-          element, so adding or removing a section from this wrapper changes
-          where the purple peaks. */}
-      <div
-        data-hero-glossy
-        className="relative isolate overflow-hidden rounded-b-card"
-      >
+          Paint only — a plain block box, no layout effect, no client JS. The
+          gradient lives in src/styles/tailwind.css under [data-hero-light], and
+          its hazes are composed against the height of THIS element, so adding
+          or removing a section from the wrapper moves where the light falls. */}
+      <div data-hero-light>
         {/* Phase 2 replaced home/Hero.jsx with HeroNetwork. The old component is
             retained on disk, unimported, as the rollback target: restoring the
             previous hero is a two-line change here. It is removed in a later
