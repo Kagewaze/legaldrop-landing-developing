@@ -82,6 +82,36 @@ const RECORD_ROWS = [
 // cell.
 const HEX_CLIP = 'polygon(50% 0%, 100% 22%, 100% 78%, 50% 100%, 0% 78%, 0% 22%)'
 
+// ── CONNECTOR ROUTES ────────────────────────────────────────────────────────
+//
+// One entry per route, in viewBox units, so a base path and its pulse overlay
+// cannot drift apart.
+//
+// ⚠️ EVERY ENDPOINT SITS INSIDE THE MODULE IT JOINS. The modules paint over the
+// network, so an endpoint tucked under a face reads as a connector terminating
+// cleanly at the silhouette; one that stops short leaves a floating end in open
+// space. Check an endpoint against the module's box before moving it — the
+// boxes come from the lg:left/top/w percentages, and the viewBox shares the
+// container's ratio, so 1 unit is the same distance on both axes.
+const ROUTES = {
+  request: 'M 208 218 C 300 232, 330 268, 388 288',
+  // Dispatch sits directly above the hub with their vertices ~7 units apart, so
+  // a straight drop between them is swallowed whole. This leaves Dispatch on
+  // its lower-left flank and enters the hub's upper-left, where the gap is wide
+  // enough for the connector to actually be seen.
+  dispatch: 'M 445 130 C 424 152, 414 180, 410 215',
+  track: 'M 578 268 C 660 244, 720 190, 782 172',
+  record: 'M 552 340 C 596 366, 626 388, 652 404',
+  medical: 'M 262 402 C 340 386, 392 350, 420 318',
+  // Held above Record's top vertex on its way to the hub: dipping below it puts
+  // the line under Record's face and breaks the run in two.
+  legal: 'M 848 372 C 784 358, 700 316, 572 306',
+}
+
+// The two routes that also carry a travelling pulse — request into the hub, hub
+// down to the record.
+const PULSE_ROUTES = ['request', 'record']
+
 // ⚠️ THE BORDER IS A NESTED SHAPE, NOT A `border`. A clipped element has its
 // border clipped away with everything else, so the hairline is produced by
 // stacking two clipped boxes: the outer one is the border colour, the inner is
@@ -231,12 +261,9 @@ export function ConnectedSystem() {
               strokeWidth="1.5"
               strokeLinecap="round"
             >
-              <path d="M 208 218 C 300 232, 330 268, 388 288" />
-              <path d="M 465 176 C 465 210, 470 226, 472 246" />
-              <path d="M 578 268 C 660 244, 720 190, 782 172" />
-              <path d="M 552 340 C 596 366, 626 388, 652 404" />
-              <path d="M 288 402 C 350 386, 392 350, 420 318" />
-              <path d="M 848 372 C 780 356, 690 330, 596 306" />
+              {Object.entries(ROUTES).map(([name, d]) => (
+                <path key={name} d={d} />
+              ))}
             </g>
 
             {/* The travelling pulse. A short dash moving along the two spine
@@ -250,22 +277,16 @@ export function ConnectedSystem() {
               strokeLinecap="round"
               pathLength="1"
             >
-              <path
-                data-system-pulse
-                d="M 208 218 C 300 232, 330 268, 388 288"
-                pathLength="1"
-              />
-              <path
-                data-system-pulse
-                style={{ animationDelay: '-3.5s' }}
-                d="M 552 340 C 596 366, 626 388, 652 404"
-                pathLength="1"
-              />
+              {PULSE_ROUTES.map((name, i) => (
+                <path
+                  key={name}
+                  data-system-pulse
+                  style={i === 1 ? { animationDelay: '-3.5s' } : undefined}
+                  d={ROUTES[name]}
+                  pathLength="1"
+                />
+              ))}
             </g>
-
-            {/* Route nodes at the two ends of the spine. */}
-            <circle cx="208" cy="218" r="3.5" fill="#7B2FBE" fillOpacity="0.45" />
-            <circle cx="652" cy="404" r="3.5" fill="#7B2FBE" fillOpacity="0.45" />
           </svg>
 
           {/* ── DRUPPR — the hub. Largest, and the only module with a tinted
