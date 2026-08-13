@@ -1,4 +1,7 @@
+import Image from 'next/image'
 import Link from 'next/link'
+
+import lawOffices from '@/images/legal-lawoffices.jpg'
 
 import { ROUTES } from '@/lib/navigation'
 
@@ -85,7 +88,7 @@ const EYEBROW =
 // footer carries one line saying what the frame is showing.
 function FrameHeader({ title }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-[#eeebf1] bg-surface-tint px-5 py-3.5">
+    <div className="flex items-center justify-between gap-3 border-b border-[#eeebf1] bg-surface-tint px-6 py-4">
       <span className="text-xs font-semibold uppercase tracking-label text-[#5f5868]">
         {title}
       </span>
@@ -98,7 +101,7 @@ function FrameHeader({ title }) {
 
 function FrameNote({ children }) {
   return (
-    <p className="border-t border-[#eeebf1] px-5 py-3 text-sm text-[#5f5868]">
+    <p className="border-t border-[#eeebf1] px-6 py-4 text-sm text-[#5f5868]">
       {children}
     </p>
   )
@@ -107,7 +110,7 @@ function FrameNote({ children }) {
 // A label/value row, the shape every tracking surface in the product uses.
 function Field({ label, value }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 py-2">
+    <div className="flex items-baseline justify-between gap-4 py-3">
       <dt className="flex-none text-sm text-[#5f5868]">{label}</dt>
       <dd className="min-w-0 text-right text-sm font-semibold text-[#17131c]">
         {value}
@@ -125,16 +128,49 @@ function Field({ label, value }) {
 //   Packages   send-flow.js EMPTY_STATE.packageCount, set by the <Stepper> in
 //              send/details/page.jsx:115 and priced in PriceBreakdown.jsx:39
 //   Weight     WEIGHT_OPTIONS[0].label in send-flow.js:78, verbatim
+// PASS 2.2 — SUBSTANCE FROM PROPORTION, NOT FROM CONTENT.
+//
+// This frame measured ~250px against Legal's 478px photograph, so Medical read
+// as the weaker of two beats rather than as the deliberately quieter one. Not
+// one word was added to fix it. Every value below is the same value it was.
+//
+// What changed is the SCALE RELATIONSHIP between values that were already here:
+// `Medical supply` — the Category value, and the one fact that says what this
+// section is about — is promoted out of its row and set at display size as the
+// card's subject. Its label moves underneath it, which is the normal figure/
+// caption order for a stated subject rather than the label/value order used for
+// specifics. The remaining three stay as label/value rows, because that is the
+// shape every tracking surface in the product uses and it is the device that
+// makes this read as an operational record.
+//
+// ⚠️ DO NOT ADD FIELDS HERE TO MAKE IT TALLER. The height is deliberate air
+// around one focal element. A fifth and sixth row would turn a composed
+// statement into the dense logistics dashboard this is specifically not.
 function MedicalFrame() {
   return (
-    <div className={CARD}>
+    // `shadow-lift`, not `shadow-card`: a larger surface has to read as a
+    // thicker material or the extra size just reads as an emptier card.
+    <div className={`${CARD} shadow-lift`}>
       <FrameHeader title="Delivery request" />
-      <dl className="flex flex-col px-5 py-3">
-        <Field label="Category" value="Medical supply" />
+
+      {/* THE SUBJECT. Set in the display face at 24px — deliberately below the
+          section's own 30px h2, so it is the focal element of the frame without
+          competing with the heading it sits beside. */}
+      <div className="px-6 pb-6 pt-7">
+        <p className="font-display text-2xl font-semibold -tracking-[0.01em] text-[#17131c]">
+          Medical supply
+        </p>
+        <p className="mt-1.5 text-sm text-[#5f5868]">Category</p>
+      </div>
+
+      {/* THE SPECIFICS. Hairline-separated so the rows read as a record rather
+          than as a list, with the row rhythm opened up from py-2 to py-3. */}
+      <dl className="flex flex-col divide-y divide-[#eeebf1] border-t border-[#eeebf1] px-6">
         <Field label="Vehicle" value="Car" />
         <Field label="Packages" value="3" />
         <Field label="Weight" value="Under 15 kg" />
       </dl>
+
       <FrameNote>
         Every request records what is moving, the vehicle it needs, and how many
         packages at what weight.
@@ -269,6 +305,15 @@ export const LEGAL_VERTICAL = {
   // signature, no affidavit, no evidentiary chain of custody.
   lead: 'Coordinate filings, confidential files and process-serving runs through a tracked workflow, with timestamped status from request through completion.',
   note: 'Arranged on your firm’s account rather than booked per drop.',
+  // ⚠️ THE ONLY PHOTOGRAPH IN THE TWO SERVICE SECTIONS, and the only one that
+  // survived the audit: brass lettering on a law-office facade. Architectural
+  // and documentary rather than a gavel or a staged handover, and truthful —
+  // Druppr delivers TO firms like this one. It asserts nothing about how a
+  // filing is handled, which is exactly why it is safe here.
+  photo: {
+    src: lawOffices,
+    alt: 'Brass lettering reading LAW OFFICES on a building facade',
+  },
   cta: 'See legal delivery',
   href: ROUTES.legal.href,
   frame: <LegalFrame />,
@@ -287,6 +332,16 @@ export function VerticalSection({
   // frame is the evidence for the claim above it, so on a phone the claim
   // should arrive first and the evidence should follow it.
   frameSide = 'left',
+  // ⚠️ A PHOTOGRAPH INSTEAD OF A CONSTRUCTED FRAME.
+  //
+  // Only one vertical takes one. Medical keeps the graphic operational frame
+  // and Legal takes a real photograph, so the two sections stop being the same
+  // module flipped left-to-right — they now differ in what the visual IS, not
+  // just which side it sits on. Do not give both a photo: the asymmetry is the
+  // design, and there is no truthful medical image (medical-pharma.jpg shows
+  // ordinary cartons, medical-temp.jpg implies cold-chain handling this
+  // product does not claim).
+  photo = null,
   // A full-bleed tint band. It needs the wrapper below for the same reason
   // home/Services.jsx does: the tint runs the whole viewport while the content
   // stays in the 1200px column, and those cannot be the same element.
@@ -299,17 +354,25 @@ export function VerticalSection({
           already a tall block on a phone, and that height is content rather
           than padding. The full rhythm returns from sm. */}
       <div className="mx-auto max-w-[1200px] px-8 py-12 sm:py-24">
-        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-14">
+        <div
+          className={`grid grid-cols-1 items-center gap-10 lg:gap-14 ${
+            // The photograph earns more width than a constructed frame does;
+            // an even split would make the two verticals read as one template.
+            photo
+              ? 'lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)]'
+              : 'lg:grid-cols-2'
+          }`}
+        >
           {/* DOM order is copy then frame, always, so the reading order a
               screen reader or keyboard user gets never depends on which side
               the frame happens to sit on at lg. `order` only reorders the two
               columns from lg up. */}
           <div className={frameSide === 'left' ? 'lg:order-2' : undefined}>
             <span className={EYEBROW}>{eyebrow}</span>
-            <h2 className="mt-3 font-display text-3xl font-extrabold text-[#17131c]">
+            <h2 className="mt-3 text-balance font-display text-3xl font-extrabold -tracking-[0.015em] text-[#17131c]">
               {heading}
             </h2>
-            <p className="mt-4 max-w-[560px] text-lg text-[#5f5868]">{lead}</p>
+            <p className="mt-4 max-w-[560px] text-pretty text-lg text-[#5f5868]">{lead}</p>
             {note && (
               <p className="mt-3 max-w-[560px] text-base text-[#5f5868]">
                 {note}
@@ -325,7 +388,21 @@ export function VerticalSection({
           </div>
 
           <div className={frameSide === 'left' ? 'lg:order-1' : undefined}>
-            {frame}
+            {photo ? (
+              // Editorial rectangle, no card around it. Taller on a phone so the
+              // building's lettering — the semantic anchor — survives the crop;
+              // wider from sm where there is room for the diagonal to read.
+              <div className="overflow-hidden rounded-card ring-1 ring-[oklch(0_0_0/0.1)]">
+                <Image
+                  src={photo.src}
+                  alt={photo.alt}
+                  sizes="(min-width: 1024px) 640px, 100vw"
+                  className="aspect-[5/4] w-full object-cover object-[58%_center] sm:aspect-[4/3]"
+                />
+              </div>
+            ) : (
+              frame
+            )}
           </div>
         </div>
       </div>

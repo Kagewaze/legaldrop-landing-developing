@@ -167,8 +167,8 @@ export default async function Home() {
 
           Alternating from here down: tint (showcase) → page (medical) → tint
           (legal) → page (trust). */}
-      <VerticalSection {...MEDICAL_VERTICAL} frameSide="left" />
-      <VerticalSection {...LEGAL_VERTICAL} frameSide="right" tinted />
+      <VerticalSection {...MEDICAL_VERTICAL} frameSide="left" tinted />
+      <VerticalSection {...LEGAL_VERTICAL} frameSide="right" />
       {/* PHASE 6: this replaces BOTH the homepage's `Why Druppr` grid and its
           Coverage band.
 
