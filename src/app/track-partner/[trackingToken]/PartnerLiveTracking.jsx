@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 
 import { API_BASE_URL } from '@/lib/config'
+import { statusPillClass } from '@/components/track/TrackingChrome'
 
 import { PartnerTrackingMap } from './PartnerTrackingMap'
 
@@ -34,18 +35,6 @@ function titleCase(value) {
     .split('_')
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ')
-}
-
-function statusBadgeClass(status) {
-  if (status === 'delivered') {
-    return 'bg-emerald-50 text-emerald-700 ring-emerald-200'
-  }
-
-  if (['cancelled', 'failed', 'refunded'].includes(status)) {
-    return 'bg-rose-50 text-rose-700 ring-rose-200'
-  }
-
-  return 'bg-amber-50 text-amber-700 ring-amber-200'
 }
 
 // Reuse the backend's precomputed ETA (durationText / distanceText); never
@@ -136,18 +125,18 @@ export function PartnerLiveTracking({
 
   return (
     <>
-      <section className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+      <section className="rounded-card border border-[#eeebf1] bg-surface-raised p-8 text-center shadow-card">
         <span
-          className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset ${statusBadgeClass(
+          className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-label ring-1 ring-inset ${statusPillClass(
             status,
           )}`}
         >
           {titleCase(status)}
         </span>
-        <h2 className="mt-4 text-2xl font-semibold text-slate-900">
+        <h2 className="mt-5 font-display text-2xl font-extrabold tracking-[-0.02em] text-[#17131c]">
           {message?.header ?? 'Order status'}
         </h2>
-        <p className="mt-2 text-sm text-slate-500">
+        <p className="mt-2 text-[15px] text-[#5f5868]">
           {message?.description ??
             'We’ll keep this page updated as your order progresses.'}
         </p>
@@ -156,16 +145,16 @@ export function PartnerLiveTracking({
       {children}
 
       {driverLocation ? (
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+        <section className="rounded-card border border-[#eeebf1] bg-surface-raised p-6 text-center shadow-card">
+          <p className="text-xs font-semibold uppercase tracking-label text-[#5f5868]">
             Estimated Arrival
           </p>
           {etaText ? (
-            <p className="mt-3 text-3xl font-semibold text-slate-900">
+            <p className="mt-3 font-display text-3xl font-extrabold tracking-[-0.02em] text-[#17131c]">
               {etaText}
             </p>
           ) : (
-            <p className="mt-3 text-lg font-medium text-slate-400">
+            <p className="mt-3 text-lg font-semibold text-[#8d8695]">
               Calculating…
             </p>
           )}
@@ -179,7 +168,7 @@ export function PartnerLiveTracking({
         route={route}
       />
 
-      <footer className="pt-4 text-center text-xs text-slate-500">
+      <footer className="pt-2 text-center text-[13px] text-[#5f5868]">
         {TERMINAL_STATUSES.includes(status)
           ? 'This order is complete — no further updates.'
           : 'This page updates automatically as your driver moves.'}

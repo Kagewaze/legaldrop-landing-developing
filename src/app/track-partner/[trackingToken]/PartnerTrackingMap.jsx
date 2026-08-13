@@ -331,18 +331,18 @@ export function PartnerTrackingMap({
   }, [driver?.lat, driver?.lng, hasValidDriver, status])
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+    <section className="rounded-card border border-[#eeebf1] bg-surface-raised p-6 shadow-card">
+      <p className="text-xs font-semibold uppercase tracking-label text-[#5f5868]">
         Live Route
       </p>
-      <div className="relative mt-4 h-80 w-full overflow-hidden rounded-2xl bg-slate-100">
+      <div className="relative mt-4 h-80 w-full overflow-hidden rounded-[14px] bg-surface-tint">
         <div
           ref={mapRef}
           className="h-full w-full"
           aria-label="Map showing the driver's live position along the delivery route"
         />
         {status !== 'ready' && (
-          <div className="absolute inset-0 flex items-center justify-center px-4 text-center text-sm text-slate-400">
+          <div className="absolute inset-0 flex items-center justify-center px-4 text-center text-[13px] text-[#5f5868]">
             {status === 'error'
               ? 'We couldn’t load the map right now.'
               : 'Loading map…'}

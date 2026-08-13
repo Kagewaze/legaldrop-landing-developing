@@ -1,6 +1,12 @@
 import Image from 'next/image'
 
 import { API_BASE_URL } from '@/lib/config'
+import {
+  CompletionMarker,
+  InfoList,
+  TrackingHeader,
+  TrackingShell,
+} from '@/components/track/TrackingChrome'
 
 import { LiveTracking } from './LiveTracking'
 
@@ -37,29 +43,8 @@ function titleCase(value) {
     .join(' ')
 }
 
-function InfoList({ title, items }) {
-  if (!items || items.length === 0) {
-    return null
-  }
-
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h3 className="text-sm font-semibold text-slate-500">{title}</h3>
-      <div className="mt-4 space-y-3 text-sm text-slate-700">
-        {items.map(({ key, label, value }) => (
-          <div key={key ?? label} className="flex flex-col">
-            <span className="text-xs uppercase tracking-wide text-slate-400">
-              {label}
-            </span>
-            <span className="mt-1 font-medium text-slate-700">
-              {value || '--'}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
+// InfoList now lives in components/track/TrackingChrome.jsx — the partner route
+// carried an identical copy, and the two had already drifted apart.
 
 async function getTrackingDetails(trackingCode) {
   try {
@@ -114,12 +99,12 @@ export default async function TrackOrderPage({ params }) {
 
   if (!tracking) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-16">
-        <div className="w-full max-w-xl rounded-3xl border border-rose-100 bg-white p-10 text-center shadow-lg">
-          <h1 className="text-2xl font-semibold text-slate-900">
+      <main className="flex min-h-screen items-center justify-center bg-surface-page px-5 py-16">
+        <div className="w-full max-w-xl rounded-card border border-[#eeebf1] bg-surface-raised p-10 text-center shadow-card">
+          <h1 className="font-display text-2xl font-extrabold tracking-[-0.02em] text-[#17131c]">
             Tracking unavailable
           </h1>
-          <p className="mt-4 text-sm text-slate-600">
+          <p className="mt-4 text-[15px] text-[#5f5868]">
             {trackingError
               ? trackingError
               : 'We couldn’t find tracking details for this code. Please double-check it or contact the sender for assistance.'}
@@ -145,6 +130,12 @@ export default async function TrackOrderPage({ params }) {
 
   const driverInitial = driver?.firstName?.charAt(0)?.toUpperCase() ?? 'D'
 
+  // The payload sends no rating for a driver who has not been rated, and the
+  // previous `?? 0` turned that absence into a displayed 0.0. Treat only a
+  // finite number above zero as a rating.
+  const ratingValue = Number(driver?.overAllRating)
+  const hasRating = Number.isFinite(ratingValue) && ratingValue > 0
+
   const orderItems = [
     { key: 'tracking-code', label: 'Tracking Code', value: code ?? trackingCode },
     { key: 'category', label: 'Category', value: titleCase(orderCategory) },
@@ -167,21 +158,8 @@ export default async function TrackOrderPage({ params }) {
   ].filter(Boolean)
 
   return (
-    <main className="min-h-screen bg-slate-100 px-4 py-12">
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-        <header className="flex flex-col items-center gap-4 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-slate-200 bg-purple-700 text-lg font-semibold text-white">
-            L
-          </div>
-          <div>
-            <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
-              Order Tracking
-            </p>
-            <h1 className="mt-1 text-3xl font-semibold text-slate-900">
-              Track your delivery
-            </h1>
-          </div>
-        </header>
+    <TrackingShell>
+        <TrackingHeader eyebrow="Order tracking" title="Track your delivery" />
 
         <LiveTracking
           trackingCode={code ?? trackingCode}
@@ -190,55 +168,66 @@ export default async function TrackOrderPage({ params }) {
           initialDriverLocation={driverLocation}
           initialEta={eta}
         >
-          <div className="grid gap-4 sm:grid-cols-2">
-            <InfoList title="Order Details" items={orderItems} />
+          <div className="grid items-start gap-5 sm:grid-cols-2">
+            {/* The marker renders only for the real terminal delivered
+                status, so the record card states its own outcome. */}
+            <InfoList
+              title="Order details"
+              items={orderItems}
+              footer={status === 'delivered' ? <CompletionMarker /> : null}
+            />
 
             {driver ? (
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h3 className="text-sm font-semibold text-slate-500">
-                  Your Driver
-                </h3>
-                <div className="mt-4 flex items-center gap-4">
-                  <div className="relative h-14 w-14 overflow-hidden rounded-full border border-slate-200 bg-white">
+              <section className="rounded-card border border-[#eeebf1] bg-surface-raised p-6 shadow-card">
+                <h2 className="text-xs font-semibold uppercase tracking-label text-[#5f5868]">
+                  Your driver
+                </h2>
+                <div className="mt-5 flex items-center gap-4">
+                  <div className="relative h-12 w-12 overflow-hidden rounded-full border border-[#eeebf1] bg-surface-raised">
                     {driver.photoUrl ? (
                       <Image
                         src={driver.photoUrl}
-                        alt={`${driver.firstName ?? 'Driver'} photo`}
+                        alt=""
                         fill
                         className="object-cover"
-                        sizes="56px"
+                        sizes="48px"
                         unoptimized
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-purple-700 text-lg font-semibold text-white">
+                      <div className="flex h-full w-full items-center justify-center bg-brand-600 text-base font-bold text-white">
                         {driverInitial}
                       </div>
                     )}
                   </div>
                   <div>
-                    <p className="text-base font-semibold text-slate-900">
+                    <p className="text-[15px] font-semibold text-[#17131c]">
                       {driver.firstName || 'Your driver'}
-                      <span className="font-normal text-slate-500">
-                        {' '}
-                        is your driver
-                      </span>
                     </p>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-0.5 text-[13px] text-[#5f5868]">
                       {titleCase(driver.vehicleType)}
                     </p>
-                    <p className="mt-1 text-sm font-medium text-amber-600">
-                      <span role="img" aria-hidden>
-                        ★
-                      </span>{' '}
-                      {Number(driver.overAllRating ?? 0).toFixed(1)}
-                    </p>
+                    {/* ⚠️ THIS USED TO READ `Number(rating ?? 0).toFixed(1)`,
+                        which printed "0.0" for every driver the API returns no
+                        rating for — an unrated driver was shown to the customer
+                        as a zero-star driver. `0` is the absence of a rating in
+                        this payload, not a score, so the row renders only when
+                        the value is a real number above zero. Do not reinstate
+                        a default. */}
+                    {hasRating ? (
+                      <p className="mt-1.5 text-[13px] font-semibold text-[#5f5868]">
+                        <span aria-hidden="true" className="text-brand-600">
+                          ★
+                        </span>{' '}
+                        {ratingValue.toFixed(1)}
+                        <span className="sr-only"> out of 5 driver rating</span>
+                      </p>
+                    ) : null}
                   </div>
                 </div>
-              </div>
+              </section>
             ) : null}
           </div>
         </LiveTracking>
-      </div>
-    </main>
+    </TrackingShell>
   )
 }
