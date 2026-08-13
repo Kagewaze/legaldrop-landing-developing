@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 import { ROUTES } from '@/lib/navigation'
 import { HeroAddressEntry } from '@/components/home/HeroAddressEntry'
-import { NetworkDemo } from '@/components/home/NetworkDemo'
+import { RecentRequestFlashcards } from '@/components/home/RecentRequestFlashcards'
 
 // Home hero: the proposition beside a demonstration of the platform working.
 //
@@ -102,7 +102,7 @@ export function HeroNetwork() {
                 pickup / drop-off entry; "Talk to our team" moved inside the
                 form so the two actions still sit on one row. HeroNetwork stays
                 a SERVER component — HeroAddressEntry is the only client island
-                added, and NetworkDemo keeps its own separate boundary.
+                added, and the flashcard field keeps its own separate boundary.
 
                 ⚠️ NO-JAVASCRIPT FALLBACK, AND WHY IT IS BUILT THIS WAY.
 
@@ -157,19 +157,19 @@ export function HeroNetwork() {
             </div>
           </div>
 
-          {/* PHASE 7.1 — WIDTH CAP IN THE SINGLE-COLUMN RANGE.
-              Between sm and lg the hero stacks, so the demo took the full 1200px
-              column: at 768 that made the panel 656px wide, and since the route
-              diagram keeps a 400x210 ratio its height followed to ~344px. The
-              hero ran 1194px, 1.41 viewports, and the panel read as a billboard
-              under the proposition rather than as its companion.
+          {/* THE OPEN FIELD. This column holds no panel of its own — no border,
+              no surface, no container. A single demonstration card drifts
+              through it and is absent as often as it is present, which is the
+              point: the booking surface opposite is the hero's one piece of
+              furniture.
 
-              The lg grid is proportional, so this restates the ceiling: 560px
-              stops the visual growing without bound on very wide displays.
-              lg:mt-2 nudges it down against the headline's cap height, since
+              The width cap stays from the panel this replaced. Between sm and lg
+              the hero stacks and this column would otherwise take the full
+              1200px; 520/560 keeps the field proportionate to the card inside
+              it. lg:mt-2 aligns it against the headline's cap height, since
               items-start aligns the two columns on their box tops. */}
           <div className="max-w-[520px] lg:mt-2 lg:max-w-[560px]">
-            <NetworkDemo />
+            <RecentRequestFlashcards />
           </div>
         </div>
       </div>

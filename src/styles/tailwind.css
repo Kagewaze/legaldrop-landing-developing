@@ -42,6 +42,35 @@
     );
 }
 
+/* ── HERO FLASHCARD DRIFT ────────────────────────────────────────────────────
+ *
+ * Ambient float for the demonstration card in RecentRequestFlashcards.jsx.
+ * Transform only; nothing here triggers layout.
+ *
+ * The enter/exit lifecycle is a transition on the card's WRAPPER and this
+ * animation runs on the element inside it, so the two transforms never compose
+ * into each other. Do not move this onto the wrapper.
+ *
+ * DESKTOP ONLY. Below lg the card sits in a reserved zone directly beneath the
+ * booking surface, where a drifting object reads as instability rather than as
+ * depth — and the enter/exit lifecycle already carries the motion there.
+ */
+@keyframes flashcard-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -3px, 0);
+  }
+}
+
+@media (min-width: 1024px) {
+  [data-flashcard-drift] {
+    animation: flashcard-drift 10s ease-in-out infinite;
+  }
+}
+
 /* ── CONNECTED SYSTEM — HOMEPAGE ─────────────────────────────────────────────
  *
  * Motion for the hexagonal system in ConnectedSystem.jsx. Transform and
@@ -230,6 +259,14 @@
 @media (prefers-reduced-motion: reduce) {
   /* No hero rule here: [data-hero-light] is static, so reduced-motion and
    * ordinary rendering are already identical. */
+
+  /* The hero card stops drifting. The component separately renders ONE static
+   * card and never cycles under reduced motion, so the field keeps its meaning
+   * rather than going blank. */
+  [data-flashcard-drift] {
+    animation: none;
+    transform: none;
+  }
 
   /* The connected system stops entirely. Both are decorative: the modules sit
    * at their resting position and the connector network stays fully drawn, so
