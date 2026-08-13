@@ -3,7 +3,7 @@ import { APPROVED_PARTNERS } from '@/data/partners'
 import { HeroNetwork } from '@/components/home/HeroNetwork'
 import { OperationalProof } from '@/components/home/OperationalProof'
 import { PartnerStrip } from '@/components/home/PartnerStrip'
-import { ConnectedSystem } from '@/components/home/ConnectedSystem'
+import { ProductStory } from '@/components/home/ProductStory'
 import { Reviews, reviewsWillMove } from '@/components/home/Reviews'
 import { SocialProofMotion } from '@/components/home/SocialProofMotion'
 import { TrustAndAccountability } from '@/components/home/TrustAndAccountability'
@@ -151,31 +151,23 @@ export default async function Home() {
             OperationalProof.jsx. Nothing else on the page moved. */}
         <OperationalProof />
       </div>
-      {/* The claim, the evidence, then the product itself — shown as one
-          connected system rather than as a stack of dense frames.
+      {/* The claim, the evidence, then the product itself — shown as three real
+          screens rather than as a diagram of one.
 
-          ConnectedSystem REPLACES home/PlatformShowcase.jsx, which joins
-          home/Services.jsx and home/HowItWorks.jsx as a retained, unimported
-          rollback target. Restoring it is a two-line change here.
+          ProductStory REPLACES home/ConnectedSystem.jsx, which joins
+          home/PlatformShowcase.jsx, home/Services.jsx and home/HowItWorks.jsx
+          as retained, unimported rollback targets. Restoring any of them is a
+          two-line change here.
 
-          Each replaced the last for the same reason: too much reading for the
-          job the section does. Services was a catalogue in which 8 of 11
-          entries were not bookable (Phase 0, D7); HowItWorks was the generic
-          courier funnel `HOMEPAGE.md` rules out by name; PlatformShowcase was
-          three frames carrying twenty-plus label/value rows between them.
-
-          This is the ONE tinted band in the page's central rhythm. */}
-      <ConnectedSystem />
-      {/* Reviews moved below the showcase: product evidence outranks consumer
-          social proof, and this keeps the narrative claim → proof → product.
-
-          PHASE 10 placed approved partner logos immediately after the reviews,
-          as one social-proof band: both are third-party corroboration, and
-          keeping them adjacent is what lets a single motion wrapper govern the
-          pair. Either, both or neither may be absent — when both are, this
-          renders nothing at all and the medical vertical follows the showcase
-          directly, with no gap. */}
-      {socialProof}
+          Each replaced the last for the same reason: the section kept
+          DESCRIBING the product instead of showing it. Services was a
+          catalogue in which 8 of 11 entries were not bookable (Phase 0, D7);
+          HowItWorks was the generic courier funnel `HOMEPAGE.md` rules out by
+          name; PlatformShowcase was three frames of label/value rows; and
+          ConnectedSystem was a hexagonal network diagram — hand-drawn product
+          fragments standing in for the product. This one uses screenshots of
+          the real thing. */}
+      <ProductStory />
       {/* The two account-based verticals. Copy for each is constrained — see
           the block in VerticalSection.jsx.
 
