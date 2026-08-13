@@ -168,40 +168,12 @@
   animation: review-marquee var(--review-duration, 60s) linear infinite;
 }
 
-/* ── PARTNER TRACK — PHASE 10 ────────────────────────────────────────────────
- *
- * DIRECTION IS RIGHT TO LEFT, opposite the reviews above. Same construction —
- * source set plus an aria-hidden duplicate, so exactly twice one set's width —
- * but running from translateX(0) to translateX(-50%) instead of the reverse.
- * The two bands therefore travel in opposite directions, which reads as two
- * distinct pieces of evidence rather than one long conveyor.
- *
- * Same speed discipline as the reviews: --partner-duration is DERIVED from the
- * logo count at a fixed pixels-per-second in PartnerStrip.jsx, so three
- * approved partners and six approved partners move at the same speed rather
- * than in the same time.
- */
-@keyframes partner-marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-[data-partner-track] {
-  animation: partner-marquee var(--partner-duration, 60s) linear infinite;
-}
-
 /* Pause while the pointer is over a track, or while keyboard focus is anywhere
  * inside it — so a visitor reading a card, or tabbing to a link, is never
- * chasing a moving target. Per-track, so hovering the reviews does not freeze
- * the partner strip and vice versa. */
+ * chasing a moving target. The partner rail has no
+ * animation to pause — it only ever moves when the visitor scrolls it. */
 [data-review-track]:hover,
-[data-review-track]:focus-within,
-[data-partner-track]:hover,
-[data-partner-track]:focus-within {
+[data-review-track]:focus-within {
   animation-play-state: paused;
 }
 
@@ -213,8 +185,7 @@
  * approved island ceiling is 3, or 4 with this wrapper — a second, independent
  * partner island would have been a fifth. The selector is the band, not the
  * section, so one data-paused flag reaches both tracks. */
-[data-social-motion][data-paused='true'] [data-review-track],
-[data-social-motion][data-paused='true'] [data-partner-track] {
+[data-reviews-motion][data-paused='true'] [data-review-track] {
   animation-play-state: paused;
 }
 
@@ -297,32 +268,13 @@
     max-width: 100%;
   }
 
-  /* PARTNER TRACK, same treatment. The logos are fixed-width flex items on a
-   * w-max track, so without releasing the width `flex-wrap` would never reach a
-   * wrap point here either — the exact defect Phase 9 fixed above. The strip
-   * becomes a centred, wrapping row of every approved logo.
-   *
-   * `justify-content: center` because a wrapped final row of one or two logos
-   * left-aligned under a full row reads as a rendering accident. */
-  [data-partner-track] {
-    animation: none;
-    transform: none;
-    flex-wrap: wrap;
-    justify-content: center;
-    width: auto;
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  [data-review-duplicate],
-  [data-partner-duplicate] {
+  [data-review-duplicate] {
     display: none;
   }
 
-  /* The shared control. Nothing is moving, so a button offering to pause motion
-   * would be an inert control. */
-  [data-social-motion-control] {
+  /* The reviews control. Nothing is moving, so a button offering to pause
+   * motion would be an inert control. */
+  [data-reviews-motion-control] {
     display: none;
   }
 }

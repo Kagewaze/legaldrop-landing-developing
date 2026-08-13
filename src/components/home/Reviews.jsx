@@ -3,7 +3,7 @@
 // inside it.
 //
 // ⚠️ PHASE 10 MOVED THE MOTION WRAPPER OUT OF THIS FILE. It used to render
-// <ReviewMotion> around its own track. The wrapper is now SocialProofMotion,
+// <ReviewMotion> around its own track. The wrapper is now ReviewsMotion,
 // mounted ONCE at page level around both this section and the partner strip,
 // because the approved island ceiling is 3 (or 4 with that wrapper) and a
 // second, partner-only island would have been a fifth.

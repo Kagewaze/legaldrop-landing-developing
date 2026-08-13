@@ -5,7 +5,7 @@ import { OperationalProof } from '@/components/home/OperationalProof'
 import { PartnerStrip } from '@/components/home/PartnerStrip'
 import { ProductStory } from '@/components/home/ProductStory'
 import { Reviews, reviewsWillMove } from '@/components/home/Reviews'
-import { SocialProofMotion } from '@/components/home/SocialProofMotion'
+import { ReviewsMotion } from '@/components/home/ReviewsMotion'
 import { TrustAndAccountability } from '@/components/home/TrustAndAccountability'
 import {
   LEGAL_VERTICAL,
@@ -54,13 +54,11 @@ export default async function Home() {
   // an empty state advertises that something is broken or unfinished.
   const showReviews = reviews !== null && reviews.totalCount > 0
 
-  // ── THE SOCIAL-PROOF BAND ───────────────────────────────────────────────────
+  // ── SOCIAL PROOF ────────────────────────────────────────────────────────────
   //
-  // Reviews and partner logos are composed together because ONE client wrapper
-  // governs both. Phase 9.1 fixed the approved ceiling at three client islands,
-  // or four while that wrapper renders; a separate partner island would have
-  // been a fifth. So SocialProofMotion is mounted at most ONCE, here, and owns
-  // the single pause boolean for both tracks.
+  // Reviews and partner logos are now SEPARATE sections with separate motion
+  // semantics, and both render at the END of the page — reviews first, then the
+  // partner rail, which is the last thing before the shared-layout Footer.
   //
   // ⚠️ PARTNERS ARE PERMISSION-GATED, NOT FEATURE-FLAGGED. APPROVED_PARTNERS is
   // filtered in src/data/partners.js on a COMPLETE permission record — every one
@@ -76,56 +74,43 @@ export default async function Home() {
   // whether it renders. Reviews move at 4+, partners at 3+; below those counts
   // each renders a static layout.
   const reviewsMove = showReviews && reviewsWillMove(reviews)
-  const partnersMove = showPartners && partners.length >= 3
-  const anyMotion = reviewsMove || partnersMove
-
-  // The accessible name of the shared control names only what is actually
-  // moving, so it never offers to pause something static.
-  const motionLabel = [
-    reviewsMove ? 'customer reviews' : null,
-    partnersMove ? 'partner logos' : null,
-  ]
-    .filter(Boolean)
-    .join(' and ')
 
   const reviewsSection = showReviews ? <Reviews data={reviews} /> : null
   const partnersSection = showPartners ? <PartnerStrip partners={partners} /> : null
 
-  const socialProof = anyMotion ? (
+  // ⚠️ REVIEWS AND PARTNERS ARE NO LONGER ONE BAND.
+  //
+  // They used to share a wrapper and a single pause boolean. They now have
+  // different interaction models and are rendered independently: the review
+  // track still moves on its own and therefore still needs a control, and the
+  // partner rail moves only when the visitor scrolls it and therefore has no
+  // control at all. Do not re-couple them.
+  const reviewsBlock = reviewsMove ? (
     <>
       {/* ── NO-JAVASCRIPT SUPPRESSION ────────────────────────────────────────
           Identical declarations to the prefers-reduced-motion block in
           src/styles/tailwind.css, applied by a mechanism that needs no
-          scripting. Without it the CSS animations would keep running with no
-          way to stop them — the pause button is the only control and it is
-          inert without JavaScript — which would leave moving content a visitor
-          cannot pause. CHANGE BOTH COPIES TOGETHER.
+          scripting. Without it the review animation would keep running with no
+          way to stop it — the pause button is the only control and it is inert
+          without JavaScript. CHANGE BOTH COPIES TOGETHER.
 
-          It lives here rather than inside either section because one block now
-          covers both tracks and the one shared control.
+          Partner declarations were removed with the partner marquee: that rail
+          is a native scroll container and is already usable without scripting.
 
           The width releases are not cosmetic: `flex-wrap` alone never fires,
-          because `w-max` sizes each track to max-content and a max-content flex
+          because `w-max` sizes the track to max-content and a max-content flex
           container always fits its items on one line. Phase 9 measured the
-          consequence on the review track — 1 of 5 reviews readable at 390 with
-          no scroll and no motion to reach the rest. The partner track has the
-          same construction and therefore the same failure mode. */}
+          consequence — 1 of 5 reviews readable at 390 with no scroll and no
+          motion to reach the rest. */}
       <noscript>
-        <style>{`[data-review-track]{animation:none!important;transform:none!important;flex-wrap:wrap!important;width:auto!important;max-width:1200px!important;margin-left:auto!important;margin-right:auto!important}[data-review-track]>li{width:auto!important;flex:1 1 300px!important;max-width:100%!important}[data-partner-track]{animation:none!important;transform:none!important;flex-wrap:wrap!important;justify-content:center!important;width:auto!important;max-width:1200px!important;margin-left:auto!important;margin-right:auto!important}[data-review-duplicate],[data-partner-duplicate]{display:none!important}[data-social-motion-control]{display:none!important}`}</style>
+        <style>{`[data-review-track]{animation:none!important;transform:none!important;flex-wrap:wrap!important;width:auto!important;max-width:1200px!important;margin-left:auto!important;margin-right:auto!important}[data-review-track]>li{width:auto!important;flex:1 1 300px!important;max-width:100%!important}[data-review-duplicate]{display:none!important}[data-reviews-motion-control]{display:none!important}`}</style>
       </noscript>
 
-      <SocialProofMotion label={motionLabel}>
-        {reviewsSection}
-        {partnersSection}
-      </SocialProofMotion>
+      <ReviewsMotion>{reviewsSection}</ReviewsMotion>
     </>
   ) : (
-    // Nothing moves, so no client island is mounted at all and no pause control
-    // is rendered. Whatever exists renders as plain static server HTML.
-    <>
-      {reviewsSection}
-      {partnersSection}
-    </>
+    // Nothing moves, so no client island mounts and no control renders.
+    reviewsSection
   )
 
   return (
@@ -215,6 +200,18 @@ export default async function Home() {
           live: false and no driver page exists; linking to it would be a dead
           route (content gate C5). Driver recruitment is separate future work.
           Restore a link only once that page ships. */}
+
+      {/* ── THE PAGE ENDING ────────────────────────────────────────────────
+          Reviews, then the partner rail, then the Footer that
+          src/components/Layout.jsx renders after {children}. Nothing may be
+          inserted between these two or after the rail: the decrescendo is the
+          point — human testimony, then a quiet logo rail, then the footer.
+
+          When the Google key is absent the reviews section is null and
+          collapses completely, leaving the rail directly after the trust
+          section with no gap where reviews would have been. */}
+      {reviewsBlock}
+      {partnersSection}
     </div>
   )
 }

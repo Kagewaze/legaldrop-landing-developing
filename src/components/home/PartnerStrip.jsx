@@ -2,7 +2,7 @@ import { canLinkPartner } from '@/data/partners'
 
 // Approved partner logos. SERVER COMPONENT — the records and the artwork never
 // cross into the client bundle. Phase 10 added motion AROUND this content, not
-// inside it: SocialProofMotion is a client wrapper that receives the rendered
+// inside it: the strip is a plain server section with no client wrapper at all
 // strip as `children`.
 //
 // ⚠️ THIS COMPONENT RENDERS WHAT IT IS GIVEN AND GATES NOTHING ITSELF. The
@@ -41,8 +41,6 @@ import { canLinkPartner } from '@/data/partners'
 // as a network at all. The visual consequence is handled by the track being
 // FULL-BLEED and centred — at 1200px+ the strip simply does not fill the width
 // and is centred, which reads as a deliberate short row rather than a broken
-// loop. Below ~648px of viewport the loop is genuinely seamless.
-const MOTION_MIN_PARTNERS = 3
 
 // Tile geometry. Every logo is letterboxed onto the same 600x240 transparent
 // canvas, so a fixed tile height renders every mark at a consistent optical
@@ -50,14 +48,12 @@ const MOTION_MIN_PARTNERS = 3
 // ratios. The 2.5:1 canvas at 80px tall is 200px wide.
 const TILE_W = 200
 const TILE_H = 80
-const GAP = 16
 
 // Reading speed in pixels per second. Slower than the review track's 34px/s
 // because a logo needs recognising rather than reading, and a slow strip is
 // less likely to pull attention away from the evidence above it. The duration
 // is DERIVED from this and the logo count, so three partners and six partners
 // travel at the same speed rather than in the same time.
-const PIXELS_PER_SECOND = 24
 
 // ⚠️ WORDING IS CONSTRAINED BY THE PERMISSION RECORDS, NOT BY AMBITION.
 //
@@ -107,8 +103,8 @@ function PartnerLogo({ partner }) {
 
   const content = (
     <div
-      className="flex items-center justify-center"
-      style={{ width: TILE_W, height: TILE_H }}
+      className="flex items-center justify-center rounded-card border border-[#eeebf1] bg-surface-raised px-6 py-5"
+      style={{ width: TILE_W + 48, height: TILE_H + 40 }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -148,100 +144,41 @@ function PartnerLogo({ partner }) {
 }
 
 export function PartnerStrip({ partners }) {
-  const animated = partners.length >= MOTION_MIN_PARTNERS
-
-  const heading = (
-    <h2 className="font-display text-3xl font-extrabold text-[#17131c]">
-      {HEADING}
-    </h2>
-  )
-
-  // ── UNDER THE THRESHOLD: a compact static row ─────────────────────────────
-  //
-  // Deliberately compact rather than a full band. One or two logos given the
-  // spacing of a six-logo strip advertises the four that are missing.
-  if (!animated) {
-    return (
-      <section className="mx-auto max-w-[1200px] px-8 py-12 sm:py-16">
-        {heading}
-        <ul className="mt-6 flex list-none flex-wrap items-center gap-4">
-          {partners.map((partner) => (
-            <li key={partner.slug}>
-              <PartnerLogo partner={partner} />
-            </li>
-          ))}
-        </ul>
-      </section>
-    )
-  }
-
-  const setWidth = partners.length * (TILE_W + GAP)
-  const duration = Math.round(setWidth / PIXELS_PER_SECOND)
-
   return (
     <section className="py-12 sm:py-16">
-      <div className="mx-auto max-w-[1200px] px-8">{heading}</div>
-
-      <div className="mt-6 overflow-hidden">
-        <ul
-          data-partner-track
-          style={{ '--partner-duration': `${duration}s`, gap: GAP }}
-          className="flex w-max list-none items-center px-8"
-        >
-          {partners.map((partner) => (
-            <li key={partner.slug} className="flex-none">
-              <PartnerLogo partner={partner} />
-            </li>
-          ))}
-
-          {/* THE SEAMLESS HALF.
-              aria-hidden, so assistive technology reads each company exactly
-              once. Every duplicated image also carries alt="" so it cannot be
-              announced even if the aria-hidden were ever removed.
-              ⚠️ THE DUPLICATE NEVER RENDERS A LINK — see DuplicateLogo. That is
-              why no tabIndex={-1} appears here: rather than neutralising a
-              duplicate tab stop, there is no second anchor to neutralise, which
-              is the stronger guarantee. A duplicated link to the same site is a
-              keyboard trap in slow motion.
-              Keys are namespaced so no React key is repeated, and no DOM id is
-              used at all. */}
-          <li aria-hidden="true" data-partner-duplicate className="contents">
-            <ul className="flex list-none items-center" style={{ gap: GAP }}>
-              {partners.map((partner) => (
-                <li key={`dup-${partner.slug}`} className="flex-none">
-                  <DuplicateLogo partner={partner} />
-                </li>
-              ))}
-            </ul>
-          </li>
-        </ul>
+      <div className="mx-auto max-w-[1200px] px-8">
+        <h2 className="font-display text-3xl font-extrabold text-[#17131c]">
+          {HEADING}
+        </h2>
       </div>
-    </section>
-  )
-}
 
-// The duplicate never links. It is decoration that exists only to make the loop
-// seamless, so it carries no interactive element at all — which is a stronger
-// guarantee than relying on tabIndex={-1} to neutralise one.
-function DuplicateLogo({ partner }) {
-  return (
-    <div
-      className="flex items-center justify-center"
-      style={{ width: TILE_W, height: TILE_H }}
-    >
-      {/* alt="" as well as the aria-hidden on the ancestor: two independent
-          reasons this copy is never announced, so removing one by accident does
-          not start reading every company twice. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={partner.src}
-        alt=""
-        width={400}
-        height={160}
-        loading="lazy"
-        decoding="async"
-        className="h-full w-full object-contain"
-      />
-    </div>
+      {/* ⚠️ THIS RAIL DOES NOT MOVE ON ITS OWN, AND THAT IS THE ARCHITECTURE.
+          It replaced a duplicated-set marquee. Because nothing animates there
+          is nothing to pause, so the band carries no motion control at all —
+          the control was removed by deleting the autoplay, not by hiding a
+          button. Do not reintroduce an animation here.
+
+          Native scrolling only: touch drag, trackpad, shift+wheel and keyboard
+          all work without JavaScript, which is also why this needs no client
+          island. `overscroll-behavior-inline: contain` stops a horizontal
+          flick at the rail's end from turning into a browser back-navigation,
+          and the overflow is contained to this element so the body never gains
+          a horizontal scrollbar. */}
+      <ul
+        data-partner-rail
+        tabIndex={0}
+        aria-label={HEADING}
+        className="mx-auto mt-6 flex max-w-[1200px] snap-x snap-mandatory list-none gap-4 overflow-x-auto scroll-smooth px-8 pb-4 [-webkit-overflow-scrolling:touch] [overscroll-behavior-inline:contain] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-600 sm:gap-5"
+      >
+        {partners.map((partner) => (
+          // snap-start rather than centre: the first tile then rests flush with
+          // the page's 32px gutter, in line with every other section, instead of
+          // floating in the middle of the viewport.
+          <li key={partner.slug} className="flex-none snap-start">
+            <PartnerLogo partner={partner} />
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
