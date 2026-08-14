@@ -69,6 +69,7 @@ const STAGES = [
   },
   {
     number: '03',
+    last: true,
     title: 'Record',
     sentence: 'Keep the completed delivery details together after the job is done.',
     image: recordShot,
@@ -79,7 +80,18 @@ const STAGES = [
     container: 'max-w-[1200px]',
     imageWidth: 'lg:w-[470px] xl:w-[560px]',
     copyWidth: 'lg:w-[300px] xl:w-[320px]',
-    align: 'lg:items-center',
+    // ⚠️ START, NOT CENTRE — AND ONLY ON THIS STAGE.
+    //
+    // Record's screenshot is 594px tall at 1440. Centred, its copy floated at
+    // the row's mid-height with large empty fields above and below it, which is
+    // what made the Track -> Record beat read as dead space. Aligning the copy
+    // to the image's top edge closes that.
+    //
+    // Track deliberately keeps `items-center`: its screenshot is the SHORT one
+    // (304px), so centring the copy against it is correct there. Do not
+    // normalise these two to one value — the right alignment depends on which
+    // child is taller, and that differs per stage.
+    align: 'lg:items-start',
     copyOffset: '',
     tilt: 'lg:rotate-[0.7deg]',
     glow: 'lg:-right-12 lg:-bottom-10 lg:h-[400px] lg:w-[400px]',
@@ -100,9 +112,31 @@ function Stage({ stage }) {
       }`}
     >
       <div className={`lg:flex-none ${stage.copyWidth} ${stage.copyOffset}`}>
-        <span className="font-display text-sm font-extrabold tracking-label text-brand-600">
-          {stage.number}
-        </span>
+        {/* ── THE JOURNEY CONNECTOR ───────────────────────────────────────────
+            A stage marker with a rule descending from it, so 01 -> 02 -> 03
+            reads as one continuous route rather than three independent blocks.
+
+            ⚠️ IT LIVES IN THE COPY COLUMN ON PURPOSE. The obvious idea — one
+            long line down the section — cannot work here: the stages ALTERNATE
+            sides and the Track screenshot is 862px wide at 1440, so any centred
+            or gutter-anchored rule either crosses a screenshot or drifts far
+            from the content it is meant to connect. Threading the numbers keeps
+            the connector attached to the thing that actually carries sequence,
+            and it cannot collide at any width.
+
+            The rule is omitted on the last stage — a route that continues past
+            its destination is just a decoration. Decorative, so aria-hidden. */}
+        <div className="flex items-center gap-3">
+          <span className="font-display text-sm font-extrabold tracking-label text-brand-600">
+            {stage.number}
+          </span>
+          {!stage.last ? (
+            <span
+              aria-hidden="true"
+              className="h-px w-10 bg-[linear-gradient(to_right,rgba(123,47,190,0.45),rgba(123,47,190,0))]"
+            />
+          ) : null}
+        </div>
         <h3 className="mt-2 font-display text-2xl font-extrabold tracking-[-0.02em] text-[#17131c] sm:text-3xl">
           {stage.title}
         </h3>
@@ -111,10 +145,21 @@ function Stage({ stage }) {
         </p>
       </div>
 
-      {/* The screenshot is the object. No card wraps it, no device frame, no
-          fake browser chrome — the hairline and shadow sit on the image itself
-          so it reads as a product surface floating on the page. */}
-      <div className={`relative w-full sm:max-w-[560px] lg:max-w-none lg:flex-none ${stage.imageWidth}`}>
+      {/* ⚠️ THE SCREENSHOT CARRIES ITS OWN PERIMETER. DO NOT ADD ANOTHER.
+          Each WebP is a capture of a real product surface that already contains
+          a rounded, bordered card. This element used to add
+          `rounded-[18px] shadow-lift ring-1 ring-[#eeebf1]` ON TOP of that, so
+          every stage rendered a card inside a card — two radii, two hairlines,
+          two shadows, visibly nested. The image now ships bare: one intentional
+          perimeter, the one the product itself draws.
+
+          No card wraps it, no device frame, no fake browser chrome. If a future
+          asset is ever captured WITHOUT its own card, give that asset a
+          perimeter — do not reinstate a global wrapper here. */}
+      <div
+        data-stage-media
+        className={`relative w-full sm:max-w-[560px] lg:max-w-none lg:flex-none ${stage.imageWidth}`}
+      >
         {/* Atmosphere. Decorative depth only, placed differently per stage so
             the three do not read as the same blob repeated. */}
         <span
@@ -125,7 +170,7 @@ function Stage({ stage }) {
           src={stage.image}
           alt={stage.alt}
           sizes={stage.sizes}
-          className={`relative w-full rounded-[18px] shadow-lift ring-1 ring-[#eeebf1] ${stage.tilt}`}
+          className={`relative block w-full ${stage.tilt}`}
         />
       </div>
     </div>
@@ -158,7 +203,10 @@ export function ProductStory() {
         </div>
       </div>
 
-      <div className="mt-10 flex flex-col gap-16 pb-16 sm:mt-12 sm:gap-20 sm:pb-20 lg:mt-14 lg:gap-24 lg:pb-24">
+      <div // Tightened from gap-16/20/24. The stages are tall objects already; at 96px
+        // apart the eye had to cross a blank field between Track and Record and the
+        // three stopped reading as one journey.
+        className="mt-10 flex flex-col gap-10 pb-16 sm:mt-12 sm:gap-12 sm:pb-20 lg:mt-12 lg:gap-14 lg:pb-24">
         {STAGES.map((stage) => (
           <Stage key={stage.number} stage={stage} />
         ))}

@@ -52,8 +52,17 @@ import { useAutoScrollRail } from '@/components/home/useAutoScrollRail'
 // canvas, so a fixed tile height renders every mark at a consistent optical
 // size WITHOUT scaling any of them differently or distorting their aspect
 // ratios. The 2.5:1 canvas at 80px tall is 200px wide.
-const TILE_W = 200
-const TILE_H = 80
+// The LOGO BOX inside each tile, not the tile itself. Raised from 200x80 with
+// the tile: at the old size a logo read as a chip beside a 340px review card,
+// and the two bands stopped looking like siblings.
+const TILE_W = 236
+const TILE_H = 140
+
+// The tile. ~300x200 against the review card's 340 wide — deliberately a little
+// smaller, because a logo carries less information than a review and matching
+// them exactly would overstate it, but unmistakably the same tier.
+const TILE_BOX_W = 300
+const TILE_BOX_H = 200
 
 // Reading speed in pixels per second. Slower than the review track's 34px/s
 // because a logo needs recognising rather than reading, and a slow strip is
@@ -77,7 +86,7 @@ const TILE_H = 80
 // modest.
 const HEADING = 'Business relationships'
 
-// ⚠️ A PLAIN <img>, DELIBERATELY, AND NOT next/image.
+// ⚠️ A PLAIN HTML IMAGE ELEMENT, DELIBERATELY, AND NOT next/image.
 //
 // This is the one place on the site where next/image is the wrong tool, so the
 // lint rule is disabled narrowly rather than the decision being hidden.
@@ -113,8 +122,8 @@ function PartnerLogo({ partner, duplicate = false }) {
 
   const content = (
     <div
-      className="flex items-center justify-center rounded-card border border-[#eeebf1] bg-surface-raised px-6 py-5"
-      style={{ width: TILE_W + 48, height: TILE_H + 40 }}
+      className="flex items-center justify-center overflow-hidden rounded-card border border-[#eeebf1] bg-surface-raised px-6 py-6 shadow-card"
+      style={{ width: TILE_BOX_W, height: TILE_BOX_H }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -124,11 +133,17 @@ function PartnerLogo({ partner, duplicate = false }) {
         height={160}
         loading="lazy"
         decoding="async"
-        // `object-contain` is what guarantees no mark is ever stretched: the
-        // canvas fits inside the tile, letterboxing if the ratios ever disagree
-        // rather than distorting. Every supplied canvas is already 2.5:1, the
-        // same ratio as the tile, so today it letterboxes nothing.
-        className="h-full w-full object-contain"
+        // ⚠️ WIDTH COMES FROM THE RECORD, NOT FROM THE TILE. Each canvas is
+        // scaled so the MARK inside it lands at a comparable optical size —
+        // see the logoWidth block in src/data/partners.js for the measured ink
+        // boxes this is derived from. The surrounding transparent padding
+        // overflows the tile and is clipped, which is why the tile carries
+        // `overflow-hidden`.
+        //
+        // `object-contain` still guarantees no mark is ever stretched: aspect
+        // ratio is preserved and the canvas letterboxes rather than distorting.
+        style={{ width: partner.logoWidth ?? TILE_W, maxHeight: TILE_H }}
+        className="h-auto max-w-none flex-none object-contain"
       />
     </div>
   )
@@ -207,7 +222,7 @@ export function PartnerStrip({ partners }) {
         ref={railRef}
         tabIndex={0}
         aria-label={HEADING}
-        className="mx-auto mt-6 flex max-w-[1200px] list-none gap-4 overflow-x-auto px-8 pb-4 [-webkit-overflow-scrolling:touch] [overscroll-behavior-inline:contain] [scrollbar-width:none] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-600 sm:gap-5"
+        className="mt-6 flex list-none gap-5 overflow-x-auto px-8 pb-4 [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [overscroll-behavior-inline:contain] [scrollbar-width:none] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-600 [&::-webkit-scrollbar]:hidden"
       >
         {partners.map((partner) => (
           <li key={partner.slug} className="flex-none">

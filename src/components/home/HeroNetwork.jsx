@@ -60,6 +60,13 @@ const CTA_SECONDARY =
 // height and improved the desktop composition too. Do not reinstate it.
 
 export function HeroNetwork() {
+  // ⚠️ NO HERO PHOTOGRAPH, DEFERRED RATHER THAN OVERLOOKED. Hero photography
+  // awaits a suitable authentic DAYTIME Toronto asset.
+  //
+  // Two repo images were prototyped on the rendered page and rejected:
+  // hero-cyclist.jpg (thermal food-delivery bag, non-Toronto street) and
+  // home-coverage-baystreet.jpg (night scene; too dark for this light hero and
+  // its Bay St cue too small to read at hero scale). Do not reintroduce either.
   return (
     // ⚠️ NO BACKGROUND ON THIS SECTION. The ground is the [data-hero-light]
     // wrapper in src/app/(main)/page.jsx, which spans this section AND

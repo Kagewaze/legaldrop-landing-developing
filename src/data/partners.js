@@ -1,5 +1,27 @@
 // Partner logo records. THE PERMISSION GATE LIVES HERE.
 //
+// ── `logoWidth` IS OPTICAL NORMALISATION, NOT A PERMISSION FIELD ────────────
+//
+// Every logo ships on an identical 400x160 canvas, but the MARK inside that
+// canvas is a different size in each file. Measured ink bounding boxes:
+//
+//   general-basket   135x107   34% of canvas width
+//   haut-logistics   121x93    30%
+//   that-local-girl  107x107   27%
+//   can-anny         133x91    33%
+//   arc-law          347x101   87%   (and 55% ink — a solid black block)
+//   accelerator      257x77    64%
+//
+// `object-contain` fits the CANVAS, so at one shared box size four marks
+// rendered at ~30% while Arc Law rendered at 87% — the logo wall read as two
+// tiers. `logoWidth` is the rendered canvas width that brings each MARK to a
+// comparable optical size; the surrounding transparent padding simply overflows
+// and is clipped by the tile. Aspect ratio is never touched.
+//
+// ⚠️ These are per-asset numbers. If a logo file is REPLACED, re-measure the ink
+// box — do not carry the old number over, and do not "simplify" this to one
+// shared value, which is the state it was just corrected from.
+//
 // ⚠️ POSSESSING A LOGO IS NOT PERMISSION TO PUBLISH IT.
 //
 // Neither is a completed delivery, the "5 business partners" metric, a pitch
@@ -111,6 +133,7 @@ export const PARTNER_LOGOS = [
     name: 'General Basket Logistics Services',
     alt: 'General Basket Logistics Services logo',
     src: '/images/partners/general-basket-logistics.webp',
+    logoWidth: 441,
     website: null,
     relationship: 'business relationship',
     evidenceReference:
@@ -144,6 +167,7 @@ export const PARTNER_LOGOS = [
     name: 'Haut Logistics',
     alt: 'Haut Logistics logo',
     src: '/images/partners/haut-logistics.webp',
+    logoWidth: 500,
     website: null,
     relationship: 'business relationship',
     evidenceReference:
@@ -165,6 +189,7 @@ export const PARTNER_LOGOS = [
     // The orange field is part of the supplied artwork, not padding. It is
     // preserved deliberately — see the strip component before "tidying" it.
     src: '/images/partners/that-local-girl.webp',
+    logoWidth: 520,
     website: null,
     relationship: 'business relationship',
     evidenceReference:
@@ -184,6 +209,7 @@ export const PARTNER_LOGOS = [
     name: 'Can-Anny',
     alt: 'Can-Anny logo',
     src: '/images/partners/can-anny.webp',
+    logoWidth: 455,
     website: null,
     relationship: 'business relationship',
     evidenceReference:
@@ -204,6 +230,7 @@ export const PARTNER_LOGOS = [
     alt: 'Arc Law logo',
     // Dark banner, part of the supplied artwork. Not to be inverted.
     src: '/images/partners/arc-law.webp',
+    logoWidth: 207,
     website: null,
     relationship: 'business relationship',
     evidenceReference:
@@ -223,6 +250,7 @@ export const PARTNER_LOGOS = [
     name: 'The Accelerator Centre',
     alt: 'The Accelerator Centre logo',
     src: '/images/partners/accelerator-centre.webp',
+    logoWidth: 281,
     website: null,
     relationship: 'program and accelerator relationship',
     evidenceReference:

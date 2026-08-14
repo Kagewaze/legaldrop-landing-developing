@@ -54,11 +54,27 @@ const POSITIONS = {
 
 // Enter, rest, leave, then a genuine pause. The gap is long on purpose: shorten
 // it and the field reads as a ticker.
-const INITIAL_DELAY_MS = 2200
-const ENTER_MS = 240
-const VISIBLE_MS = 6000
-const EXIT_MS = 200
-const GAP_MS = 5200
+// ── ARRIVAL RHYTHM ──────────────────────────────────────────────────────────
+//
+// ⚠️ THE GAP IS THE SETTING THAT MATTERS. Measured on the previous values over
+// a real 33-second foreground observation: 4 requests appeared, each visible
+// ~6.1s with a ~5.4s EMPTY field between them — the hero showed nothing at all
+// 47% of the time. The animation was running correctly and was still easy to
+// miss, because arrival is a ~300ms event and a visitor had to be looking at
+// the right 300ms out of every 11,500ms.
+//
+// Halving the gap is what makes an arrival perceptible; lengthening the enter
+// is what makes it legible once seen. Cycle is now ~7.9s with 2.0s quiet (25%),
+// so a glance lands on a card far more often and the quiet beat still reads as
+// "that one is finished" rather than as a loading state.
+//
+// Do not close the gap further. With no quiet beat the field becomes a ticker
+// and the cards stop feeling like discrete requests arriving.
+const INITIAL_DELAY_MS = 1600
+const ENTER_MS = 380
+const VISIBLE_MS = 5200
+const EXIT_MS = 300
+const GAP_MS = 2000
 
 // ●───→○ — the route motif, at caption scale. Decorative, so it is hidden from
 // assistive technology along with the rest of the card.
@@ -172,10 +188,10 @@ export function RecentRequestFlashcards() {
           POSITIONS[event.position]
         } ${
           visible
-            ? 'translate-y-0 opacity-100 duration-[240ms]'
+            ? 'translate-y-0 scale-100 opacity-100 duration-[380ms]'
             : phase === 'out'
-              ? '-translate-y-2 opacity-0 duration-200'
-              : 'translate-y-3 opacity-0 duration-200'
+              ? '-translate-y-2 scale-100 opacity-0 duration-300'
+              : 'translate-y-3 scale-[0.985] opacity-0 duration-300'
         }`}
       >
         {/* Lifecycle lives on the wrapper and ambient drift on this element, so

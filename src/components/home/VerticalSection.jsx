@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 import lawOffices from '@/images/legal-lawoffices.jpg'
+import specimenRack from '@/images/medical-specimen.jpg'
 
 import { ROUTES } from '@/lib/navigation'
 
@@ -274,6 +275,26 @@ export const MEDICAL_VERTICAL = {
   note: 'Arranged on your clinic’s account rather than booked per drop.',
   cta: 'See medical delivery',
   href: ROUTES.medical.href,
+  // ⚠️ MEDICAL IS NOW PHOTO + FRAME, LAYERED — NOT A SECOND COPY OF LEGAL.
+  //
+  // Legal is one clean photograph. If Medical became one clean photograph too,
+  // the two verticals would be the same template again, which is exactly what
+  // the asymmetry pass fixed. So Medical stacks two DIFFERENT kinds of object:
+  // a specimen photograph as the ground, with the operational request card
+  // overlapping its lower edge — the physical world and the record of it, in
+  // one composition.
+  //
+  // ⚠️ WHY medical-specimen.jpg AND NOT medical-temp.jpg. The temp image centres
+  // a gloved hand on a canister packed in blue gel — it reads as cold-chain
+  // handling, and this product claims no temperature control of any kind.
+  // This one is a rack of EMPTY sample vials on a lab bench: unmistakably
+  // clinical, and it asserts nothing about what is inside them, how they are
+  // kept, or who handled them. Do not swap it for the temp image, and do not
+  // add cold-chain copy beside it.
+  photo: {
+    src: specimenRack,
+    alt: 'A rack of empty sample vials on a laboratory bench',
+  },
   frame: <MedicalFrame />,
 }
 
@@ -347,6 +368,12 @@ export function VerticalSection({
   // stays in the 1200px column, and those cannot be the same element.
   tinted = false,
 }) {
+  // BOTH a photograph and an operational frame => the layered composition.
+  // Only Medical does this; Legal is photo-only and keeps the wide single
+  // rectangle. That difference is what stops the two verticals collapsing back
+  // into one mirrored template.
+  const layered = Boolean(photo && frame)
+
   return (
     <section className={tinted ? 'bg-surface-tint' : undefined}>
       {/* py-12 while stacked rather than the site's py-16, the same allowance
@@ -358,9 +385,13 @@ export function VerticalSection({
           className={`grid grid-cols-1 items-center gap-10 lg:gap-14 ${
             // The photograph earns more width than a constructed frame does;
             // an even split would make the two verticals read as one template.
-            photo
-              ? 'lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)]'
-              : 'lg:grid-cols-2'
+            layered
+              ? // A tall stacked composition wants a near-even split; the wide
+                // 1.18fr column would stretch it into a letterbox.
+                'lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start'
+              : photo
+                ? 'lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)]'
+                : 'lg:grid-cols-2'
           }`}
         >
           {/* DOM order is copy then frame, always, so the reading order a
@@ -390,15 +421,39 @@ export function VerticalSection({
           <div className={frameSide === 'left' ? 'lg:order-1' : undefined}>
             {photo ? (
               // Editorial rectangle, no card around it. Taller on a phone so the
-              // building's lettering — the semantic anchor — survives the crop;
-              // wider from sm where there is room for the diagonal to read.
-              <div className="overflow-hidden rounded-card ring-1 ring-[oklch(0_0_0/0.1)]">
-                <Image
-                  src={photo.src}
-                  alt={photo.alt}
-                  sizes="(min-width: 1024px) 640px, 100vw"
-                  className="aspect-[5/4] w-full object-cover object-[58%_center] sm:aspect-[4/3]"
-                />
+              // subject survives the crop; wider from sm where there is room.
+              <div>
+                <div className="overflow-hidden rounded-card ring-1 ring-[oklch(0_0_0/0.1)]">
+                  <Image
+                    src={photo.src}
+                    alt={photo.alt}
+                    sizes="(min-width: 1024px) 640px, 100vw"
+                    className={`w-full object-cover ${
+                      layered
+                        ? // The vials sit high in the frame; anchoring low would
+                          // crop to empty bench. Taller than Legal's crop so the
+                          // card below can overlap it without eating the subject.
+                          'aspect-[4/3] object-[center_40%]'
+                        : 'aspect-[5/4] object-[58%_center] sm:aspect-[4/3]'
+                    }`}
+                  />
+                </div>
+
+                {/* ⚠️ THE FRAME OVERLAPS THE PHOTOGRAPH'S LOWER EDGE — it does
+                    not sit ON it. An absolutely-positioned card was tried first
+                    and was wrong: at 390px tall against a 342px photo it covered
+                    almost the entire image, so the photograph stopped being the
+                    ground and became a thin border. A negative margin overlaps a
+                    fixed ~72px instead, which is enough to bind the two objects
+                    into one composition while leaving the vials fully visible.
+
+                    Two distinct objects — the physical world, and the record of
+                    it. Not a card inside an image. */}
+                {layered && frame ? (
+                  <div className="relative -mt-14 px-4 sm:-mt-16 sm:px-8 lg:ml-12 lg:mr-0 lg:px-0">
+                    {frame}
+                  </div>
+                ) : null}
               </div>
             ) : (
               frame

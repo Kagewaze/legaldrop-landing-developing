@@ -41,8 +41,21 @@ export function ReviewsMotion({ children, canLoop = true }) {
           The container classes are repeated because the track is full-bleed —
           it runs to the viewport edges, which is what makes it read as a
           continuous strip. The control must not follow it out there. */}
+      {/* ⚠️ VISUALLY HIDDEN, NOT REMOVED — AND THE DIFFERENCE MATTERS.
+          A permanent second button under the Google link was visual clutter, so
+          it is gone from normal presentation. It is NOT gone from the page:
+          `sr-only` keeps it in the accessibility tree and in the tab order, and
+          `focus-within:not-sr-only` brings it back into view the moment a
+          keyboard reaches it — so a keyboard or screen-reader user can still
+          stop moving content, which WCAG 2.2.2 requires of anything that
+          auto-scrolls for more than five seconds.
+
+          Everyone else already has control without a button: the rail yields to
+          touch, trackpad and wheel on contact and resumes 1100ms later. Do not
+          "finish the job" by deleting this control — that would leave moving
+          content with no keyboard-reachable stop. */}
       <div
-        className="mx-auto mb-4 flex max-w-[1200px] justify-end px-8"
+        className="sr-only focus-within:not-sr-only focus-within:mx-auto focus-within:mb-4 focus-within:flex focus-within:max-w-[1200px] focus-within:justify-end focus-within:px-8"
         data-reviews-motion-control
       >
         <button
@@ -73,7 +86,7 @@ export function ReviewsMotion({ children, canLoop = true }) {
         ref={railRef}
         tabIndex={0}
         aria-label="Customer reviews"
-        className="flex list-none gap-5 overflow-x-auto px-8 pb-2 [-webkit-overflow-scrolling:touch] [overscroll-behavior-inline:contain] [scrollbar-width:none] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-600"
+        className="flex list-none gap-5 overflow-x-auto px-8 pb-2 [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [overscroll-behavior-inline:contain] [scrollbar-width:none] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-600 [&::-webkit-scrollbar]:hidden"
       >
         {children}
       </ul>

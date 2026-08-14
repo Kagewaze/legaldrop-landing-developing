@@ -233,3 +233,43 @@
     display: none;
   }
 }
+
+
+/* ── PRODUCT STORY — SCROLL-PROGRESSIVE ENTRANCE ─────────────────────────────
+ *
+ * The page read as too static, so each stage's screenshot settles as it enters
+ * the viewport. ONE effect, on ONE element per stage.
+ *
+ * ⚠️ PROGRESSIVE ENHANCEMENT, AND THE FALLBACK IS THE DEFAULT. No rule here
+ * sets a starting opacity or transform outside the @supports block, so a
+ * browser without scroll-timeline renders the section exactly as it does today
+ * — fully visible, correctly positioned. Nothing depends on this to be legible.
+ *
+ * ⚠️ NO CLIENT ISLAND. This is why it is CSS and not an IntersectionObserver:
+ * ProductStory is a server component and the homepage is at its approved
+ * 5-island ceiling. Do not convert it.
+ *
+ * `animation-range` ends at 40% of entry so the settle finishes while the stage
+ * is still arriving — an effect that completes after you are already reading it
+ * is just latency.
+ */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes product-stage-settle {
+      from {
+        opacity: 0.94;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    [data-stage-media] {
+      animation: product-stage-settle linear both;
+      animation-timeline: view();
+      animation-range: entry 5% entry 40%;
+    }
+  }
+}
