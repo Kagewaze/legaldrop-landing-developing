@@ -1,12 +1,17 @@
+import { ReviewsMotion } from '@/components/home/ReviewsMotion'
+
 // Google Business Profile reviews. SERVER COMPONENT — the Google data never
 // crosses into the client bundle. Phase 8 added motion around this content, not
 // inside it.
 //
-// ⚠️ PHASE 10 MOVED THE MOTION WRAPPER OUT OF THIS FILE. It used to render
-// <ReviewMotion> around its own track. The wrapper is now ReviewsMotion,
-// mounted ONCE at page level around both this section and the partner strip,
-// because the approved island ceiling is 3 (or 4 with that wrapper) and a
-// second, partner-only island would have been a fifth.
+// ⚠️ THE MOTION WRAPPER IS BACK IN THIS FILE, AND IT IS NOW THE SCROLL
+// CONTAINER ITSELF. Phase 10 had moved it to page level to share one island
+// with the partner strip; the dual-autoplay pass moved it back, because the
+// pause button and the autoplay loop have to agree about one scroll position
+// and a page-level wrapper could only toggle an attribute on a CSS marquee.
+//
+// ReviewsMotion renders the <ul> that holds these cards. Reviews and Partners
+// are now separate islands sharing home/useAutoScrollRail.js.
 //
 // The consequence for this file: it renders the track and the `data-review-
 // track` hook, and nothing about pausing. The <noscript> suppression moved to
@@ -51,13 +56,8 @@ export function reviewsWillMove(data) {
 const CARD_W = 340
 const GAP = 20
 
-// Reading speed, in pixels per second. 34px/s moves a 340px card past a fixed
-// point in ten seconds — slow enough to read a sentence of a review without
-// tracking it, which is the whole point of the movement being subordinate to
-// the content. The duration below is DERIVED from this and the card count, so
-// four reviews and five reviews travel at the same speed rather than the same
-// duration.
-const PIXELS_PER_SECOND = 34
+// Reading speed moved to ReviewsMotion.jsx (REVIEW_SPEED) with the rest of the
+// motion. It is 34 px/s there, unchanged from what production runs.
 
 // Initials fallback rather than the author's Google photo.
 //
@@ -155,12 +155,6 @@ export function Reviews({ data }) {
   const { rating, totalCount, reviews, sourceUrl } = data
   const animated = reviews.length >= MOTION_MIN_REVIEWS
 
-  // One set's width, then the seconds needed to travel it at the reading speed
-  // above. The animation moves by exactly one set per cycle, so this is the
-  // cycle length.
-  const setWidth = reviews.length * (CARD_W + GAP)
-  const duration = Math.round(setWidth / PIXELS_PER_SECOND)
-
   const header = (
     <div className="flex flex-wrap items-baseline justify-between gap-6">
       <h2 className="font-display text-3xl font-extrabold text-[#17131c]">
@@ -244,40 +238,36 @@ export function Reviews({ data }) {
 
       {/* Full-bleed so the track runs to the viewport edges rather than
           stopping inside the 1200px column, which is what makes it read as a
-          continuous strip rather than a box of sliding cards. overflow-hidden
-          is what keeps the off-screen half from widening the page. */}
-      <div className="overflow-hidden">
-        <ul
-          data-review-track
-          style={{
-            '--review-duration': `${duration}s`,
-            gap: GAP,
-          }}
-          className="flex w-max list-none px-8"
-        >
-          {cards}
+          continuous strip rather than a box of sliding cards.
 
-          {/* THE SEAMLESS HALF.
-              aria-hidden, so assistive technology reads each review exactly
-              once. Every descendant is inert to the keyboard too — the cards
-              contain no links, so there is nothing to remove from the tab
-              order, and `inert` is not needed to achieve it. Keys are
-              namespaced so no React key or DOM id is duplicated. */}
-          <li aria-hidden="true" data-review-duplicate className="contents">
-            <ul className="flex list-none" style={{ gap: GAP }}>
-              {reviews.map((review, index) => (
-                <li
-                  key={`dup-${review.authorName}-${index}`}
-                  className="flex-none"
-                  style={{ width: CARD_W }}
-                >
-                  <ReviewCard review={review} clamp />
-                </li>
-              ))}
-            </ul>
+          ⚠️ THE TRACK ITSELF IS NOW A CLIENT SCROLL CONTAINER. The cards are
+          still rendered HERE, on the server, and handed over as children — the
+          Google payload never reaches the bundle. ReviewsMotion owns only the
+          scroll position and the pause button. */}
+      <ReviewsMotion canLoop={animated}>
+        {cards}
+
+        {/* THE SEAMLESS HALF.
+            aria-hidden, so assistive technology reads each review exactly
+            once. Every descendant is inert to the keyboard too — the cards
+            contain no links, so there is nothing to remove from the tab
+            order. Keys are namespaced so no React key or DOM id is duplicated.
+
+            This copy is what makes the loop endless: useAutoScrollRail wraps by
+            exactly half the scroll width, and the two halves are identical, so
+            the reposition lands on the same picture and is invisible. */}
+        {reviews.map((review, index) => (
+          <li
+            key={`dup-${review.authorName}-${index}`}
+            aria-hidden="true"
+            data-review-duplicate
+            className="flex-none"
+            style={{ width: CARD_W }}
+          >
+            <ReviewCard review={review} clamp />
           </li>
-        </ul>
-      </div>
+        ))}
+      </ReviewsMotion>
 
       <div className="mx-auto max-w-[1200px] px-8">{attribution}</div>
     </section>

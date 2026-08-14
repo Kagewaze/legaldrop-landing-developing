@@ -1,9 +1,15 @@
-import { canLinkPartner } from '@/data/partners'
+'use client'
 
-// Approved partner logos. SERVER COMPONENT — the records and the artwork never
-// cross into the client bundle. Phase 10 added motion AROUND this content, not
-// inside it: the strip is a plain server section with no client wrapper at all
-// strip as `children`.
+import { canLinkPartner } from '@/data/partners'
+import { useAutoScrollRail } from '@/components/home/useAutoScrollRail'
+
+// Approved partner logos.
+//
+// ⚠️ THIS IS NOW A CLIENT ISLAND, and it was a server component until autoplay
+// arrived. The rail has to write scrollLeft every frame and yield to real input
+// events, and neither is expressible on the server. What crosses into the
+// bundle is the six already-filtered records and their logo paths — the same
+// data the markup ships anyway — not the permission register.
 //
 // ⚠️ THIS COMPONENT RENDERS WHAT IT IS GIVEN AND GATES NOTHING ITSELF. The
 // caller passes APPROVED_PARTNERS, which src/data/partners.js has already
@@ -98,8 +104,12 @@ const HEADING = 'Business relationships'
 // One tile. Linked only when the partner has BOTH link permission and a URL —
 // linking a mark is a further use beyond displaying it, so it is gated
 // separately in the data module.
-function PartnerLogo({ partner }) {
-  const linked = canLinkPartner(partner)
+function PartnerLogo({ partner, duplicate = false }) {
+  // A loop copy is decorative: it is aria-hidden by its <li>, and rendering it
+  // as bare content guarantees it can never become a second tab stop even once
+  // a partner earns a link. Do not "simplify" this back to canLinkPartner
+  // alone — an aria-hidden anchor is still focusable.
+  const linked = !duplicate && canLinkPartner(partner)
 
   const content = (
     <div
@@ -143,7 +153,24 @@ function PartnerLogo({ partner }) {
   )
 }
 
+// Right-to-left, the direction the original partner marquee used. Reviews
+// travel the other way, so the two closing bands read as two pieces of evidence
+// rather than one long conveyor — the same opposition the old implementation
+// had, rebuilt on scroll instead of transforms.
+//
+// Same 34 px/s as the reviews above, so the page ends on ONE tempo. Deliberately
+// not faster: a logo rail that outruns the reviews beside it reads as a ticker.
+const PARTNER_SPEED = 34 // px/s
+
 export function PartnerStrip({ partners }) {
+  // Loop only once there is genuinely more than a screen of logos to travel
+  // through. Below that the duplicate set would be visible beside the original.
+  const canLoop = partners.length >= 3
+  const railRef = useAutoScrollRail({
+    speed: PARTNER_SPEED,
+    enabled: canLoop,
+  })
+
   return (
     <section className="py-12 sm:py-16">
       <div className="mx-auto max-w-[1200px] px-8">
@@ -152,32 +179,61 @@ export function PartnerStrip({ partners }) {
         </h2>
       </div>
 
-      {/* ⚠️ THIS RAIL DOES NOT MOVE ON ITS OWN, AND THAT IS THE ARCHITECTURE.
-          It replaced a duplicated-set marquee. Because nothing animates there
-          is nothing to pause, so the band carries no motion control at all —
-          the control was removed by deleting the autoplay, not by hiding a
-          button. Do not reintroduce an animation here.
+      {/* ⚠️ AUTOPLAY AND THE VISITOR SHARE ONE NUMBER: this element's
+          scrollLeft. Read useAutoScrollRail.js before changing anything here —
+          the previous marquee could not be swiped at all, and the fix was to
+          stop animating a transform and start moving real scroll offset.
 
-          Native scrolling only: touch drag, trackpad, shift+wheel and keyboard
-          all work without JavaScript, which is also why this needs no client
-          island. `overscroll-behavior-inline: contain` stops a horizontal
-          flick at the rail's end from turning into a browser back-navigation,
-          and the overflow is contained to this element so the body never gains
-          a horizontal scrollbar. */}
+          ⚠️ NO `snap-mandatory`, DELIBERATELY. Mandatory snapping fights
+          continuous autoplay directly: every frame the loop nudges the rail,
+          the snap engine drags it back to the nearest tile, which shows up as
+          a stutter that never resolves. Continuous motion is the priority here
+          and a flick still settles naturally on its own momentum.
+
+          ⚠️ NO `scroll-smooth` EITHER. Smooth scrolling animates every
+          scrollLeft write, so a per-frame write becomes an animation queue
+          fighting itself.
+
+          ⚠️ AND NO VISIBLE PAUSE BUTTON. This band yields while a finger,
+          trackpad or key is on it and resumes shortly after; that is the whole
+          control surface, by explicit direction. Reviews keep their button
+          because that band moves under its own steam in a reading context.
+
+          `overscroll-behavior-inline: contain` keeps a horizontal flick at the
+          end from becoming a browser back-navigation, and the overflow is
+          contained here so the body never gains a horizontal scrollbar. */}
       <ul
         data-partner-rail
+        ref={railRef}
         tabIndex={0}
         aria-label={HEADING}
-        className="mx-auto mt-6 flex max-w-[1200px] snap-x snap-mandatory list-none gap-4 overflow-x-auto scroll-smooth px-8 pb-4 [-webkit-overflow-scrolling:touch] [overscroll-behavior-inline:contain] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-600 sm:gap-5"
+        className="mx-auto mt-6 flex max-w-[1200px] list-none gap-4 overflow-x-auto px-8 pb-4 [-webkit-overflow-scrolling:touch] [overscroll-behavior-inline:contain] [scrollbar-width:none] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-600 sm:gap-5"
       >
         {partners.map((partner) => (
-          // snap-start rather than centre: the first tile then rests flush with
-          // the page's 32px gutter, in line with every other section, instead of
-          // floating in the middle of the viewport.
-          <li key={partner.slug} className="flex-none snap-start">
+          <li key={partner.slug} className="flex-none">
             <PartnerLogo partner={partner} />
           </li>
         ))}
+
+        {/* THE SEAMLESS HALF — rendered only when the rail actually loops.
+            aria-hidden so the six relationships are announced exactly once, and
+            `duplicate` forces the tile to render as bare content so a linked
+            partner never contributes a second, invisible tab stop.
+
+            THESE ARE NOT ADDITIONAL RELATIONSHIPS. Six logical partners are
+            rendered twice; the second copy exists so the wrap in
+            useAutoScrollRail lands on an identical frame. */}
+        {canLoop &&
+          partners.map((partner) => (
+            <li
+              key={`loop-${partner.slug}`}
+              aria-hidden="true"
+              data-partner-loop-copy
+              className="flex-none"
+            >
+              <PartnerLogo partner={partner} duplicate />
+            </li>
+          ))}
       </ul>
     </section>
   )

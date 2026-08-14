@@ -73,7 +73,7 @@ The second row is a ceiling, not a prohibition: a minority reading us as a conve
 | E2 | Regulated-vertical content reachable | by screen **2** on mobile |
 | E3 | LCP | ≤ 2.0 s on a mid-tier device, 4G |
 | E4 | CLS | ≤ 0.05 |
-| E5 | Client JS on the home route | **≤ 3 interactive islands, or ≤ 4 while the verified Google Reviews motion wrapper renders** — raised from ≤ 2 on 2026-08-05, see below |
+| E5 | Client JS on the home route | **≤ 4 interactive islands, or ≤ 5 while BOTH social-proof rails — Google Reviews and Business Relationships — run autoplay/swipe** — raised from ≤ 2 on 2026-08-05 and from ≤ 3/≤ 4 on 2026-08-13, see below |
 | E6 | `prefers-reduced-motion` | every animation degrades to no motion |
 | E7 | Contrast | every text/ground pair measured ≥ 4.5:1 |
 | E8 | Keyboard | full traversal, visible focus on every interactive element |
@@ -123,6 +123,51 @@ a budget to spend. A fifth island, or a fourth that is not the review wrapper,
 requires its own decision — and the four properties in the table above are the
 conditions under which this approval stands. If any of them regresses, the
 approval does not carry.
+
+#### E5 was raised again on 2026-08-13, this time before being exceeded
+
+The decision the paragraph above demanded. **The fifth island was approved
+first and implemented second**, which is the difference between this raise and
+the 2026-08-05 one recorded above.
+
+**What changed.** Business Relationships had shipped as a manual-only scroll
+rail with no autoplay and therefore no island. That turned out to be a
+misreading of the founder's instruction: "swipeable" meant *autoplay the user
+can take hold of*, not *manual instead of autoplay*. Both social-proof bands now
+autoplay **and** accept touch, trackpad, wheel and keyboard, so the partner rail
+needs client code and the page-level wrapper that used to cover both bands with
+one pause boolean was split in two.
+
+**What the new ceiling is:** 4 islands, or 5 while both social-proof rails run.
+The fifth is conditional in the same way the fourth already was — the review
+rail is absent whenever the Places response is null or returns fewer than four
+reviews, and the partner rail loops only when at least three approved
+relationships exist. Neither is an unconditional cost.
+
+**Why it was approved.** The budget this gate exists to protect is still being
+met, measured on a production build:
+
+| Property | Measured | Ceiling |
+|---|---|---|
+| `/` rendering | **`○ (Static)`** — still prerendered | — |
+| Route JS `/` | **8.90 kB** | — |
+| First Load JS `/` | **108 kB** | 130 kB |
+| Shared JS | **87.2 kB** | — |
+| `maps.googleapis.com` / `places.googleapis.com` before address interaction | **0 / 0** | 0 |
+| CLS | **0** at every tested width | ≤ 0.05 (E4) |
+| New dependencies | **none** | — |
+
+The two rails share one narrow primitive
+(`src/components/home/useAutoScrollRail.js`) rather than a carousel library, and
+both still receive their content as `children` from server components — no
+review payload and no partner permission register enters the client bundle.
+
+**What this does not license.** Unchanged in force: this is a count of
+*approved* islands. **A sixth island requires its own decision**, as does a fifth
+that is not one of the two social-proof rails. The properties in the table above
+are the conditions under which this approval stands; if any regresses, it does
+not carry. No other gate on this page was relaxed to accommodate this one —
+E1–E4 and E6–E9 are unchanged and the release meets them.
 
 ### Outcome measures (tracked, not gating)
 

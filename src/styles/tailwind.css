@@ -132,100 +132,62 @@
   animation: system-pulse 7s linear infinite;
 }
 
-/* ── REVIEW TRACK MOTION ─────────────────────────────────────────────────────
+/* ── REVIEW / PARTNER RAIL MOTION — NOW IN JAVASCRIPT, DELIBERATELY ─────────
  *
- * Phase 8. The only bespoke CSS in this project, and it lives here rather than
- * in arbitrary-value classes because it needs four coordinated states that
- * Tailwind variants cannot express together: a keyframe, an explicit pause flag
- * set by a button, hover/focus pausing, and two total-suppression cases.
+ * There is no marquee keyframe here any more and none should be added back.
  *
- * DIRECTION IS LEFT TO RIGHT. The track holds the source set followed by an
- * aria-hidden duplicate, so it is exactly twice the width of one set. Starting
- * at translateX(-50%) — the duplicate's left edge — and ending at 0 moves the
- * content rightwards, and because the two halves are identical the jump back to
- * -50% at the end of the cycle is invisible. No reset flash, no acceleration:
- * `linear`, one speed, forever.
+ * Both rails used to be CSS `transform: translateX()` animations on `w-max`
+ * tracks inside `overflow-hidden`. That construction is unswipeable by
+ * construction: the animation moves a transform while a finger, a trackpad and
+ * a wheel move scroll offset, so a gesture has nothing to take hold of and the
+ * keyframe keeps replaying underneath anything the user does.
  *
- * DURATION IS DERIVED, NOT PICKED. --review-duration is set inline from the
- * card count at a fixed reading speed (see Reviews.jsx), so five reviews move
- * at the same pixels per second as four. A duration chosen because it "looks
- * active" would run fast on a narrow track and crawl on a wide one.
+ * Autoplay and the visitor now write the same number — `scrollLeft` on a real
+ * overflow container — from src/components/home/useAutoScrollRail.js. Which
+ * means the rules that used to live here (animation, animation-play-state on
+ * hover/focus, the [data-paused] selector) have nothing left to act on:
  *
- * PRECEDENCE. Explicit pause is declared last and is therefore unconditional:
- * a visitor who presses Pause stays paused when the pointer leaves. Hover and
- * focus pause only while the pointer or focus is inside.
+ *   pause button      React state, read by the rAF loop
+ *   yield to gesture  pointerdown/touchstart/wheel/keydown on the rail
+ *   reduced motion    the hook returns before starting the loop
+ *
+ * ⚠️ DO NOT ADD `scroll-behavior: smooth` OR `scroll-snap-type: mandatory` to
+ * either rail. Both fight a per-frame scrollLeft write — smooth turns every
+ * frame into a queued animation, and mandatory snap drags the rail back to the
+ * nearest item on every frame. Both show up as a stutter that never resolves.
  */
-@keyframes review-marquee {
-  from {
-    transform: translateX(-50%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-[data-review-track] {
-  animation: review-marquee var(--review-duration, 60s) linear infinite;
-}
-
-/* Pause while the pointer is over a track, or while keyboard focus is anywhere
- * inside it — so a visitor reading a card, or tabbing to a link, is never
- * chasing a moving target. The partner rail has no
- * animation to pause — it only ever moves when the visitor scrolls it. */
-[data-review-track]:hover,
-[data-review-track]:focus-within {
-  animation-play-state: paused;
-}
-
-/* THE SHARED BUTTON'S STATE. Declared last, and therefore the winner over
- * hover and focus — pressing Pause survives the pointer leaving.
- *
- * ONE control governs BOTH bands. Phase 10 refactored the Phase 8 wrapper from
- * a reviews-only component into a single social-proof boundary, because the
- * approved island ceiling is 3, or 4 with this wrapper — a second, independent
- * partner island would have been a fifth. The selector is the band, not the
- * section, so one data-paused flag reaches both tracks. */
-[data-reviews-motion][data-paused='true'] [data-review-track] {
-  animation-play-state: paused;
-}
 
 /* ── TOTAL SUPPRESSION ───────────────────────────────────────────────────────
  *
- * Two cases — reduced motion, and no JavaScript — and in BOTH the track must
- * become a readable static block rather than a strip frozen mid-slide with half
- * a card cut off. `transform: none` puts the source set back at its natural
- * position and wrapping lets the cards flow instead of running off the edge.
+ * Two cases — reduced motion, and no JavaScript — and in BOTH the answer is now
+ * almost nothing, because the rails are REAL SCROLL CONTAINERS rather than
+ * transformed strips.
  *
- * ⚠️ PHASE 9 CORRECTION — WRAPPING NEEDS A WIDTH, NOT JUST `flex-wrap`.
+ * ⚠️ THIS BLOCK USED TO BE LONG AND IT IS SUPPOSED TO BE SHORT NOW. Phase 9 had
+ * to fight a `w-max` track inside `overflow-hidden`: with the animation removed
+ * the strip sat frozen mid-slide, `flex-wrap` could never reach a wrap point
+ * against a max-content width, and the measured result was 1 of 5 reviews
+ * readable at 390 with no motion and no scroll to reach the rest — content
+ * removed rather than motion removed, against E6's hard floor. All of that
+ * machinery (width releases, flex-basis overrides, the 1200px cap, the
+ * `transform: none` reset) existed to undo the marquee, and the marquee is gone.
  *
- * `flex-wrap: wrap` alone did nothing here, and the suppressed state silently
- * hid reviews. The track carries Tailwind's `w-max` (`width: max-content`) so
- * the marquee is exactly twice one set's width; a flex container sized to
- * max-content is BY DEFINITION wide enough for every item on one line, so the
- * wrap point never arrives. Measured with a five-review stub before the fix:
- * the track computed 1844px inside a 1440px parent whose overflow-x is hidden,
- * leaving 3 of 5 reviews readable at 1440 and 1 OF 5 AT 390 — with no motion
- * and no scroll to reach the others. Under `prefers-reduced-motion`, which
- * HOMEPAGE.md E6 makes a hard floor, that is content removed rather than
- * motion removed.
+ * What remains true without any rule from here: no autoplay runs, and every
+ * review and every logo is still reachable by hand, because `overflow-x: auto`
+ * does not depend on JavaScript or on motion being enabled.
  *
- * So the width is released (`width: auto`) and the items are allowed to shrink.
- * The li carries an INLINE `width: 340px` from Reviews.jsx — inline styles beat
- * a stylesheet, so overriding it is the one place `!important` is warranted.
- * `flex: 1 1 300px` then wraps the cards into readable columns at any width,
- * and the 1200px cap plus auto margins line the block up with every other
- * section on the page instead of running full-bleed as the moving strip does.
+ * So the only thing left to suppress is the DUPLICATE HALF of each rail. It
+ * exists solely so an autoplay wrap lands on a pixel-identical frame; with
+ * nothing moving it is the same reviews and the same six logos printed twice.
  *
- * The aria-hidden duplicate is removed here: with no motion it is not making a
- * loop seamless, it is the same reviews printed twice.
+ * The reviews pause button goes too, in BOTH cases and for the same reason: it
+ * offers to pause motion, nothing is moving, and Phase 8 forbids inert
+ * controls. Under reduced motion the loop never starts, so the button would
+ * toggle a flag governing nothing.
  *
- * The pause control is removed too. Nothing is moving, so a button offering to
- * pause motion would be an inert control — which Phase 8 forbids explicitly.
- *
- * The no-JavaScript half is applied by a <noscript> block in Reviews.jsx, which
- * carries the identical declarations. It cannot be shared with this rule
- * because @media and <noscript> are different mechanisms; the duplication is
- * deliberate and both copies must be changed together.
+ * ⚠️ THE <noscript> COPY IN page.jsx CARRIES THE SAME DECLARATIONS and must be
+ * changed with this rule. It cannot be shared — @media and <noscript> are
+ * different mechanisms — so the duplication is deliberate. CHANGE BOTH.
  */
 @media (prefers-reduced-motion: reduce) {
   /* No hero rule here: [data-hero-light] is static, so reduced-motion and
@@ -252,23 +214,16 @@
     stroke-dasharray: none;
   }
 
-  [data-review-track] {
-    animation: none;
-    transform: none;
-    flex-wrap: wrap;
-    width: auto;
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  [data-review-track] > li {
-    width: auto !important;
-    flex: 1 1 300px;
-    max-width: 100%;
-  }
-
-  [data-review-duplicate] {
+  /* Neither rail autoplays: useAutoScrollRail returns before starting its
+   * loop. Nothing is needed here to stop them, and nothing here may make them
+   * unscrollable — both stay real overflow containers so every review and
+   * every logo is still reachable by hand. Motion is removed; content is not.
+   *
+   * The duplicate half goes, though. It exists ONLY to make an autoplay wrap
+   * land on an identical frame; with no autoplay it is the same reviews
+   * printed twice. */
+  [data-review-duplicate],
+  [data-partner-loop-copy] {
     display: none;
   }
 

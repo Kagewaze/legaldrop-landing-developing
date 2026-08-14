@@ -119,8 +119,13 @@ const GRID_COLS = {
 // island: no 'use client', no hook, no state, no effect. The fetch runs on the
 // server behind `server-only`; do not move it to a client-side poll.
 //
-// docs/HOMEPAGE.md gate E5 caps the home route at 4 interactive islands and the
-// page is at 4. This section contributes ZERO, before and after.
+// docs/HOMEPAGE.md gate E5 caps the home route at 4 interactive islands, or 5
+// while both social-proof rails — Google Reviews and Business Relationships —
+// run autoplay/swipe. The page is at 5, which is the approved configuration
+// (E5 raised 2026-08-13; the rationale and the measured budget are recorded
+// under that heading).
+//
+// This section still contributes ZERO, before and after.
 export async function OperationalProof() {
   // null on any failure — see the note in operational-metrics.js. Never 0,
   // never a partial object.

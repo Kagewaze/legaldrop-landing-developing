@@ -5,7 +5,6 @@ import { OperationalProof } from '@/components/home/OperationalProof'
 import { PartnerStrip } from '@/components/home/PartnerStrip'
 import { ProductStory } from '@/components/home/ProductStory'
 import { Reviews, reviewsWillMove } from '@/components/home/Reviews'
-import { ReviewsMotion } from '@/components/home/ReviewsMotion'
 import { TrustAndAccountability } from '@/components/home/TrustAndAccountability'
 import {
   LEGAL_VERTICAL,
@@ -62,11 +61,14 @@ export default async function Home() {
   //
   // ⚠️ PARTNERS ARE PERMISSION-GATED, NOT FEATURE-FLAGGED. APPROVED_PARTNERS is
   // filtered in src/data/partners.js on a COMPLETE permission record — every one
-  // of eight fields, not just a status string. It is currently EMPTY, because
-  // all six supplied records arrived blank, so no partner section renders and
-  // there is no gap where one would be. Nothing here needs changing when
-  // permissions land: fill in the register, mirror it into the data module, and
-  // the section appears at the right size on its own.
+  // of eight fields, not just a status string.
+  //
+  // It currently holds SIX approved relationships and the section renders. (An
+  // earlier note here said the register was empty and no partner section
+  // rendered; that stopped being true once the permission records were
+  // completed.) The gate still does its job: an incomplete record is filtered
+  // out, and if the list ever empties the section disappears rather than
+  // leaving a gap.
   const partners = APPROVED_PARTNERS
   const showPartners = partners.length > 0
 
@@ -78,38 +80,48 @@ export default async function Home() {
   const reviewsSection = showReviews ? <Reviews data={reviews} /> : null
   const partnersSection = showPartners ? <PartnerStrip partners={partners} /> : null
 
-  // ⚠️ REVIEWS AND PARTNERS ARE NO LONGER ONE BAND.
+  // ⚠️ REVIEWS AND PARTNERS BOTH AUTOPLAY AND BOTH SWIPE, BUT THEY ARE STILL
+  // NOT ONE BAND.
   //
-  // They used to share a wrapper and a single pause boolean. They now have
-  // different interaction models and are rendered independently: the review
-  // track still moves on its own and therefore still needs a control, and the
-  // partner rail moves only when the visitor scrolls it and therefore has no
-  // control at all. Do not re-couple them.
+  // They share a motion PRIMITIVE (home/useAutoScrollRail.js) and nothing else:
+  // separate sections, separate speeds, opposite directions, and separate
+  // controls. Reviews keep an explicit pause button because that band moves
+  // under a reader; the partner rail has none by direction, and yields to touch
+  // instead. Do not re-couple them behind one shared pause boolean again.
+  //
+  // The motion wrapper is no longer HERE. It moved inside Reviews.jsx, because
+  // the pause button and the scroll container have to agree about one scroll
+  // position — an outer wrapper could only toggle an attribute.
   const reviewsBlock = reviewsMove ? (
     <>
       {/* ── NO-JAVASCRIPT SUPPRESSION ────────────────────────────────────────
-          Identical declarations to the prefers-reduced-motion block in
-          src/styles/tailwind.css, applied by a mechanism that needs no
-          scripting. Without it the review animation would keep running with no
-          way to stop it — the pause button is the only control and it is inert
-          without JavaScript. CHANGE BOTH COPIES TOGETHER.
+          Far smaller than it used to be, and for a good reason: the review
+          track is now a REAL scroll container rather than a transformed
+          `w-max` strip. Without JavaScript it simply does not autoplay, and it
+          is already readable and scrollable by hand — so the width releases and
+          wrap rules that Phase 9 needed are gone with the marquee that required
+          them.
 
-          Partner declarations were removed with the partner marquee: that rail
-          is a native scroll container and is already usable without scripting.
+          What remains: hide the duplicate half of BOTH rails — each exists only
+          to make an autoplay loop seamless, and with nothing moving they are
+          just the same reviews and the same six logos printed twice — and hide
+          the pause button, which is inert without scripting.
 
-          The width releases are not cosmetic: `flex-wrap` alone never fires,
-          because `w-max` sizes the track to max-content and a max-content flex
-          container always fits its items on one line. Phase 9 measured the
-          consequence — 1 of 5 reviews readable at 390 with no scroll and no
-          motion to reach the rest. */}
+          ⚠️ THE PARTNER SELECTOR BELONGS HERE EVEN THOUGH THIS BLOCK RENDERS
+          WITH THE REVIEWS. Without JavaScript neither rail autoplays, so the
+          partner loop copy is duplicated content on a band this <noscript>
+          happens to be adjacent to rather than part of. It is declared here
+          because this is the page's only <noscript>; if reviews are ever absent
+          while partners render, move it rather than dropping it. */}
       <noscript>
-        <style>{`[data-review-track]{animation:none!important;transform:none!important;flex-wrap:wrap!important;width:auto!important;max-width:1200px!important;margin-left:auto!important;margin-right:auto!important}[data-review-track]>li{width:auto!important;flex:1 1 300px!important;max-width:100%!important}[data-review-duplicate]{display:none!important}[data-reviews-motion-control]{display:none!important}`}</style>
+        <style>{`[data-review-duplicate],[data-partner-loop-copy]{display:none!important}[data-reviews-motion-control]{display:none!important}`}</style>
       </noscript>
 
-      <ReviewsMotion>{reviewsSection}</ReviewsMotion>
+      {reviewsSection}
     </>
   ) : (
-    // Nothing moves, so no client island mounts and no control renders.
+    // Too few reviews to loop: Reviews renders its static grid and mounts no
+    // rail at all.
     reviewsSection
   )
 

@@ -13,7 +13,9 @@ import { useEffect, useRef, useState } from 'react'
 //
 // ⚠️ REPLACES home/NetworkDemo.jsx, retained on disk and unimported as the
 // rollback target — restoring it is a two-line change in HeroNetwork.jsx. This
-// takes over NetworkDemo's client-island slot, so the homepage still has four.
+// takes over NetworkDemo's client-island slot, so this file adds no island of
+// its own. (The homepage total is 5 since the partner rail gained autoplay —
+// see the note in OperationalProof.jsx.)
 //
 // ONE CARD AT A TIME, AND OFTEN NONE. The empty gap is the design, not a loading
 // state: the old panel was a permanent dashboard competing with the booking
