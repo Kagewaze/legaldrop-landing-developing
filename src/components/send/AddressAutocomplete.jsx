@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { importMapsLibrary } from '@/lib/maps-loader'
+import { MobileAddressField } from '@/components/send/MobileAddressField'
 
 // Google Places autocomplete input (Places API New: PlaceAutocompleteElement).
 //
@@ -237,6 +238,41 @@ function RailGlyph({ variant }) {
   )
 }
 
+// ⚠️ THE MOBILE / DESKTOP SPLIT, AND WHY IT IS A DELIBERATE BREAKPOINT.
+//
+// Under 640px this row renders a Druppr-owned field (send/MobileAddressField)
+// and the Google web component is never constructed. Above it, the existing
+// <gmp-place-autocomplete> is unchanged.
+//
+// The reason is not styling preference. <gmp-place-autocomplete> promotes
+// itself into a FULL-SCREEN takeover at small viewports — its own back arrow,
+// search bar, prediction list and Google Maps branding replace the booking page
+// — and all of it lives in a CLOSED shadow root, so it can be neither styled nor
+// suppressed. Measured on production with real browser input: host height
+// collapses 48px -> 0px at 390 and 430, and stays 48px at 768 and 1440.
+//
+// 640 is OUR threshold (the design system's `sm`), chosen so the switch is
+// deterministic. Google's own takeover threshold is undocumented and internal —
+// do not try to match it.
+//
+// `null` means "not yet known", which is what the server renders. The desktop
+// container is rendered in that state so markup is stable across hydration; the
+// widget is only CONSTRUCTED once the query resolves to false, so a phone never
+// builds one.
+function useIsCompact() {
+  const [isCompact, setIsCompact] = useState(null)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639.98px)')
+    const apply = () => setIsCompact(mq.matches)
+    apply()
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
+  }, [])
+
+  return isCompact
+}
+
 export function AddressAutocomplete({
   label,
   variant = 'pickup',
@@ -278,6 +314,25 @@ export function AddressAutocomplete({
   // visible change at all. That is the most likely cause of the reported
   // "addresses don't propagate on mobile".
   const [commitStatus, setCommitStatus] = useState('idle') // 'idle'|'pending'|'failed'
+
+  const isCompact = useIsCompact()
+
+  // ⚠️ THE ELLIPSIS BELONGS TO THE GOOGLE WIDGET'S BOOT, AND THE WIDGET NEVER
+  // BOOTS ON A PHONE. `status` starts at 'loading' and is only moved to 'ready'
+  // by the init effect, which compact mode deliberately skips — so without this
+  // the mobile field showed a permanent "…" beside every address row.
+  useEffect(() => {
+    if (isCompact === true) {
+      setStatus('ready')
+    }
+  }, [isCompact])
+
+  // The mobile field is a controlled input, so its text lives here. Seeded from
+  // a committed selection so returning to Step 1 shows the chosen address.
+  const [query, setQuery] = useState(selected?.address ?? '')
+  useEffect(() => {
+    if (selected?.address) setQuery(selected.address)
+  }, [selected?.address])
 
   // The prediction behind a failed commit, kept so 'Try again' can retry the
   // fetch without making the customer search for the address a second time.
@@ -346,6 +401,14 @@ export function AddressAutocomplete({
   commitPredictionRef.current = commitPrediction
 
   useEffect(() => {
+    // ⚠️ NEVER CONSTRUCT THE GOOGLE ELEMENT ON A PHONE. This is the whole fix:
+    // if it is built, it takes the page over the moment the customer types.
+    // `null` (unknown, pre-hydration) also does nothing — the widget waits until
+    // the media query has actually resolved to desktop.
+    if (isCompact !== false) {
+      return
+    }
+
     let cancelled = false
     let element = null
     let handleSelect = null
@@ -437,11 +500,16 @@ export function AddressAutocomplete({
       element?.remove()
       elementRef.current = null
     }
-    // Mount once. See rule 4 above. Adding `selected` here to drive hydration
-    // is exactly the mistake rule 2 forbids — it would tear the element down
-    // and rebuild it mid-typing. Hydration is a separate effect, below.
+    // ⚠️ `isCompact` IS THE ONLY PERMITTED DEPENDENCY. Adding `selected` here to
+    // drive hydration is exactly the mistake rule 2 forbids — it would tear the
+    // element down and rebuild it mid-typing. Hydration is a separate effect,
+    // below.
+    //
+    // isCompact is safe because it settles once (null -> true|false) and then
+    // only changes if the viewport actually crosses 640px, where rebuilding IS
+    // the correct response: the two modes cannot share one element.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [isCompact])
 
   // ── Mount hydration — the one permitted .value write. See rule 2. ─────────
   //
@@ -518,7 +586,36 @@ export function AddressAutocomplete({
             captions are gone; the placeholder carries that meaning visually. */}
           <span className="sr-only">{label}</span>
 
-          <div ref={containerRef} className="min-w-0 flex-1" />
+          {isCompact === true ? (
+            <div className="min-w-0 flex-1">
+              <MobileAddressField
+                label={label}
+                placeholder={
+                  variant === 'pickup'
+                    ? 'Enter pickup address'
+                    : 'Enter drop-off address'
+                }
+                value={query}
+                selected={selected}
+                commitStatus={commitStatus}
+                onQueryChange={setQuery}
+                onInvalidate={() => {
+                  // Editing after committing drops the stored place, so Step 1
+                  // can never quote using the previous address's coordinates.
+                  pendingPredictionRef.current = null
+                  setCommitStatus('idle')
+                  onClearRef.current?.()
+                }}
+                onCommit={(prediction) => {
+                  // Same resolve path as the desktop widget — see the note on
+                  // MobileAddressField. One contract, two presentations.
+                  commitPredictionRef.current(prediction)
+                }}
+              />
+            </div>
+          ) : (
+            <div ref={containerRef} className="min-w-0 flex-1" />
+          )}
 
           {/* PHASE 9: #8d8695 -> #5f5868 (3.51:1 -> 6.81:1 on white). Colour
               only — no behaviour, no structure, nothing about the Google
