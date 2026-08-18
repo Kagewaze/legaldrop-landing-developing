@@ -30,7 +30,10 @@ export const ROUTES = {
   legal: { href: '/legal', live: true },
   ride: { href: '/ride', live: false },
   marketplace: { href: '/marketplace', live: false },
-  dropBatch: { href: '/drop-batch', live: false },
+  // /drop-batch ships: a public, read-only trip board served from the
+  // unauthenticated GET /drop-batch/public/trips projection. Discovery only —
+  // posting, requesting space and messaging stay in the app.
+  dropBatch: { href: '/drop-batch', live: true },
   tow: { href: '/tow', live: false },
   designatedDriver: { href: '/designated-driver', live: false },
   petTransport: { href: '/pet-transport', live: false },
@@ -104,9 +107,18 @@ export const PARTNER_SIGNUP_URL = 'https://partner.legaldrop.ca/signup'
 //
 // REMOVE this item once the design's own nav destinations ship — i.e. once
 // /track ships, which is the last one outstanding.
+// ⚠️ THE live FLAG GATES AN ITEM; IT DOES NOT CREATE ONE. Header renders
+// NAV_LINKS.filter(l => l.live), so a destination must be listed HERE as well as
+// carry live: true. DropBatch was live-gated in ROUTES but absent from this
+// array, so flipping the flag alone would have shipped it to the footer and left
+// the header unchanged. Adding a route to ROUTES is not enough on its own.
 export const NAV_LINKS = [
   { label: 'Medical', ...ROUTES.medical },
   { label: 'Legal', ...ROUTES.legal },
+  // Sits with the other service destinations rather than at the end, matching
+  // the footer's Services grouping. One word — "DropBatch" is the product name
+  // used by the page itself; do not respell it "Drop Batch".
+  { label: 'DropBatch', ...ROUTES.dropBatch },
   { label: 'Track', ...ROUTES.track },
   { label: 'Contact', ...ROUTES.contact },
 ]
@@ -139,7 +151,7 @@ export const FOOTER_SECTIONS = [
       { label: 'Legal documents', ...ROUTES.legal },
       { label: 'Request a ride', ...ROUTES.ride },
       { label: 'Marketplace', ...ROUTES.marketplace },
-      { label: 'Drop Batch', ...ROUTES.dropBatch },
+      { label: 'DropBatch', ...ROUTES.dropBatch },
       { label: 'Tow truck', ...ROUTES.tow },
       { label: 'Designated driver', ...ROUTES.designatedDriver },
       { label: 'Pet transport', ...ROUTES.petTransport },
