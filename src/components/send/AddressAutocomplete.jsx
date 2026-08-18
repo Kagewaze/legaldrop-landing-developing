@@ -556,6 +556,19 @@ export function AddressAutocomplete({
       // As above — the store clear below still runs.
     }
 
+    // ⚠️ THE PHONE'S TEXT LIVES IN `query`, NOT IN elementRef.
+    // Below 640px the Google element is never constructed (see the init effect's
+    // `if (isCompact !== false) return`), so elementRef.current is null and the
+    // clear above is a no-op. The visible field is MobileAddressField, a
+    // CONTROLLED input reading `query` — so without this line the row kept
+    // displaying the old address after ✕ while the store had already dropped it,
+    // and the ✕ itself vanished (it is gated on `selected`), leaving no way back
+    // except deleting the text by hand. Reproduced on production at 390.
+    //
+    // The seeding effect above cannot cover this: it only assigns when
+    // `selected?.address` is truthy, which is exactly what a clear makes false.
+    setQuery('')
+
     // A dropped address cannot have a commit still pending against it.
     pendingPredictionRef.current = null
     setCommitStatus('idle')
