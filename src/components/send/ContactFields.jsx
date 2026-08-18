@@ -86,6 +86,39 @@ export function ContactFields({ contact, onChange, disabled }) {
             optional
           />
         </div>
+
+        {/* ⚠️ receiverNote IS THE EXISTING BACKEND FIELD, NOT A WEB INVENTION.
+            Mobile has always sent it, POST /order already accepts it, the
+            delivery_point row already stores it, and the driver app already
+            renders it as "Recipient Note". See EMPTY_STATE.contact in
+            src/lib/send-flow.js for the end-to-end trace.
+
+            A textarea rather than an input because a buzzer code plus a loading
+            dock note does not fit one line — but only two rows, so it stays a
+            compact optional field rather than dominating the step.
+
+            NO maxLength: the contract has no length limit anywhere (yup has no
+            .max(), the DTO has no @MaxLength, and the column is `text`). Capping
+            it here would reject notes the app accepts. Reported as a backend
+            hardening follow-up instead of silently diverging. */}
+        <div className="sm:col-span-2">
+          <label className="block" htmlFor="receiverNote">
+            <span className={LABEL}>
+              Delivery instructions
+              <span className="ml-1 font-normal text-[#8d8695]">(optional)</span>
+            </span>
+            <textarea
+              id="receiverNote"
+              rows={2}
+              value={contact.receiverNote ?? ''}
+              onChange={(event) => onChange('receiverNote', event.target.value)}
+              placeholder="Unit, buzzer, loading dock, reception, or handling notes."
+              // text-base (16px) on the phone for the same reason as the address
+              // field: iOS Safari zooms the viewport for anything smaller.
+              className={`${FIELD} min-h-[76px] resize-y text-base sm:text-[15px]`}
+            />
+          </label>
+        </div>
       </div>
 
       <p className="mt-3 text-[13px] text-[#5f5868]">

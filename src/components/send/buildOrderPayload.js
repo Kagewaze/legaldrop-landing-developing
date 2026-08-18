@@ -41,6 +41,17 @@ export function buildOrderPayload({ flow, quote, paymentIntentId }) {
     receiver.receiverEmail = contact.receiverEmail.trim()
   }
 
+  // Optional delivery note, omitted entirely when blank for the same reason as
+  // phone/email above: an empty string reads as "supplied but blank" to anyone
+  // reading the order, and the column is nullable.
+  //
+  // Same property name the mobile app sends and the driver app renders — this is
+  // parity on an existing contract, not a new field. See EMPTY_STATE.contact in
+  // src/lib/send-flow.js for the full trace.
+  if (contact.receiverNote?.trim()) {
+    receiver.receiverNote = contact.receiverNote.trim()
+  }
+
   return {
     senderLocation: { latitude: pickup.lat, longitude: pickup.lng },
     senderAddress: pickup.address,

@@ -49,6 +49,19 @@ const EMPTY_STATE = {
     receiverName: '',
     receiverPhone: '',
     receiverEmail: '',
+    // ⚠️ THE EXISTING BACKEND FIELD, NOT A WEB INVENTION.
+    // `receiverNote` is the delivery-point note the mobile app has always sent
+    // (types/order.ts Receiver.receiverNote), the DTO already accepts
+    // (create-order.dto.ts:150, @IsString @IsOptional), the database already
+    // persists (delivery_point.entity.ts:65, a nullable text column) and the
+    // driver already receives (driver.service.ts:337) and displays as
+    // "Recipient Note" (mobile bottomModal.tsx:244).
+    //
+    // Do NOT rename this to notes/deliveryInstructions/driverInstructions. The
+    // mobile receiver form has a `driverInstructions` yup rule, but it reaches no
+    // payload, no DTO and no column — it is a dead field, and copying it here
+    // would create a web-only property the driver never sees.
+    receiverNote: '',
   },
 }
 
