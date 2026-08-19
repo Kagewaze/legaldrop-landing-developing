@@ -52,11 +52,28 @@ export function buildOrderPayload({ flow, quote, paymentIntentId }) {
     receiver.receiverNote = contact.receiverNote.trim()
   }
 
+  // ⚠️ TWO SIMILAR NAMES, TWO DIFFERENT CONTRACTS. DO NOT MIX THEM.
+  //
+  //   pickUpTime   capital U — POST /order (this payload). An absolute ISO instant,
+  //                sent ONLY for a scheduled order.
+  //   pickupTime   lowercase u — POST /drop-batch/public/quote. A different endpoint
+  //                with its own DTO.
+  //
+  // The backend rejects `scheduled_pickup` without a future pickUpTime, and an
+  // instant order must omit it entirely rather than send a placeholder — a stray
+  // timestamp is what made the old column default meaningless.
+  const isScheduled = flow.pickupTiming === 'scheduled' && !!flow.scheduledPickupAt
+
+  const scheduling = isScheduled
+    ? { type: 'scheduled_pickup', pickUpTime: flow.scheduledPickupAt }
+    : { type: 'instant_pickup' }
+
   return {
     senderLocation: { latitude: pickup.lat, longitude: pickup.lng },
     senderAddress: pickup.address,
     senderName: contact.senderName.trim(),
     senderPhone: contact.senderPhone.trim(),
+    ...scheduling,
     // Normalised key ('cargovan', never the local 'cargo' id).
     vehicle: apiKeyFor(flow.vehicle),
     // 'other' for general consumer packages, unless a ?section= preset set one
