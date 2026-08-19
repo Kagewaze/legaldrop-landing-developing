@@ -14,6 +14,8 @@ import {
 import { PriceBreakdown } from '@/components/send/PriceBreakdown'
 import { VehiclePicker } from '@/components/send/VehiclePicker'
 import { PickupTiming, pickupTimingIsComplete } from '@/components/send/PickupTiming'
+import { DropBatchQuoteCard } from '@/components/send/DropBatchQuoteCard'
+import { useDropBatchQuote } from '@/components/send/useDropBatchQuote'
 import { useVehicleQuotes } from '@/components/send/useVehicleQuotes'
 import { vehicleById } from '@/components/send/vehicles'
 
@@ -79,6 +81,17 @@ export default function SendDetailsPage() {
     dropoff: flow.dropoff,
     packageCount: flow.packageCount,
     weight: flow.weight,
+  })
+
+  // Supplementary and fully isolated: this never blocks or delays standard
+  // pricing, and it stays idle unless the customer scheduled a pickup.
+  const dropBatch = useDropBatchQuote({
+    pickup: flow.pickup,
+    dropoff: flow.dropoff,
+    pickupTiming: flow.pickupTiming,
+    scheduledPickupAt: flow.scheduledPickupAt,
+    vehicle: flow.vehicle,
+    packageCount: flow.packageCount,
   })
 
   if (!flow.hydrated || !complete) {
@@ -165,6 +178,20 @@ export default function SendDetailsPage() {
             onScheduleChange={flow.setScheduledPickup}
           />
         </div>
+
+        {/* DropBatch, when the backend says a real trip matches this scheduled
+            pickup. Rendered AFTER the vehicle choices and outside VehiclePicker
+            because it is a delivery MODE, not another vehicle — and it is
+            informational only, so it must not look selectable next to cards that
+            are. Its absence is the normal case and costs the customer nothing. */}
+        {dropBatch.show && (
+          <DropBatchQuoteCard
+            senderPays={dropBatch.senderPays}
+            matchCount={dropBatch.matchCount}
+            soonestWindow={dropBatch.soonestWindow}
+            allOverCapacity={dropBatch.allOverCapacity}
+          />
+        )}
       </div>
 
       <div className="flex flex-col border-t border-[#f0eef2] bg-[#faf7fd] px-6 py-8 sm:px-8 lg:border-l lg:border-t-0">
