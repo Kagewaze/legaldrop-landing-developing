@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import {
   createContext,
@@ -19,10 +19,10 @@ import {
 //
 // Persisted to sessionStorage so a refresh mid-flow does not throw away the
 // addresses someone just typed. Same reasoning as the guest session: one
-// booking, one tab â€” it survives refresh and dies when the tab closes.
+// booking, one tab — it survives refresh and dies when the tab closes.
 
 // PHASE 7: the literal moved to src/lib/send-flow-contract.js so the homepage
-// address form can write this key without importing this module â€” which would
+// address form can write this key without importing this module — which would
 // have pulled SendFlowProvider's context onto a page that must not mount it.
 // Aliased rather than renamed so every existing reference below is untouched.
 const STORAGE_KEY = SEND_FLOW_STORAGE_KEY
@@ -37,23 +37,23 @@ const EMPTY_STATE = {
   // flow sent unconditionally before presets existed; a ?section= param on step
   // 1 can substitute one of the other whitelisted values.
   //
-  // NOT part of paymentInputsHash, deliberately â€” the backend prices every
+  // NOT part of paymentInputsHash, deliberately — the backend prices every
   // section identically, so including it would invalidate live recovery records
   // for a change that cannot move the fare.
   section: 'other',
 
-  // â”€â”€ PICKUP TIMING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── PICKUP TIMING ─────────────────────────────────────────────────────────
   //
   // 'instant' is the default so an existing customer who touches nothing keeps
   // exactly the flow they have today: type 'instant_pickup', no pickUpTime, and
   // dispatch the moment payment clears.
   //
-  // 'scheduled' carries scheduledPickupAt â€” ONE ABSOLUTE INSTANT as an ISO string
+  // 'scheduled' carries scheduledPickupAt — ONE ABSOLUTE INSTANT as an ISO string
   // with an offset, produced by lib/toronto-time from the Toronto date and time the
   // customer picked. It is stored resolved rather than as separate date/time fields
   // so nothing downstream has to re-guess a timezone.
   //
-  // âš ï¸ These two must stay consistent: switching back to 'instant' clears
+  // ⚠️ These two must stay consistent: switching back to 'instant' clears
   // scheduledPickupAt (see setPickupTiming), so a stale timestamp can never ride
   // along invisibly on an ASAP order.
   pickupTiming: 'instant',
@@ -71,7 +71,7 @@ const EMPTY_STATE = {
     receiverName: '',
     receiverPhone: '',
     receiverEmail: '',
-    // âš ï¸ THE EXISTING BACKEND FIELD, NOT A WEB INVENTION.
+    // ⚠️ THE EXISTING BACKEND FIELD, NOT A WEB INVENTION.
     // `receiverNote` is the delivery-point note the mobile app has always sent
     // (types/order.ts Receiver.receiverNote), the DTO already accepts
     // (create-order.dto.ts:150, @IsString @IsOptional), the database already
@@ -81,7 +81,7 @@ const EMPTY_STATE = {
     //
     // Do NOT rename this to notes/deliveryInstructions/driverInstructions. The
     // mobile receiver form has a `driverInstructions` yup rule, but it reaches no
-    // payload, no DTO and no column â€” it is a dead field, and copying it here
+    // payload, no DTO and no column — it is a dead field, and copying it here
     // would create a web-only property the driver never sees.
     receiverNote: '',
   },
@@ -110,18 +110,18 @@ export const PACKAGE_COUNT_MAX = 12
 
 // Weight bands, as in the design.
 //
-// âš ï¸ UNVERIFIED: `kg` is what we send to the backend as receivers[].weight, and
+// ⚠️ UNVERIFIED: `kg` is what we send to the backend as receivers[].weight, and
 // the backend uses it to compute lineItems.heavyFee. The design only specifies
 // bands ("Under 15 kg"), not the number to transmit, so these are representative
 // midpoints. Confirm against how the backend actually tiers heavyFee before
-// launch â€” if it expects a band identifier rather than a number, or tiers at
+// launch — if it expects a band identifier rather than a number, or tiers at
 // different thresholds, the surcharge shown will be wrong.
 //
 // The design's own $4 / $9 surcharges are placeholders and are NOT used
 // anywhere: the fee displayed always comes from lineItems.heavyFee.
 export const WEIGHT_OPTIONS = [
   { id: 'light', label: 'Under 15 kg', kg: 10 },
-  { id: 'mid', label: '15â€“30 kg', kg: 25 },
+  { id: 'mid', label: '15–30 kg', kg: 25 },
   { id: 'heavy', label: 'Over 30 kg', kg: 40 },
 ]
 
@@ -130,7 +130,7 @@ export function weightKgFor(weightId) {
   return (option ?? WEIGHT_OPTIONS[0]).kg
 }
 
-// â”€â”€ Payment recovery â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Payment recovery ────────────────────────────────────────────────────────
 //
 // Deliberately a SEPARATE storage key from the flow state above, and
 // deliberately not part of the React context.
@@ -143,7 +143,7 @@ export function weightKgFor(weightId) {
 // that runs on success.
 //
 // THE INVARIANT: a stored record means "a PaymentIntent exists and NO order has
-// been created for it yet". It is cleared in exactly one place â€” after
+// been created for it yet". It is cleared in exactly one place — after
 // POST /order succeeds. That is what makes "stored record + intent already
 // succeeded" an unambiguous signal that the customer paid and we still owe them
 // an order.
@@ -204,7 +204,7 @@ export function writePaymentSession(session) {
 }
 
 // The ONLY place this is called is after POST /order succeeds. Do not add
-// another caller â€” clearing it early loses the record that the customer paid.
+// another caller — clearing it early loses the record that the customer paid.
 export function clearPaymentSession() {
   if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') {
     return
@@ -219,7 +219,7 @@ export function clearPaymentSession() {
 
 // PHASE 7: isPlace and hasBothAddresses moved to send-flow-contract.js, which
 // has no React in it. Re-exported here so every existing importer of
-// `hasBothAddresses` from this module keeps working unchanged â€” /send,
+// `hasBothAddresses` from this module keeps working unchanged — /send,
 // /send/details and /send/pay all import it from here.
 export { hasBothAddresses }
 
@@ -260,7 +260,7 @@ export function SendFlowProvider({ children }) {
 
   // Storage cannot be read during render (it does not exist on the server), so
   // the first client render always shows EMPTY_STATE. `hydrated` tells the step
-  // guards to wait â€” without it, /send/details would redirect to /send on its
+  // guards to wait — without it, /send/details would redirect to /send on its
   // very first frame, before the saved addresses have been restored.
   const [hydrated, setHydrated] = useState(false)
 
@@ -320,7 +320,7 @@ export function SendFlowProvider({ children }) {
   )
   // Switching to ASAP DROPS the scheduled instant rather than remembering it.
   // Keeping it would leave an invisible timestamp attached to an order the customer
-  // has just said should go now â€” and buildOrderPayload reads pickupTiming, so a
+  // has just said should go now — and buildOrderPayload reads pickupTiming, so a
   // remembered value would be one refactor away from being sent.
   const setPickupTiming = useCallback(
     (pickupTiming) =>

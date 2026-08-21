@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect } from 'react'
 import Link from 'next/link'
@@ -19,7 +19,7 @@ import { useDropBatchQuote } from '@/components/send/useDropBatchQuote'
 import { useVehicleQuotes } from '@/components/send/useVehicleQuotes'
 import { vehicleById } from '@/components/send/vehicles'
 
-// Step 2 â€” packages, vehicle and live price.
+// Step 2 — packages, vehicle and live price.
 
 function Stepper({ value, onChange }) {
   return (
@@ -31,7 +31,7 @@ function Stepper({ value, onChange }) {
         aria-label="One fewer package"
         className="h-12 w-12 rounded-full border-[1.5px] border-[#e3dfe8] bg-white text-[22px] font-bold leading-none text-brand-600 transition-colors hover:bg-[#faf7fd] disabled:cursor-not-allowed disabled:text-[#c9c3d0] disabled:hover:bg-white"
       >
-        âˆ’
+        −
       </button>
       <div
         className="min-w-[32px] text-center text-[20px] font-extrabold text-[#17131c]"
@@ -60,7 +60,7 @@ export default function SendDetailsPage() {
 
   // Precondition guard.
   //
-  // Waits for `hydrated` â€” sessionStorage cannot be read during render, so on
+  // Waits for `hydrated` — sessionStorage cannot be read during render, so on
   // the first frame the addresses are always absent and redirecting there would
   // bounce every refresh straight back to step 1.
   //
@@ -97,7 +97,7 @@ export default function SendDetailsPage() {
   if (!flow.hydrated || !complete) {
     return (
       <div className="px-6 py-16 text-center text-[15px] text-[#5f5868] sm:px-8">
-        Loading your detailsâ€¦
+        Loading your details…
       </div>
     )
   }
@@ -114,10 +114,10 @@ export default function SendDetailsPage() {
         <h1 className="text-[26px] font-extrabold tracking-[-0.02em] text-[#17131c]">
           Details and vehicle
         </h1>
-        {/* Addresses only â€” no distance here. Distance comes from the quote and
+        {/* Addresses only — no distance here. Distance comes from the quote and
             is shown with the fare, where it is a real number. */}
         <p className="mt-2 text-[15px] text-[#5f5868]">
-          {flow.pickup.address} â†’ {flow.dropoff.address}
+          {flow.pickup.address} → {flow.dropoff.address}
         </p>
 
         <div className="mb-6 mt-6 flex flex-wrap items-center justify-between gap-5 rounded-2xl border-[1.5px] border-[#eeebf1] px-4 py-4 sm:px-5">
@@ -209,21 +209,21 @@ export default function SendDetailsPage() {
             </div>
             {/* "Please try again shortly" is only true of a transient
                 failure. When the backend has specifically REFUSED this vehicle
-                â€” bike over its 10 km cap â€” retrying can never succeed, and
+                — bike over its 10 km cap — retrying can never succeed, and
                 telling someone to wait leaves them on a dead end with no hint
                 that another vehicle would work. Say which it is. */}
             <p className="mt-3 text-[15px] text-[#5f5868]">
               {status === 'loading' || status === 'idle'
-                ? 'Calculating your priceâ€¦'
+                ? 'Calculating your price…'
                 : unavailable[flow.vehicle]
-                  ? `${vehicleById(flow.vehicle).name} canâ€™t take this trip. Choose another vehicle above to see its price.`
-                  : 'We couldnâ€™t price this route right now. Please try again shortly.'}
+                  ? `${vehicleById(flow.vehicle).name} can’t take this trip. Choose another vehicle above to see its price.`
+                  : 'We couldn’t price this route right now. Please try again shortly.'}
             </p>
           </div>
         )}
 
         <div className="mt-auto pt-6">
-          {/* Enabled only with a real quote in hand â€” continuing without one
+          {/* Enabled only with a real quote in hand — continuing without one
               would land on the payment step with nothing to charge for.
               A scheduled pickup must also be RESOLVED and still in the future:
               the backend rejects scheduled_pickup without a future pickUpTime,
