@@ -33,8 +33,14 @@ function Stepper({ value, onChange }) {
       >
         −
       </button>
+      {/* Wide enough for three digits, and tabular so every digit is the same
+          width. The ceiling is now 100, so this box would otherwise grow at 10
+          and again at 100 — and because it sits BETWEEN the two buttons, each
+          growth nudges "+" sideways under a cursor that is clicking it
+          repeatedly. Fixing the width keeps both buttons stationary across the
+          whole range. */}
       <div
-        className="min-w-[32px] text-center text-[20px] font-extrabold text-[#17131c]"
+        className="min-w-[52px] text-center text-[20px] font-extrabold tabular-nums text-[#17131c]"
         aria-live="polite"
       >
         {value}

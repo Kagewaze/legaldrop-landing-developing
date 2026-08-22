@@ -64,17 +64,17 @@ for (const n of [1, 2, 3, 4, 5]) {
   check(`car is available at ${n} package(s)`, packageCapacityRefusal('car', n) === null)
 }
 
-for (const n of [6, 7, 11, 12]) {
+for (const n of [6, 7, 11, 12, 13, 20, 50, 100]) {
   check(`car is unavailable at ${n} packages`, packageCapacityRefusal('car', n) === 'Up to 5 packages')
 }
 
 check('the boundary is exactly 5 → 6', packageCapacityRefusal('car', 5) === null && packageCapacityRefusal('car', 6) !== null)
 
-// >10 packages must not collapse the offering: every class without a capacity row stays
-// offered at every count the stepper can reach.
+// The ceiling must not collapse the offering: every class without a capacity row stays
+// offered at every count the stepper can reach, all the way to the maximum.
 for (const vehicle of VEHICLES) {
   if (vehicle.id === 'car') continue
-  for (const n of [1, 6, 11, 12]) {
+  for (const n of [1, 6, 11, 12, 13, 20, 50, 100]) {
     check(
       `${vehicle.name} stays available at ${n} packages`,
       packageCapacityRefusal(vehicle.id, n) === null
@@ -84,7 +84,9 @@ for (const vehicle of VEHICLES) {
 
 // The larger classes specifically, by the id the picker uses ('cargo', not 'cargovan').
 for (const id of ['minivan', 'cargo', 'boxtruck']) {
-  check(`${id} is offered at 11 and 12 packages`, packageCapacityRefusal(id, 11) === null && packageCapacityRefusal(id, 12) === null)
+  for (const n of [11, 12, 13, 20, 50, 100]) {
+    check(`${id} is offered at ${n} packages`, packageCapacityRefusal(id, n) === null)
+  }
 }
 
 // ── RUNTIME: the selection transitions ──────────────────────────────────────
@@ -101,6 +103,34 @@ check('6 → 5 does not resurrect a cleared selection', vehicleAfterPackageChang
 
 // ── WIRING ──────────────────────────────────────────────────────────────────
 const sendFlow = read('lib/send-flow.js')
+
+// THE CEILING IS THE API'S. CreateOrderDto.packageCount is @Min(1) @Max(100); a website
+// ceiling below it refuses orders the backend would take, and one above it lets someone
+// build a basket that get-fee rejects after they have chosen a vehicle and typed their
+// contact details. Both bounds are asserted so neither can drift alone.
+check(
+  'the general package ceiling matches the API @Max(100)',
+  /export const PACKAGE_COUNT_MAX = 100\b/.test(sendFlow),
+  'landing PACKAGE_COUNT_MAX must equal the backend CreateOrderDto @Max'
+)
+check(
+  'the package floor is still 1',
+  /export const PACKAGE_COUNT_MIN = 1\b/.test(sendFlow)
+)
+check(
+  'the ceiling is clamped in setPackageCount, not just in the stepper',
+  /Math\.min\(\s*PACKAGE_COUNT_MAX/.test(sendFlow),
+  'the stepper button is a UI affordance; the clamp is the rule'
+)
+
+// The general ceiling must not be mistaken for a capacity claim: at the maximum count, the
+// car is the ONLY class that becomes unavailable.
+const unavailableAtMax = VEHICLES.filter(v => packageCapacityRefusal(v.id, 100) !== null)
+check(
+  'at the maximum count the car is the only unavailable class',
+  unavailableAtMax.length === 1 && unavailableAtMax[0].id === 'car',
+  `also unavailable: ${unavailableAtMax.map(v => v.id).filter(id => id !== 'car').join(', ')}`
+)
 
 check(
   'send-flow re-evaluates the vehicle whenever the package count changes',

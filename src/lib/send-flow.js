@@ -110,7 +110,18 @@ export function contactIsComplete(contact) {
 }
 
 export const PACKAGE_COUNT_MIN = 1
-export const PACKAGE_COUNT_MAX = 12
+
+// The GENERAL ceiling, matched to the API's own: CreateOrderDto.packageCount is
+// @Min(1) @Max(100), so 12 was a website-only limit that refused orders the
+// backend would have accepted. It is not a capacity claim about any vehicle —
+// per-vehicle capacity is VEHICLE_PACKAGE_CAPACITY in components/send/vehicles,
+// where only the car declares one (5). Nothing here implies an SUV, minivan,
+// cargo van or box truck maximum.
+//
+// ⚠️ KEEP EQUAL TO THE BACKEND @Max. A website ceiling ABOVE it would let
+// someone build a basket the API rejects at get-fee, after they had picked a
+// vehicle and filled in contact details.
+export const PACKAGE_COUNT_MAX = 100
 
 // Weight bands, as in the design.
 //
