@@ -1,4 +1,5 @@
 import { apiKeyFor } from '@/components/send/vehicles'
+import { weightKgFor } from '@/lib/send-flow'
 
 // The one and only place the POST /order body is constructed.
 //
@@ -29,6 +30,9 @@ export function buildOrderPayload({ flow, quote, paymentIntentId }) {
     // two routing engines disagree and this value is what the fare was priced
     // from.
     distance: quote.distanceKm,
+    // ⚠️ PRICED INPUT — SEE THE packageCount NOTE BELOW. Omitting this made the
+    // server re-derive the fare with weight 0 and drop the $20 heavy surcharge.
+    weight: weightKgFor(flow.weight),
   }
 
   // At least one of phone/email is required. Only send what was actually
@@ -76,6 +80,22 @@ export function buildOrderPayload({ flow, quote, paymentIntentId }) {
     ...scheduling,
     // Normalised key ('cargovan', never the local 'cargo' id).
     vehicle: apiKeyFor(flow.vehicle),
+    // ⚠️ EVERY PRICED INPUT MUST APPEAR HERE. POST /order does NOT trust the
+    // amount already charged — it RE-DERIVES the fare from this payload
+    // (OrderService.create → calculateFee, feeOnly:true) and rejects the order
+    // if the result does not match the PaymentIntent to the cent.
+    //
+    // packageCount and receivers[].weight were both missing. The DTO defaults
+    // them to 1 and 0, so the server re-priced a 5-package 25 kg delivery as a
+    // 1-package 0 kg one: charged $68.50, re-derived $16.50, rejected — AFTER
+    // the card was charged. Every order with 2+ packages or a package over
+    // 15 kg failed that way, leaving the customer paid with no delivery.
+    //
+    // The rule this encodes: anything paymentInputsHash covers is an input the
+    // fare depends on, so it belongs in this payload too. Adding a priced
+    // option (dimensions, a service tier) without adding it here reopens
+    // exactly this failure.
+    packageCount: flow.packageCount,
     // 'other' for general consumer packages, unless a ?section= preset set one
     // of the other whitelisted values on step 1.
     section: flow.section ?? 'other',

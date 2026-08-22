@@ -152,6 +152,29 @@ check(
   'this is the last gate before get-fee mints a real PaymentIntent'
 )
 
+// PRICED-INPUT PARITY. POST /order does not trust the amount already charged — it re-derives
+// the fare from its own payload and rejects the order if it disagrees with the PaymentIntent.
+// So every input the price depends on must appear in BOTH the get-fee body and the order
+// body. When packageCount and weight were missing from the order body, the server re-priced a
+// 5-package 25 kg delivery as a 1-package 0 kg one and rejected it after the card was
+// charged. paymentInputsHash is the list of priced inputs; these two are the ones that reach
+// the wire.
+const orderPayload = read('components/send/buildOrderPayload.js')
+check(
+  'the order payload sends packageCount',
+  /packageCount:\s*flow\.packageCount/.test(orderPayload),
+  'omitting it makes the server re-price the order at 1 package and reject it'
+)
+check(
+  'the order payload sends the package weight',
+  /weight:\s*weightKgFor\(flow\.weight\)/.test(orderPayload),
+  'omitting it drops the heavy surcharge from the re-derived fare'
+)
+check(
+  'the order payload sends the vehicle as a normalised api key',
+  /vehicle:\s*apiKeyFor\(flow\.vehicle\)/.test(orderPayload)
+)
+
 const details = read('app/send/details/page.jsx')
 check(
   'the details step passes the package count to the picker',
