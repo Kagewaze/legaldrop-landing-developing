@@ -102,8 +102,12 @@ export default function SendDetailsPage() {
     )
   }
 
-  const vehicle = vehicleById(flow.vehicle)
-  const quote = quotes[flow.vehicle] ?? null
+  // flow.vehicle is NULL whenever no vehicle can currently be booked for this
+  // load — the package count outgrew the one that was selected. vehicleById
+  // falls back to the car for an unknown id, so it must not be reached with
+  // null: that would name and price a vehicle the customer no longer has.
+  const vehicle = flow.vehicle ? vehicleById(flow.vehicle) : null
+  const quote = flow.vehicle ? (quotes[flow.vehicle] ?? null) : null
   const weightLabel = WEIGHT_OPTIONS.find(
     (option) => option.id === flow.weight,
   )?.label
@@ -142,6 +146,7 @@ export default function SendDetailsPage() {
           unavailable={unavailable}
           distanceKm={distanceKm}
           status={status}
+          packageCount={flow.packageCount}
         />
 
         <label className="mt-6 block max-w-[420px]">
@@ -195,7 +200,7 @@ export default function SendDetailsPage() {
       </div>
 
       <div className="flex flex-col border-t border-[#f0eef2] bg-[#faf7fd] px-6 py-8 sm:px-8 lg:border-l lg:border-t-0">
-        {quote ? (
+        {quote && vehicle ? (
           <PriceBreakdown
             quote={quote}
             vehicleName={vehicle.name}
@@ -211,13 +216,20 @@ export default function SendDetailsPage() {
                 failure. When the backend has specifically REFUSED this vehicle
                 — bike over its 10 km cap — retrying can never succeed, and
                 telling someone to wait leaves them on a dead end with no hint
-                that another vehicle would work. Say which it is. */}
+                that another vehicle would work. Say which it is.
+
+                No vehicle at all is its own case, and NOT an error: the load
+                simply outgrew the one that was selected. It says what to do
+                next and does not apologise for something that has not gone
+                wrong. */}
             <p className="mt-3 text-[15px] text-[#5f5868]">
-              {status === 'loading' || status === 'idle'
-                ? 'Calculating your price…'
-                : unavailable[flow.vehicle]
-                  ? `${vehicleById(flow.vehicle).name} can’t take this trip. Choose another vehicle above to see its price.`
-                  : 'We couldn’t price this route right now. Please try again shortly.'}
+              {!flow.vehicle
+                ? 'Choose a vehicle above to see your price.'
+                : status === 'loading' || status === 'idle'
+                  ? 'Calculating your price…'
+                  : unavailable[flow.vehicle]
+                    ? `${vehicleById(flow.vehicle).name} can’t take this trip. Choose another vehicle above to see its price.`
+                    : 'We couldn’t price this route right now. Please try again shortly.'}
             </p>
           </div>
         )}

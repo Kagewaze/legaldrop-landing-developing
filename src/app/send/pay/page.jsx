@@ -23,7 +23,11 @@ import { ContactFields } from '@/components/send/ContactFields'
 import { PaymentForm } from '@/components/send/PaymentForm'
 import { PriceBreakdown, formatMoney } from '@/components/send/PriceBreakdown'
 import { buildOrderPayload } from '@/components/send/buildOrderPayload'
-import { apiKeyFor, vehicleById } from '@/components/send/vehicles'
+import {
+  apiKeyFor,
+  packageCapacityRefusal,
+  vehicleById,
+} from '@/components/send/vehicles'
 
 // Step 3 — payment. THIS CHARGES REAL CARDS ON LIVE STRIPE KEYS.
 //
@@ -159,6 +163,25 @@ export default function SendPayPage() {
 
     if (!hasBothAddresses(flow)) {
       router.replace('/send')
+      return
+    }
+
+    // THE LAST GATE BEFORE ANY STRIPE OBJECT EXISTS.
+    //
+    // Every line below builds toward a real charge, and each one names the
+    // vehicle: quote-itemized, get-fee (which mints the PaymentIntent), and the
+    // order payload. A missing vehicle would be silently resolved to the car by
+    // apiKeyFor's fallback, and an over-capacity car would be refused by the
+    // backend only AFTER the card was charged — the paid-but-no-order failure.
+    //
+    // Both are recoverable by going back one step, so this sends them there
+    // rather than showing an error. Reached by a deep link, a restored session
+    // predating the capacity rule, or a back-navigation that changed the count.
+    if (
+      !flow.vehicle ||
+      packageCapacityRefusal(flow.vehicle, flow.packageCount)
+    ) {
+      router.replace('/send/details')
       return
     }
 

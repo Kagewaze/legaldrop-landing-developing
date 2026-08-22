@@ -14,6 +14,10 @@ import {
   hasBothAddresses,
   isPlace,
 } from '@/lib/send-flow-contract'
+import {
+  packageCapacityRefusal,
+  vehicleAfterPackageChange,
+} from '@/components/send/vehicles'
 
 // Send-flow state, shared across /send and /send/details.
 //
@@ -237,6 +241,8 @@ function readStored() {
 
     const parsed = JSON.parse(raw)
 
+    const packageCount = parsed?.packageCount ?? EMPTY_STATE.packageCount
+
     return {
       ...EMPTY_STATE,
       ...parsed,
@@ -244,6 +250,14 @@ function readStored() {
       // so re-validate rather than trusting whatever is in storage.
       pickup: isPlace(parsed?.pickup) ? parsed.pickup : null,
       dropoff: isPlace(parsed?.dropoff) ? parsed.dropoff : null,
+      // Re-checked on the way out of storage for the same reason as the
+      // coordinates. A record written before this rule existed can hold
+      // car + 12 packages, and restoring that pair would put an unbookable
+      // vehicle back into the flow with a fare the backend will refuse.
+      vehicle: vehicleAfterPackageChange(
+        parsed?.vehicle ?? EMPTY_STATE.vehicle,
+        packageCount,
+      ),
       // Merged rather than replaced, so a record written before the contact
       // fields existed (or a partial one) still yields every key.
       contact: { ...EMPTY_STATE.contact, ...(parsed?.contact ?? {}) },
@@ -295,23 +309,48 @@ export function SendFlowProvider({ children }) {
     (place) => setState((prev) => ({ ...prev, dropoff: place })),
     [],
   )
+  // Package count and vehicle are changed TOGETHER, in one state update.
+  //
+  // The count can invalidate the vehicle (a car stops at 5 packages), and doing
+  // that here rather than in a page effect is what makes the invalidation
+  // atomic: there is no render in which packageCount is 6 while `vehicle` is
+  // still 'car'. That intermediate frame is exactly how a stale fare survives
+  // long enough to be read — and paymentInputsHash below is built from both
+  // fields, so a stale pair is also a PaymentIntent for the wrong amount.
+  //
+  // Clearing to null, never substituting a bigger vehicle: see
+  // vehicleAfterPackageChange.
   const setPackageCount = useCallback(
     (count) =>
-      setState((prev) => ({
-        ...prev,
-        packageCount: Math.min(
+      setState((prev) => {
+        const packageCount = Math.min(
           PACKAGE_COUNT_MAX,
           Math.max(PACKAGE_COUNT_MIN, count),
-        ),
-      })),
+        )
+
+        return {
+          ...prev,
+          packageCount,
+          vehicle: vehicleAfterPackageChange(prev.vehicle, packageCount),
+        }
+      }),
     [],
   )
   const setWeight = useCallback(
     (weight) => setState((prev) => ({ ...prev, weight })),
     [],
   )
+  // Refuses a vehicle that cannot take the current load. The picker already
+  // renders those cards disabled, so this is the backstop for the paths a
+  // disabled button does not cover — keyboard activation, a restored session,
+  // and any future caller.
   const setVehicle = useCallback(
-    (vehicle) => setState((prev) => ({ ...prev, vehicle })),
+    (vehicle) =>
+      setState((prev) =>
+        packageCapacityRefusal(vehicle, prev.packageCount)
+          ? prev
+          : { ...prev, vehicle },
+      ),
     [],
   )
   const setSection = useCallback(

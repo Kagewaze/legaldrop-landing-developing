@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 
 import { guestFetch } from '@/lib/guest-session'
 import { weightKgFor } from '@/lib/send-flow'
-import { VEHICLES } from '@/components/send/vehicles'
+import { VEHICLES, packageCapacityRefusal } from '@/components/send/vehicles'
 
 // Live pricing for every vehicle.
 //
@@ -134,6 +134,15 @@ export function useVehicleQuotes({ pickup, dropoff, packageCount, weight }) {
         // 20/60s per-IP throttle).
         const entries = await Promise.all(
           VEHICLES.map(async (vehicle) => {
+            // Over its package capacity: not asked for, so no price exists to
+            // go stale. The backend would 400 this exact request anyway (the
+            // rule is enforced there, not here) — skipping it saves a round
+            // trip and, more importantly, guarantees `quotes[car]` is empty
+            // rather than holding the fare from the last count that fit.
+            if (packageCapacityRefusal(vehicle.id, packageCount)) {
+              return [vehicle.id, null, true]
+            }
+
             try {
               const response = await guestFetch('/order/quote-itemized', {
                 method: 'POST',

@@ -70,3 +70,66 @@ export function vehicleById(id) {
 export function apiKeyFor(id) {
   return vehicleById(id).apiKey
 }
+
+// ── PACKAGE CAPACITY ────────────────────────────────────────────────────────
+//
+// A MIRROR OF THE BACKEND RULE, NOT A SECOND SOURCE OF TRUTH.
+//
+// The authority is src/utils/vehicle.utils.ts (VEHICLE_PACKAGE_CAPACITY) in the
+// API repo, which refuses an over-capacity car on quote-itemized, get-fee, order
+// creation and order groups alike. Nothing here can let a booking through that
+// the backend would reject; this exists so the customer is told BEFORE they pick
+// a vehicle and start typing card details, instead of after.
+//
+// ⚠️ ONE ROW, AND IT IS FOUNDER-APPROVED: a car carries at most 5 packages.
+// Do NOT add speculative capacities for bike/suv/minivan/cargo van/box truck.
+// There is no such rule in the backend, and inventing one here would hide a
+// vehicle the customer is entitled to book — which is precisely the bug that
+// made >10 packages look unserviceable. A vehicle absent from this table has no
+// declared limit and must stay offered at every package count.
+//
+// KEYED BY apiKey, matching the backend table, so the two can be compared
+// literally. Callers pass the local design id and this resolves it.
+export const VEHICLE_PACKAGE_CAPACITY = {
+  car: 5,
+}
+
+export function vehicleCapacityFor(id) {
+  return VEHICLE_PACKAGE_CAPACITY[apiKeyFor(id)] ?? null
+}
+
+// null when the vehicle may take the load, otherwise a short label for the card.
+//
+// Deliberately stated as a capability ("Up to 5 packages") rather than as a
+// failure: the vehicle is not broken and the trip is not impossible — the
+// customer just needs a bigger one, and the number is the useful part.
+export function packageCapacityRefusal(id, packageCount) {
+  const limit = vehicleCapacityFor(id)
+
+  if (limit === null) {
+    return null
+  }
+
+  const count = Number(packageCount)
+
+  if (!Number.isFinite(count) || count <= limit) {
+    return null
+  }
+
+  return `Up to ${limit} packages`
+}
+
+// The selection rule the whole flow shares: a vehicle that cannot take the load
+// must not stay selected. Returns the vehicle to keep, or null to force a fresh
+// choice.
+//
+// It returns NULL rather than substituting the next size up. Silently moving
+// someone onto a more expensive vehicle — and then charging them for it — is not
+// a correction the customer asked for; the flow blocks and asks instead.
+export function vehicleAfterPackageChange(id, packageCount) {
+  if (!id) {
+    return null
+  }
+
+  return packageCapacityRefusal(id, packageCount) ? null : id
+}
