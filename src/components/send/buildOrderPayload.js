@@ -87,9 +87,18 @@ export function buildOrderPayload({ flow, quote, paymentIntentId }) {
     //
     // packageCount and receivers[].weight were both missing. The DTO defaults
     // them to 1 and 0, so the server re-priced a 5-package 25 kg delivery as a
-    // 1-package 0 kg one: charged $68.50, re-derived $16.50, rejected — AFTER
-    // the card was charged. Every order with 2+ packages or a package over
-    // 15 kg failed that way, leaving the customer paid with no delivery.
+    // 1-package 0 kg one and rejected it — AFTER the card was charged. Every
+    // order with 2+ packages or a package over 15 kg failed that way, leaving
+    // the customer paid with no delivery.
+    //
+    // Worked example, car, from the current rate table. STATE THE DISTANCE when
+    // quoting these numbers: the shortfall is the extra-package and heavy
+    // components, which do NOT vary with distance, so the same defect shows
+    // different totals per trip and looks inconsistent when the distance is left
+    // out.
+    //   10 km: charged $68.50, re-derived $16.50
+    //    5 km: charged $64.25, re-derived $12.25
+    // Both are a $52.00 shortfall — 4 × $8 extra-package + $20 heavy.
     //
     // The rule this encodes: anything paymentInputsHash covers is an input the
     // fare depends on, so it belongs in this payload too. Adding a priced
