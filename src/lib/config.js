@@ -59,6 +59,30 @@ export const BRAND = {
   legalName: 'LegalDrop',
 }
 
+// DropBatch is OFF, and this constant is the only place that decides it.
+//
+// WHY. DropBatch has real matching, pricing, capacity and messaging behind it,
+// and none of the lifecycle that turns an accepted request into a delivery:
+// there is no payment, no Order, no driver execution, no tracking, no proof of
+// delivery, no completion, no driver earning, no payout, no refund, and no
+// cancel or expiry handling. A booking that is accepted today reserves capacity
+// and then stops. Nothing on this site can book — the public projection carries
+// no trip id — but the site must not advertise a product that cannot be
+// completed, so the whole surface is switched off in one place instead of being
+// argued about page by page.
+//
+// WHAT IT GOVERNS. Everything DropBatch on this site:
+//   - ROUTES.dropBatch.live (src/lib/navigation.js), which is what Header,
+//     Footer and the home services grid already read;
+//   - the /drop-batch page itself, which 404s while this is false;
+//   - the DropBatch price card in the /send flow, via useDropBatchQuote, which
+//     also stops the public quote request being made at all.
+//
+// A plain constant rather than NEXT_PUBLIC_*: this is a product decision that
+// belongs in source and in review, not an operator toggle. Flip it to true to
+// restore every surface above — nothing has been deleted.
+export const DROPBATCH_ENABLED = false
+
 // Intentionally NOT exported for use in next.config.js.
 //
 // The /pay/:code rewrite there must keep its hardcoded destination: Next.js

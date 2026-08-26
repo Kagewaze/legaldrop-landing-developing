@@ -1,4 +1,7 @@
+import { notFound } from 'next/navigation'
+
 import { TripBoard } from '@/components/dropbatch/TripBoard'
+import { DROPBATCH_ENABLED } from '@/lib/config'
 import { fetchPublicTrips } from '@/lib/drop-batch'
 
 // /drop-batch — the public DropBatch product page.
@@ -66,6 +69,20 @@ const STEPS = [
 ]
 
 export default async function DropBatchPage() {
+  // ⚠️ UNLINKING IS NOT CONTAINMENT ON ITS OWN. ROUTES.dropBatch.live already
+  // drops this page out of Header, Footer and the services grid, but the route
+  // still resolves for anyone who knows or guesses the URL — and what it serves
+  // is a live-looking product page listing real trips. While DropBatch cannot
+  // be completed (no payment, no execution, no tracking, no completion), the
+  // page must not exist to the public at all.
+  //
+  // notFound() rather than a redirect or a "coming soon": it is the smallest
+  // reversible guard, it leaves every line below untouched for the day the
+  // lifecycle lands, and it makes the flag flip genuinely sufficient.
+  if (!DROPBATCH_ENABLED) {
+    notFound()
+  }
+
   // Server-fetched from the default Toronto origin so the board is populated on
   // first paint — no client request, no geolocation prompt. A failure here must
   // not take the page down: the board renders its own empty/error handling and

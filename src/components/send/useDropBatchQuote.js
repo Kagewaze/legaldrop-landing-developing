@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-import { API_BASE_URL } from '@/lib/config'
+import { API_BASE_URL, DROPBATCH_ENABLED } from '@/lib/config'
 import { apiKeyFor } from '@/components/send/vehicles'
 import { isFutureInstant } from '@/lib/toronto-time'
 
@@ -47,6 +47,14 @@ function inputSignature(input) {
 // Everything the DTO requires must be present and committed. A typed address with no
 // committed place has no coordinates and is therefore not enough.
 function buildRequest(input) {
+  // The containment switch, applied where the question is formed rather than
+  // where the answer is rendered: returning null here means no DTO, so no
+  // request is ever sent to /drop-batch/public/quote and the hook stays IDLE —
+  // `show` is false and the card never mounts. Gating the JSX instead would
+  // still have quoted a hidden feature on every scheduled pickup. See
+  // DROPBATCH_ENABLED in lib/config.
+  if (!DROPBATCH_ENABLED) return null
+
   const { pickup, dropoff, pickupTiming, scheduledPickupAt, vehicle, packageCount } = input ?? {}
 
   if (pickupTiming !== 'scheduled') return null
