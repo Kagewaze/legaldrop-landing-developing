@@ -1,6 +1,7 @@
 import Image from 'next/image'
 
 import { API_BASE_URL } from '@/lib/config'
+import { partnerTrackingIdentity, trackingPollUrl } from '@/lib/tracking.mjs'
 import {
   CompletionMarker,
   InfoList,
@@ -50,9 +51,12 @@ function titleCase(value) {
 
 async function getPartnerTrackingDetails(trackingToken) {
   try {
-    const response = await fetch(`${TRACK_PARTNER_ENDPOINT}/${trackingToken}`, {
-      cache: 'no-store',
-    })
+    const response = await fetch(
+      trackingPollUrl(TRACK_PARTNER_ENDPOINT, trackingToken),
+      {
+        cache: 'no-store',
+      },
+    )
 
     const contentType = response.headers.get('content-type') ?? ''
     const isJson = contentType.includes('application/json')
@@ -116,8 +120,16 @@ export default async function TrackPartnerPage({ params }) {
     )
   }
 
+  // The route token is the credential for every partner request, server-side
+  // and client-side alike. `displayCode` is the short human-readable reference
+  // and is used only for rendering — see partnerTrackingIdentity for the bug
+  // that a `trackingCode ?? trackingToken` fallback caused here.
+  const { pollCredential, displayCode } = partnerTrackingIdentity({
+    routeTrackingToken: trackingToken,
+    payload: tracking,
+  })
+
   const {
-    trackingCode,
     status,
     message,
     createdAt,
@@ -145,7 +157,8 @@ export default async function TrackPartnerPage({ params }) {
   const receiverList = Array.isArray(receivers) ? receivers : []
 
   const orderItems = [
-    { key: 'tracking-code', label: 'Tracking Code', value: trackingCode ?? trackingToken },
+    // Never the token: it is a credential, not a label.
+    { key: 'tracking-code', label: 'Tracking Code', value: displayCode ?? '--' },
     { key: 'category', label: 'Category', value: titleCase(orderCategory) },
     { key: 'vehicle', label: 'Vehicle', value: titleCase(vehicle) },
     { key: 'created', label: 'Order Placed', value: formatDate(createdAt) },
@@ -182,7 +195,7 @@ export default async function TrackPartnerPage({ params }) {
         <TrackingHeader eyebrow="Order tracking" title="Track your delivery" />
 
         <PartnerLiveTracking
-          trackingToken={trackingCode ?? trackingToken}
+          trackingToken={pollCredential}
           initialStatus={status}
           initialMessage={message}
           initialDriverLocation={driverLocation}

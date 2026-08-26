@@ -3,6 +3,14 @@
 import { useEffect, useState } from 'react'
 
 import { API_BASE_URL } from '@/lib/config'
+// TERMINAL_STATUSES and the polling loop are shared with the customer route so
+// the two surfaces cannot drift apart. See src/lib/tracking.mjs for why the
+// terminal set is an allowlist and why polling is single-flight.
+import {
+  isTerminalStatus,
+  startTrackingPoll,
+  trackingPollUrl,
+} from '@/lib/tracking.mjs'
 import { statusPillClass } from '@/components/track/TrackingChrome'
 
 import { PartnerTrackingMap } from './PartnerTrackingMap'
@@ -11,17 +19,6 @@ const TRACK_PARTNER_ENDPOINT = `${API_BASE_URL}/public/track-partner`
 
 // Poll cadence for live driver location + ETA updates.
 const POLL_INTERVAL_MS = 6000
-
-// Terminal order statuses — confirmed against the backend's authoritative
-// TaskStatusType (legal_drop_be, src/modules/order/entities/delivery_point.entity.ts),
-// the 9-value type order.status is declared as. These 4 are the complete
-// terminal set; the other 5 (pending, assigned, ongoing,
-// awaiting_seller_confirmation, awaiting_handoff) are all non-terminal.
-// Deliberately an allowlist (not "anything that isn't 'ongoing'") — the old
-// ACTIVE_STATUS === 'ongoing' check would have frozen polling on 'assigned',
-// 'awaiting_seller_confirmation', and 'awaiting_handoff', which are real
-// states orders pass through.
-const TERMINAL_STATUSES = ['delivered', 'cancelled', 'failed', 'refunded']
 
 // Small formatting helpers, mirrored from the private view so the live status
 // card renders identically. Kept local to avoid a shared-module refactor
@@ -78,29 +75,16 @@ export function PartnerLiveTracking({
     // Keep polling for any non-terminal status (pending, ongoing, and any
     // future in-between status this frontend doesn't explicitly know about)
     // — only stop once the order has actually reached a terminal state.
-    if (TERMINAL_STATUSES.includes(status)) {
+    if (isTerminalStatus(status)) {
       return undefined
     }
 
-    let cancelled = false
-
-    const poll = async () => {
-      try {
-        const response = await fetch(`${TRACK_PARTNER_ENDPOINT}/${trackingToken}`, {
-          cache: 'no-store',
-        })
-
-        if (!response.ok) {
-          return
-        }
-
-        const payload = await response.json()
-
-        if (cancelled || !payload?.success || !payload.data) {
-          return
-        }
-
-        const data = payload.data
+    // `trackingToken` is the opaque credential from the route, never the short
+    // display code — /public/track-partner is keyed by the token alone.
+    return startTrackingPoll({
+      url: trackingPollUrl(TRACK_PARTNER_ENDPOINT, trackingToken),
+      intervalMs: POLL_INTERVAL_MS,
+      onData: (data) => {
         setStatus(data.status)
         setMessage(data.message)
         setDriverLocation(data.driverLocation)
@@ -108,17 +92,8 @@ export function PartnerLiveTracking({
         setSenderLocation(data.senderLocation)
         setReceivers(Array.isArray(data.receivers) ? data.receivers : [])
         setRoute(data.route)
-      } catch (error) {
-        // Ignore transient polling errors; the next tick will retry.
-      }
-    }
-
-    const intervalId = setInterval(poll, POLL_INTERVAL_MS)
-
-    return () => {
-      cancelled = true
-      clearInterval(intervalId)
-    }
+      },
+    })
   }, [trackingToken, status])
 
   const etaText = formatEta(eta)
@@ -169,7 +144,7 @@ export function PartnerLiveTracking({
       />
 
       <footer className="pt-2 text-center text-[13px] text-[#5f5868]">
-        {TERMINAL_STATUSES.includes(status)
+        {isTerminalStatus(status)
           ? 'This order is complete — no further updates.'
           : 'This page updates automatically as your driver moves.'}
       </footer>
