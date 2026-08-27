@@ -77,6 +77,26 @@ export function buildOrderPayload({ flow, quote, paymentIntentId }) {
     senderAddress: pickup.address,
     senderName: contact.senderName.trim(),
     senderPhone: contact.senderPhone.trim(),
+    // A1 — THE BOOKING DIRECTION THIS FLOW STATES, AND IT IS ALWAYS 'send'.
+    //
+    // /send is the "I am shipping something" form: the person filling it in controls the
+    // ORIGIN and the counterparty is at the destination. That is the definition of 'send',
+    // so this flow STATES it as a fact rather than deriving it.
+    //
+    // A LITERAL, DELIBERATELY. It is not read from the route, form state, the contact fields
+    // or the guest session, because none of those is the reason the value is 'send' — the
+    // identity of THIS FORM is. Anything computed here would be an inference dressed as a
+    // fact, and would start returning the wrong answer the moment a second flow reused this
+    // builder.
+    //
+    // Server contract: optional, @IsIn(['send','receive','third_party']), NO default. An
+    // omitted field persists NULL, meaning "the client did not state a direction" — which is
+    // what every landing order created before this line meant, and still means. Do NOT send
+    // an explicit null instead: the DTO rejects it (@ValidateIf keys on undefined alone), so
+    // omission is the only spelling of "not stated" on the wire.
+    //
+    // Case matters: @IsIn is case-sensitive and the server applies no normalising transform.
+    bookingDirection: 'send',
     ...scheduling,
     // Normalised key ('cargovan', never the local 'cargo' id).
     vehicle: apiKeyFor(flow.vehicle),
