@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-import { importMapsLibrary } from '@/lib/maps-loader'
+import {
+  importMapsLibrary,
+  subscribeMapsAuthFailure,
+} from '@/lib/maps-loader'
 import {
   computeMovementHeading,
   normalizeCoordinate,
@@ -26,19 +29,58 @@ export function TrackingMap({ driverLocation, isLive = true }) {
   const markerVehicleRef = useRef(null)
   const previousDriverRef = useRef(null)
   const followingRef = useRef(true)
+  const mapUnavailableRef = useRef(false)
   const [following, setFollowing] = useState(true)
   const [status, setStatus] = useState('loading') // 'loading' | 'ready' | 'error'
 
   const driver = normalizeCoordinate(driverLocation)
   const hasValidCoords = driver != null
 
+  function markMapUnavailable(error, context) {
+    if (mapUnavailableRef.current) return
+
+    mapUnavailableRef.current = true
+    followingRef.current = false
+    setFollowing(false)
+    setStatus('error')
+    console.error(
+      `[consumer-tracking-map] Google Maps ${context}; map disabled.`,
+      error,
+    )
+  }
+
+  function runMapOperation(context, operation) {
+    if (mapUnavailableRef.current) return false
+
+    try {
+      operation()
+      return true
+    } catch (error) {
+      markMapUnavailable(error, context)
+      return false
+    }
+  }
+
   function recenter() {
-    if (!driver || !mapInstanceRef.current) return
+    if (!driver || !mapInstanceRef.current || mapUnavailableRef.current) return
     followingRef.current = true
     setFollowing(true)
-    mapInstanceRef.current.setZoom(DEFAULT_ZOOM)
-    mapInstanceRef.current.panTo(driver)
+    runMapOperation('recenter failed', () => {
+      mapInstanceRef.current.setZoom(DEFAULT_ZOOM)
+      mapInstanceRef.current.panTo(driver)
+    })
   }
+
+  useEffect(
+    () =>
+      subscribeMapsAuthFailure(() => {
+        markMapUnavailable(
+          new Error('Google Maps authentication failed.'),
+          'authentication failed',
+        )
+      }),
+    [],
+  )
 
   // Initialise the map + marker exactly once. The bootstrap loader / Map ID
   // logic is reused untouched; later coordinate changes only pan the map.
@@ -65,21 +107,27 @@ export function TrackingMap({ driverLocation, isLive = true }) {
           return
         }
 
-        const map = new Map(mapRef.current, {
-          center: driver,
-          zoom: DEFAULT_ZOOM,
-          mapId: MAP_ID,
-          mapTypeControl: false,
-          streetViewControl: false,
-          fullscreenControl: false,
+        let map
+        let markerResult
+        const initialized = runMapOperation('initialization failed', () => {
+          map = new Map(mapRef.current, {
+            center: driver,
+            zoom: DEFAULT_ZOOM,
+            mapId: MAP_ID,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: false,
+          })
+          markerResult = createDriverMarker({
+            AdvancedMarkerElement,
+            map,
+            position: driver,
+            heading: null,
+          })
         })
+        if (!initialized || cancelled) return
 
-        const { marker, vehicle } = createDriverMarker({
-          AdvancedMarkerElement,
-          map,
-          position: driver,
-          heading: null,
-        })
+        const { marker, vehicle } = markerResult
         markerRef.current = marker
         markerVehicleRef.current = vehicle
         previousDriverRef.current = driver
@@ -88,7 +136,7 @@ export function TrackingMap({ driverLocation, isLive = true }) {
         setStatus('ready')
       } catch (error) {
         if (!cancelled) {
-          setStatus('error')
+          markMapUnavailable(error, 'initialization failed')
         }
       }
     }
@@ -105,24 +153,40 @@ export function TrackingMap({ driverLocation, isLive = true }) {
   // heading because the consumer payload has no heading field. Camera updates
   // happen only while follow mode remains enabled.
   useEffect(() => {
-    if (!driver || !mapInstanceRef.current || !markerRef.current) {
+    if (
+      !driver ||
+      !mapInstanceRef.current ||
+      !markerRef.current ||
+      mapUnavailableRef.current
+    ) {
       return
     }
 
     const heading = computeMovementHeading(previousDriverRef.current, driver)
-    markerRef.current.position = driver
-    setDriverMarkerHeading(markerVehicleRef.current, heading)
+    const updated = runMapOperation('driver update failed', () => {
+      markerRef.current.position = driver
+      setDriverMarkerHeading(markerVehicleRef.current, heading)
 
-    if (followingRef.current) {
-      mapInstanceRef.current.panTo(driver)
-    }
+      if (followingRef.current) {
+        mapInstanceRef.current.panTo(driver)
+      }
+    })
 
-    previousDriverRef.current = driver
+    if (updated) previousDriverRef.current = driver
+    // The normalized `driver` object is recreated during render. Coordinates
+    // are the intentional update contract; depending on the object would rerun
+    // this Google mutation after unrelated state changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [driver?.lat, driver?.lng])
 
   useEffect(() => {
     return () => {
-      if (markerRef.current) markerRef.current.map = null
+      try {
+        if (markerRef.current) markerRef.current.map = null
+      } catch (error) {
+        // An unauthorized Maps runtime can reject teardown mutations too. The
+        // container is being removed, so clearing local references is enough.
+      }
       markerRef.current = null
       markerVehicleRef.current = null
       previousDriverRef.current = null
@@ -158,10 +222,19 @@ export function TrackingMap({ driverLocation, isLive = true }) {
           }
         />
         {status !== 'ready' && (
-          <div className="absolute inset-0 flex items-center justify-center px-4 text-center text-[13px] text-[#5f5868]">
-            {status === 'error'
-              ? 'We couldn’t load the map right now.'
-              : 'Loading map…'}
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface-tint px-4 text-center text-[#5f5868]">
+            {status === 'error' ? (
+              <>
+                <p className="text-sm font-semibold text-[#17131c]">
+                  Map temporarily unavailable
+                </p>
+                <p className="mt-2 text-[13px]">
+                  Delivery status and tracking updates are still available.
+                </p>
+              </>
+            ) : (
+              <p className="text-[13px]">Loading map…</p>
+            )}
           </div>
         )}
         {status === 'ready' && !following ? (

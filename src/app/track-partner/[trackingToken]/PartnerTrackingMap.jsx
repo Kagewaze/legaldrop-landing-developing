@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-import { importMapsLibrary } from '@/lib/maps-loader'
+import {
+  importMapsLibrary,
+  subscribeMapsAuthFailure,
+} from '@/lib/maps-loader'
 import {
   collectBoundsCoordinates,
   getPartnerGeography,
@@ -42,6 +45,7 @@ export function PartnerTrackingMap({
   const appliedGeographySignatureRef = useRef(null)
   const initialViewportSetRef = useRef(false)
   const followingRef = useRef(true)
+  const mapUnavailableRef = useRef(false)
   const [following, setFollowing] = useState(true)
   const [status, setStatus] = useState('loading') // 'loading' | 'ready' | 'error'
 
@@ -59,13 +63,51 @@ export function PartnerTrackingMap({
     geography.route.length > 0
   const hasMapContent = hasValidDriver || hasStaticGeography
 
+  function markMapUnavailable(error, context) {
+    if (mapUnavailableRef.current) return
+
+    mapUnavailableRef.current = true
+    followingRef.current = false
+    setFollowing(false)
+    setStatus('error')
+    console.error(
+      `[partner-tracking-map] Google Maps ${context}; map disabled.`,
+      error,
+    )
+  }
+
+  function runMapOperation(context, operation) {
+    if (mapUnavailableRef.current) return false
+
+    try {
+      operation()
+      return true
+    } catch (error) {
+      markMapUnavailable(error, context)
+      return false
+    }
+  }
+
   function recenter() {
-    if (!driver || !mapInstanceRef.current) return
+    if (!driver || !mapInstanceRef.current || mapUnavailableRef.current) return
     followingRef.current = true
     setFollowing(true)
-    mapInstanceRef.current.setZoom(DEFAULT_ZOOM)
-    mapInstanceRef.current.panTo(driver)
+    runMapOperation('recenter failed', () => {
+      mapInstanceRef.current.setZoom(DEFAULT_ZOOM)
+      mapInstanceRef.current.panTo(driver)
+    })
   }
+
+  useEffect(
+    () =>
+      subscribeMapsAuthFailure(() => {
+        markMapUnavailable(
+          new Error('Google Maps authentication failed.'),
+          'authentication failed',
+        )
+      }),
+    [],
+  )
 
   // Initialise the Map and driver independently from the static delivery
   // layers. The reconciliation effect below owns pickup, stops and route.
@@ -103,28 +145,40 @@ export function PartnerTrackingMap({
           geography.destinations[0]?.position ??
           geography.route[0]
 
-        const map = new Map(mapRef.current, {
-          center: initialCenter,
-          zoom: DEFAULT_ZOOM,
-          mapId: MAP_ID,
-          mapTypeControl: false,
-          streetViewControl: false,
-          fullscreenControl: false,
+        let map
+        const mapCreated = runMapOperation('initialization failed', () => {
+          map = new Map(mapRef.current, {
+            center: initialCenter,
+            zoom: DEFAULT_ZOOM,
+            mapId: MAP_ID,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: false,
+          })
         })
+        if (!mapCreated || cancelled) return
 
         // Car marker for the live driver position, if already assigned. If
         // the driver is assigned later, the update effect below creates it.
         if (driver) {
-          const { marker, vehicle } = createDriverMarker({
-            AdvancedMarkerElement,
-            map,
-            position: driver,
-            heading: resolveDriverHeading({
-              backendHeading: driverLocation?.heading,
-              previous: null,
-              current: driver,
-            }),
-          })
+          let markerResult
+          const markerCreated = runMapOperation(
+            'driver marker creation failed',
+            () => {
+              markerResult = createDriverMarker({
+                AdvancedMarkerElement,
+                map,
+                position: driver,
+                heading: resolveDriverHeading({
+                  backendHeading: driverLocation?.heading,
+                  previous: null,
+                  current: driver,
+                }),
+              })
+            },
+          )
+          if (!markerCreated) return
+          const { marker, vehicle } = markerResult
           carMarkerRef.current = marker
           carInnerRef.current = vehicle
           prevDriverRef.current = driver
@@ -134,7 +188,7 @@ export function PartnerTrackingMap({
         setStatus('ready')
       } catch (error) {
         if (!cancelled) {
-          setStatus('error')
+          markMapUnavailable(error, 'initialization failed')
         }
       }
     }
@@ -169,14 +223,14 @@ export function PartnerTrackingMap({
       return
     }
 
-    staticMarkersRef.current.forEach((marker) => {
-      marker.map = null
-    })
-    staticMarkersRef.current = []
-    routePolylineRef.current?.setMap(null)
-    routePolylineRef.current = null
+    runMapOperation('geography update failed', () => {
+      staticMarkersRef.current.forEach((marker) => {
+        marker.map = null
+      })
+      staticMarkersRef.current = []
+      routePolylineRef.current?.setMap(null)
+      routePolylineRef.current = null
 
-    try {
       if (geography.pickup) {
         const pickupPin = new PinElement({
           background: '#10b981',
@@ -245,15 +299,7 @@ export function PartnerTrackingMap({
         }
       }
       initialViewportSetRef.current = true
-    } catch (error) {
-      staticMarkersRef.current.forEach((marker) => {
-        marker.map = null
-      })
-      staticMarkersRef.current = []
-      routePolylineRef.current?.setMap(null)
-      routePolylineRef.current = null
-      setStatus('error')
-    }
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geographySignature, status])
 
@@ -263,7 +309,12 @@ export function PartnerTrackingMap({
   // load (order went from pending → ongoing mid-poll): the car marker is
   // created here rather than at init in that case.
   useEffect(() => {
-    if (!hasValidDriver || status !== 'ready' || !mapInstanceRef.current) {
+    if (
+      !hasValidDriver ||
+      status !== 'ready' ||
+      !mapInstanceRef.current ||
+      mapUnavailableRef.current
+    ) {
       return
     }
 
@@ -272,24 +323,35 @@ export function PartnerTrackingMap({
         return
       }
 
-      const { marker, vehicle } = createDriverMarker({
-        AdvancedMarkerElement: advancedMarkerCtorRef.current,
-        map: mapInstanceRef.current,
-        position: driver,
-        heading: resolveDriverHeading({
-          backendHeading: driverLocation?.heading,
-          previous: null,
-          current: driver,
-        }),
-      })
+      let markerResult
+      const markerCreated = runMapOperation(
+        'driver marker creation failed',
+        () => {
+          markerResult = createDriverMarker({
+            AdvancedMarkerElement: advancedMarkerCtorRef.current,
+            map: mapInstanceRef.current,
+            position: driver,
+            heading: resolveDriverHeading({
+              backendHeading: driverLocation?.heading,
+              previous: null,
+              current: driver,
+            }),
+          })
+        },
+      )
+      if (!markerCreated) return
+      const { marker, vehicle } = markerResult
       carMarkerRef.current = marker
       carInnerRef.current = vehicle
       prevDriverRef.current = driver
-      if (followingRef.current) mapInstanceRef.current.panTo(driver)
+      if (followingRef.current) {
+        runMapOperation('driver follow failed', () => {
+          mapInstanceRef.current.panTo(driver)
+        })
+      }
       return
     }
 
-    carMarkerRef.current.position = driver
     const previous = prevDriverRef.current
     const moved =
       previous && (previous.lat !== driver.lat || previous.lng !== driver.lng)
@@ -298,24 +360,32 @@ export function PartnerTrackingMap({
       previous,
       current: driver,
     })
-    setDriverMarkerHeading(carInnerRef.current, heading)
+    const updated = runMapOperation('driver update failed', () => {
+      carMarkerRef.current.position = driver
+      setDriverMarkerHeading(carInnerRef.current, heading)
 
-    if (moved && followingRef.current) {
-      mapInstanceRef.current.panTo(driver)
-    }
+      if (moved && followingRef.current) {
+        mapInstanceRef.current.panTo(driver)
+      }
+    })
 
-    prevDriverRef.current = driver
+    if (updated) prevDriverRef.current = driver
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [driver?.lat, driver?.lng, driverLocation?.heading, hasValidDriver, status])
 
   useEffect(() => {
     return () => {
-      staticMarkersRef.current.forEach((marker) => {
-        marker.map = null
-      })
+      try {
+        staticMarkersRef.current.forEach((marker) => {
+          marker.map = null
+        })
+        if (carMarkerRef.current) carMarkerRef.current.map = null
+        routePolylineRef.current?.setMap(null)
+      } catch (error) {
+        // An unauthorized Maps runtime can reject teardown mutations too. The
+        // container is being removed, so clearing local references is enough.
+      }
       staticMarkersRef.current = []
-      if (carMarkerRef.current) carMarkerRef.current.map = null
-      routePolylineRef.current?.setMap(null)
       routePolylineRef.current = null
       appliedGeographySignatureRef.current = null
       initialViewportSetRef.current = false
@@ -357,10 +427,19 @@ export function PartnerTrackingMap({
           }
         />
         {status !== 'ready' && (
-          <div className="absolute inset-0 flex items-center justify-center px-4 text-center text-[13px] text-[#5f5868]">
-            {status === 'error'
-              ? 'We couldn’t load the map right now.'
-              : 'Loading map…'}
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface-tint px-4 text-center text-[#5f5868]">
+            {status === 'error' ? (
+              <>
+                <p className="text-sm font-semibold text-[#17131c]">
+                  Map temporarily unavailable
+                </p>
+                <p className="mt-2 text-[13px]">
+                  Delivery status and tracking updates are still available.
+                </p>
+              </>
+            ) : (
+              <p className="text-[13px]">Loading map…</p>
+            )}
           </div>
         )}
         {status === 'ready' && !following && driver ? (

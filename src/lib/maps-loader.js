@@ -53,6 +53,8 @@ let bootstrapInstalled = false
 // Shared promise for callers that just want "Maps is ready".
 let readyPromise = null
 
+export { subscribeMapsAuthFailure } from './maps-auth.mjs'
+
 // Google's official inline bootstrap loader (loading=async). Defines
 // google.maps.importLibrary synchronously; the API itself is fetched lazily on
 // the first importLibrary() call, and that fetch is memoised internally, so
