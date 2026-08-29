@@ -167,3 +167,30 @@ export function getPartnerGeographySignature(geography) {
       .map(({ lat, lng }) => [lat, lng]),
   })
 }
+
+export function getConsumerRouteGeography({ destinationLocation, route } = {}) {
+  const destination = normalizeCoordinate(destinationLocation)
+  const routeCoordinates = Array.isArray(route?.coordinates)
+    ? route.coordinates.map(normalizeCoordinate).filter(Boolean)
+    : []
+
+  return {
+    destination,
+    // The destination field is the authority for this privacy-scoped route.
+    // Never infer it from the final polyline coordinate.
+    route: destination && routeCoordinates.length >= 2 ? routeCoordinates : [],
+  }
+}
+
+export function getConsumerRouteGeographySignature(geography) {
+  const destination = normalizeCoordinate(geography?.destination)
+  const route = Array.isArray(geography?.route) ? geography.route : []
+
+  return JSON.stringify({
+    destination: destination ? [destination.lat, destination.lng] : null,
+    route: route
+      .map(normalizeCoordinate)
+      .filter(Boolean)
+      .map(({ lat, lng }) => [lat, lng]),
+  })
+}

@@ -28,6 +28,8 @@ export function LiveTracking({
   initialStatus,
   initialMessage,
   initialDriverLocation,
+  initialDestinationLocation,
+  initialRoute,
   initialEta,
   driverSummary,
   deliveryDetails,
@@ -35,6 +37,10 @@ export function LiveTracking({
   const [status, setStatus] = useState(initialStatus)
   const [message, setMessage] = useState(initialMessage)
   const [driverLocation, setDriverLocation] = useState(initialDriverLocation)
+  const [destinationLocation, setDestinationLocation] = useState(
+    initialDestinationLocation ?? null,
+  )
+  const [route, setRoute] = useState(initialRoute ?? null)
   const [eta, setEta] = useState(initialEta)
 
   useEffect(() => {
@@ -55,6 +61,8 @@ export function LiveTracking({
         setStatus(data.status)
         setMessage(data.message)
         setDriverLocation(data.driverLocation)
+        setDestinationLocation(data.destinationLocation ?? null)
+        setRoute(data.route ?? null)
         setEta(data.eta)
       },
     })
@@ -67,9 +75,11 @@ export function LiveTracking({
       </div>
 
       <div className="lg:sticky lg:top-8 lg:col-start-2 lg:row-span-4 lg:row-start-1 lg:self-start">
-        {driverLocation ? (
+        {driverLocation || destinationLocation ? (
           <TrackingMap
             driverLocation={driverLocation}
+            destinationLocation={destinationLocation}
+            route={route}
             isLive={!isTerminalStatus(status)}
           />
         ) : (

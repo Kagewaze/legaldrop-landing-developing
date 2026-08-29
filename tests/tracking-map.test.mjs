@@ -4,6 +4,8 @@ import test from 'node:test'
 import {
   collectBoundsCoordinates,
   computeMovementHeading,
+  getConsumerRouteGeography,
+  getConsumerRouteGeographySignature,
   getPartnerGeography,
   getPartnerGeographySignature,
   easeInOutCubic,
@@ -12,6 +14,107 @@ import {
   normalizeHeading,
   resolveDriverHeading,
 } from '../src/lib/tracking-map.mjs'
+
+function consumerRouteSignature(input) {
+  return getConsumerRouteGeographySignature(getConsumerRouteGeography(input))
+}
+
+test('normalizes consumer destination and an authoritative route', () => {
+  assert.deepEqual(
+    getConsumerRouteGeography({
+      destinationLocation: { latitude: 43.67, longitude: -79.36 },
+      route: {
+        coordinates: [
+          { latitude: 43.65, longitude: -79.38 },
+          { lat: 43.67, lng: -79.36 },
+        ],
+      },
+    }),
+    {
+      destination: { lat: 43.67, lng: -79.36 },
+      route: [
+        { lat: 43.65, lng: -79.38 },
+        { lat: 43.67, lng: -79.36 },
+      ],
+    },
+  )
+})
+
+test('rejects malformed consumer routes without inventing geometry', () => {
+  assert.deepEqual(
+    getConsumerRouteGeography({
+      destinationLocation: { lat: 43.67, lng: -79.36 },
+      route: { coordinates: [null, { lat: 91, lng: 0 }] },
+    }),
+    { destination: { lat: 43.67, lng: -79.36 }, route: [] },
+  )
+  assert.deepEqual(
+    getConsumerRouteGeography({
+      route: {
+        coordinates: [
+          { lat: 43.65, lng: -79.38 },
+          { lat: 43.67, lng: -79.36 },
+        ],
+      },
+    }),
+    { destination: null, route: [] },
+  )
+})
+
+test('equivalent fresh consumer route payloads have the same signature', () => {
+  assert.equal(
+    consumerRouteSignature({
+      destinationLocation: { latitude: 43.67, longitude: -79.36 },
+      route: {
+        coordinates: [
+          { latitude: 43.65, longitude: -79.38 },
+          { latitude: 43.67, longitude: -79.36 },
+        ],
+      },
+    }),
+    consumerRouteSignature({
+      destinationLocation: { lat: 43.67, lng: -79.36 },
+      route: {
+        coordinates: [
+          [-79.38, 43.65],
+          [-79.36, 43.67],
+        ],
+      },
+    }),
+  )
+})
+
+test('consumer route signature changes with destination or route geometry', () => {
+  const base = {
+    destinationLocation: { lat: 43.67, lng: -79.36 },
+    route: {
+      coordinates: [
+        { lat: 43.65, lng: -79.38 },
+        { lat: 43.67, lng: -79.36 },
+      ],
+    },
+  }
+  assert.notEqual(
+    consumerRouteSignature(base),
+    consumerRouteSignature({
+      ...base,
+      destinationLocation: { lat: 43.68, lng: -79.35 },
+    }),
+  )
+  assert.notEqual(
+    consumerRouteSignature(base),
+    consumerRouteSignature({
+      ...base,
+      route: {
+        coordinates: [
+          { lat: 43.65, lng: -79.38 },
+          { lat: 43.66, lng: -79.37 },
+          { lat: 43.67, lng: -79.36 },
+        ],
+      },
+    }),
+  )
+})
 
 test('interpolates only between normalized successive coordinates', () => {
   assert.deepEqual(

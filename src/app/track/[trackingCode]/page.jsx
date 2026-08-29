@@ -130,6 +130,8 @@ export default async function TrackOrderPage({ params }) {
     vehicle,
     driver,
     driverLocation,
+    destinationLocation,
+    route,
     eta,
   } = tracking
 
@@ -177,6 +179,8 @@ export default async function TrackOrderPage({ params }) {
           initialStatus={status}
           initialMessage={message}
           initialDriverLocation={driverLocation}
+          initialDestinationLocation={destinationLocation}
+          initialRoute={route}
           initialEta={eta}
           driverSummary={
             driverPresentation ? (

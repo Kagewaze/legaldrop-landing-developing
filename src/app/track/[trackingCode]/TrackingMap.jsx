@@ -5,7 +5,10 @@ import { useEffect, useRef, useState } from 'react'
 import { importMapsLibrary, subscribeMapsAuthFailure } from '@/lib/maps-loader'
 import {
   computeMovementHeading,
+  collectBoundsCoordinates,
   distanceBetweenCoordinates,
+  getConsumerRouteGeography,
+  getConsumerRouteGeographySignature,
   normalizeCoordinate,
 } from '@/lib/tracking-map.mjs'
 import {
@@ -20,12 +23,28 @@ import { TrackingMapRecenter } from '@/components/track/TrackingMapRecenter'
 // required by AdvancedMarkerElement.
 const MAP_ID = 'ea0f34dfd1b56b44758f5576'
 const DEFAULT_ZOOM = 16
+const MAX_JOURNEY_ZOOM = 17
+const CAMERA_MOVEMENT_THRESHOLD_METRES = 30
 
-export function TrackingMap({ driverLocation, isLive = true }) {
+export function TrackingMap({
+  driverLocation,
+  destinationLocation,
+  route,
+  isLive = true,
+}) {
   const mapRef = useRef(null)
   const mapInstanceRef = useRef(null)
   const markerRef = useRef(null)
   const markerVehicleRef = useRef(null)
+  const advancedMarkerCtorRef = useRef(null)
+  const pinCtorRef = useRef(null)
+  const boundsCtorRef = useRef(null)
+  const destinationMarkerRef = useRef(null)
+  const routePolylinesRef = useRef([])
+  const appliedRouteSignatureRef = useRef(null)
+  const initialJourneyFramedRef = useRef(false)
+  const lastCameraDriverRef = useRef(null)
+  const cameraIdleListenerRef = useRef(null)
   const previousDriverRef = useRef(null)
   const animatedDriverRef = useRef(null)
   const cancelMarkerAnimationRef = useRef(null)
@@ -36,6 +55,12 @@ export function TrackingMap({ driverLocation, isLive = true }) {
 
   const driver = normalizeCoordinate(driverLocation)
   const hasValidCoords = driver != null
+  const geography = getConsumerRouteGeography({
+    destinationLocation,
+    route,
+  })
+  const routeSignature = getConsumerRouteGeographySignature(geography)
+  const hasMapContent = hasValidCoords || geography.destination != null
 
   function markMapUnavailable(error, context) {
     if (mapUnavailableRef.current) return
@@ -64,11 +89,55 @@ export function TrackingMap({ driverLocation, isLive = true }) {
     }
   }
 
+  function frameActiveJourney(driverPosition = driver) {
+    const map = mapInstanceRef.current
+    const LatLngBounds = boundsCtorRef.current
+    if (
+      !map ||
+      !LatLngBounds ||
+      !driverPosition ||
+      !geography.destination ||
+      mapUnavailableRef.current
+    ) {
+      return false
+    }
+
+    return runMapOperation('journey framing failed', () => {
+      const points = collectBoundsCoordinates({
+        driver: driverPosition,
+        destinations: [geography.destination],
+        route: geography.route,
+      })
+      const bounds = new LatLngBounds()
+      points.forEach((point) => bounds.extend(point))
+      map.fitBounds(bounds, { top: 72, right: 64, bottom: 72, left: 64 })
+
+      cameraIdleListenerRef.current?.remove()
+      cameraIdleListenerRef.current = map.addListener('idle', () => {
+        cameraIdleListenerRef.current?.remove()
+        cameraIdleListenerRef.current = null
+        if (!followingRef.current || mapUnavailableRef.current) return
+        runMapOperation('journey zoom adjustment failed', () => {
+          const zoom = map.getZoom()
+          if (Number.isFinite(zoom) && zoom > MAX_JOURNEY_ZOOM) {
+            map.setZoom(MAX_JOURNEY_ZOOM)
+          }
+        })
+      })
+      lastCameraDriverRef.current = driverPosition
+      initialJourneyFramedRef.current = true
+    })
+  }
+
   function recenter() {
     if (!driver || !mapInstanceRef.current || mapUnavailableRef.current) return
     followingRef.current = true
     setFollowing(true)
     runMapOperation('recenter failed', () => {
+      if (geography.destination) {
+        frameActiveJourney(driver)
+        return
+      }
       const zoom = mapInstanceRef.current.getZoom()
       if (!Number.isFinite(zoom) || zoom < 14 || zoom > 18) {
         mapInstanceRef.current.setZoom(DEFAULT_ZOOM)
@@ -91,7 +160,7 @@ export function TrackingMap({ driverLocation, isLive = true }) {
   // Initialise the map + marker exactly once. The bootstrap loader / Map ID
   // logic is reused untouched; later coordinate changes only pan the map.
   useEffect(() => {
-    if (!hasValidCoords) {
+    if (!hasMapContent) {
       setStatus('error')
       return undefined
     }
@@ -104,9 +173,14 @@ export function TrackingMap({ driverLocation, isLive = true }) {
 
     async function initMap() {
       try {
-        const [{ Map }, { AdvancedMarkerElement }] = await Promise.all([
+        const [
+          { Map },
+          { AdvancedMarkerElement, PinElement },
+          { LatLngBounds },
+        ] = await Promise.all([
           importMapsLibrary('maps'),
           importMapsLibrary('marker'),
+          importMapsLibrary('core'),
         ])
 
         if (cancelled || !mapRef.current || mapInstanceRef.current) {
@@ -115,29 +189,36 @@ export function TrackingMap({ driverLocation, isLive = true }) {
 
         let map
         let markerResult
+        advancedMarkerCtorRef.current = AdvancedMarkerElement
+        pinCtorRef.current = PinElement
+        boundsCtorRef.current = LatLngBounds
         const initialized = runMapOperation('initialization failed', () => {
           map = new Map(mapRef.current, {
-            center: driver,
+            center: driver ?? geography.destination,
             zoom: DEFAULT_ZOOM,
             mapId: MAP_ID,
             mapTypeControl: false,
             streetViewControl: false,
             fullscreenControl: false,
           })
-          markerResult = createDriverMarker({
-            AdvancedMarkerElement,
-            map,
-            position: driver,
-            heading: null,
-          })
+          if (driver) {
+            markerResult = createDriverMarker({
+              AdvancedMarkerElement,
+              map,
+              position: driver,
+              heading: null,
+            })
+          }
         })
         if (!initialized || cancelled) return
 
-        const { marker, vehicle } = markerResult
-        markerRef.current = marker
-        markerVehicleRef.current = vehicle
-        previousDriverRef.current = driver
-        animatedDriverRef.current = driver
+        if (markerResult) {
+          const { marker, vehicle } = markerResult
+          markerRef.current = marker
+          markerVehicleRef.current = vehicle
+          previousDriverRef.current = driver
+          animatedDriverRef.current = driver
+        }
         mapInstanceRef.current = map
 
         setStatus('ready')
@@ -154,18 +235,113 @@ export function TrackingMap({ driverLocation, isLive = true }) {
       cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasValidCoords])
+  }, [hasMapContent])
+
+  // Destination and provider-supplied route are reconciled separately from
+  // the moving driver. Equivalent fresh polling objects are a no-op.
+  useEffect(() => {
+    const map = mapInstanceRef.current
+    const AdvancedMarkerElement = advancedMarkerCtorRef.current
+    const PinElement = pinCtorRef.current
+    if (
+      status !== 'ready' ||
+      !map ||
+      !AdvancedMarkerElement ||
+      !PinElement ||
+      appliedRouteSignatureRef.current === routeSignature
+    ) {
+      return
+    }
+
+    runMapOperation('route update failed', () => {
+      if (destinationMarkerRef.current) {
+        destinationMarkerRef.current.map = null
+        destinationMarkerRef.current = null
+      }
+      routePolylinesRef.current.forEach((polyline) => polyline.setMap(null))
+      routePolylinesRef.current = []
+
+      if (geography.destination) {
+        const destinationPin = new PinElement({
+          background: '#7B2FBE',
+          borderColor: '#4f176f',
+          glyphColor: '#ffffff',
+          glyph: 'B',
+          scale: 0.95,
+        })
+        destinationMarkerRef.current = new AdvancedMarkerElement({
+          map,
+          position: geography.destination,
+          content: destinationPin.element,
+          title: 'Delivery destination',
+          zIndex: 10,
+        })
+      }
+
+      if (geography.route.length >= 2) {
+        const routeOptions = {
+          map,
+          path: geography.route,
+          geodesic: true,
+          clickable: false,
+        }
+        routePolylinesRef.current = [
+          new window.google.maps.Polyline({
+            ...routeOptions,
+            strokeColor: '#eadcf4',
+            strokeOpacity: 0.9,
+            strokeWeight: 10,
+            zIndex: 1,
+          }),
+          new window.google.maps.Polyline({
+            ...routeOptions,
+            strokeColor: '#7B2FBE',
+            strokeOpacity: 0.92,
+            strokeWeight: 5,
+            zIndex: 2,
+          }),
+        ]
+      }
+
+      appliedRouteSignatureRef.current = routeSignature
+      if (driver && followingRef.current) {
+        frameActiveJourney(driver)
+      }
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeSignature, status])
 
   // Move the existing marker in place. Movement supplies a conservative
   // heading because the consumer payload has no heading field. Camera updates
   // happen only while follow mode remains enabled.
   useEffect(() => {
-    if (
-      !driver ||
-      !mapInstanceRef.current ||
-      !markerRef.current ||
-      mapUnavailableRef.current
-    ) {
+    if (!driver || !mapInstanceRef.current || mapUnavailableRef.current) {
+      return
+    }
+
+    if (!markerRef.current) {
+      if (!advancedMarkerCtorRef.current) return
+      let markerResult
+      const created = runMapOperation('driver marker creation failed', () => {
+        markerResult = createDriverMarker({
+          AdvancedMarkerElement: advancedMarkerCtorRef.current,
+          map: mapInstanceRef.current,
+          position: driver,
+          heading: null,
+        })
+      })
+      if (!created) return
+      markerRef.current = markerResult.marker
+      markerVehicleRef.current = markerResult.vehicle
+      previousDriverRef.current = driver
+      animatedDriverRef.current = driver
+      if (followingRef.current) {
+        if (geography.destination) frameActiveJourney(driver)
+        else
+          runMapOperation('driver follow failed', () => {
+            mapInstanceRef.current.panTo(driver)
+          })
+      }
       return
     }
 
@@ -177,7 +353,7 @@ export function TrackingMap({ driverLocation, isLive = true }) {
     const updated = runMapOperation('driver update failed', () => {
       setDriverMarkerHeading(markerVehicleRef.current, heading)
 
-      if (followingRef.current) {
+      if (followingRef.current && !geography.destination) {
         mapInstanceRef.current.panTo(driver)
       }
     })
@@ -195,6 +371,20 @@ export function TrackingMap({ driverLocation, isLive = true }) {
           markMapUnavailable(error, 'driver animation failed'),
       })
       previousDriverRef.current = driver
+
+      const cameraDistance = distanceBetweenCoordinates(
+        lastCameraDriverRef.current,
+        driver,
+      )
+      if (
+        followingRef.current &&
+        geography.destination &&
+        (!initialJourneyFramedRef.current ||
+          cameraDistance == null ||
+          cameraDistance >= CAMERA_MOVEMENT_THRESHOLD_METRES)
+      ) {
+        frameActiveJourney(driver)
+      }
     }
     // The normalized `driver` object is recreated during render. Coordinates
     // are the intentional update contract; depending on the object would rerun
@@ -207,16 +397,30 @@ export function TrackingMap({ driverLocation, isLive = true }) {
       cancelMarkerAnimationRef.current?.()
       cancelMarkerAnimationRef.current = null
       try {
+        cameraIdleListenerRef.current?.remove()
+        if (destinationMarkerRef.current) {
+          destinationMarkerRef.current.map = null
+        }
+        routePolylinesRef.current.forEach((polyline) => polyline.setMap(null))
         if (markerRef.current) markerRef.current.map = null
       } catch (error) {
         // An unauthorized Maps runtime can reject teardown mutations too. The
         // container is being removed, so clearing local references is enough.
       }
       markerRef.current = null
+      destinationMarkerRef.current = null
+      routePolylinesRef.current = []
+      appliedRouteSignatureRef.current = null
+      initialJourneyFramedRef.current = false
+      lastCameraDriverRef.current = null
+      cameraIdleListenerRef.current = null
       markerVehicleRef.current = null
       previousDriverRef.current = null
       animatedDriverRef.current = null
       mapInstanceRef.current = null
+      advancedMarkerCtorRef.current = null
+      pinCtorRef.current = null
+      boundsCtorRef.current = null
     }
   }, [])
 
@@ -279,12 +483,14 @@ export function TrackingMap({ driverLocation, isLive = true }) {
             )}
           </div>
         )}
-        {status === 'ready' && !following ? (
+        {status === 'ready' && !following && driver ? (
           <TrackingMapRecenter
             onClick={recenter}
             label={
               isLive
-                ? 'Recenter map on driver'
+                ? geography.destination
+                  ? 'Recenter map on active delivery journey'
+                  : 'Recenter map on driver'
                 : 'Recenter map on last known driver position'
             }
           />
