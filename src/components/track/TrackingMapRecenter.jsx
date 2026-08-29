@@ -1,10 +1,13 @@
-export function TrackingMapRecenter({ onClick }) {
+export function TrackingMapRecenter({
+  onClick,
+  label = 'Recenter map on driver',
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label="Recenter map on driver"
-      title="Recenter on driver"
+      aria-label={label}
+      title={label}
       className="absolute right-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-[#ddd7e3] bg-white text-brand-700 shadow-lg transition hover:bg-surface-tint focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
     >
       <svg

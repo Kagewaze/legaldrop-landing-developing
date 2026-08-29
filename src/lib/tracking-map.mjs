@@ -86,3 +86,67 @@ export function collectBoundsCoordinates({
     .map(normalizeCoordinate)
     .filter(Boolean)
 }
+
+export function getPartnerGeography({
+  senderLocation,
+  receivers = [],
+  route,
+} = {}) {
+  const receiverList = Array.isArray(receivers) ? receivers : []
+  const routeCoordinates = Array.isArray(route?.coordinates)
+    ? route.coordinates
+    : []
+
+  return {
+    pickup: normalizeCoordinate(senderLocation),
+    destinations: receiverList
+      .map((receiver, index) => {
+        const position = normalizeCoordinate(
+          receiver?.receiverLocation ?? receiver,
+        )
+        if (!position) return null
+
+        return {
+          position,
+          stopNumber: index + 1,
+          title:
+            typeof receiver?.receiverName === 'string' &&
+            receiver.receiverName.trim()
+              ? receiver.receiverName.trim()
+              : `Stop ${index + 1}`,
+        }
+      })
+      .filter(Boolean),
+    route: routeCoordinates.map(normalizeCoordinate).filter(Boolean),
+  }
+}
+
+export function getPartnerGeographySignature(geography) {
+  const pickup = normalizeCoordinate(geography?.pickup)
+  const destinations = Array.isArray(geography?.destinations)
+    ? geography.destinations
+    : []
+  const route = Array.isArray(geography?.route) ? geography.route : []
+
+  return JSON.stringify({
+    pickup: pickup ? [pickup.lat, pickup.lng] : null,
+    destinations: destinations
+      .map((destination) => {
+        const position = normalizeCoordinate(
+          destination?.position ?? destination,
+        )
+        if (!position) return null
+        return [
+          Number(destination?.stopNumber) || null,
+          position.lat,
+          position.lng,
+          typeof destination?.title === 'string' ? destination.title : '',
+        ]
+      })
+      .filter(Boolean),
+    route: route
+      .map(normalizeCoordinate)
+      .filter(Boolean)
+      .map(({ lat, lng }) => [lat, lng]),
+  })
+}

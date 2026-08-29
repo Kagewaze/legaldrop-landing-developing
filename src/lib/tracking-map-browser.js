@@ -51,13 +51,30 @@ export function setDriverMarkerHeading(vehicle, heading) {
 
 export function observeMapInteraction(element, onInteraction) {
   const events = ['pointerdown', 'wheel', 'touchstart', 'keydown']
+  const mapNavigationKeys = new Set([
+    'ArrowUp',
+    'ArrowDown',
+    'ArrowLeft',
+    'ArrowRight',
+    '+',
+    '-',
+    '=',
+    'PageUp',
+    'PageDown',
+    'Home',
+    'End',
+  ])
+  const handleInteraction = (event) => {
+    if (event.type === 'keydown' && !mapNavigationKeys.has(event.key)) return
+    onInteraction(event)
+  }
   events.forEach((event) =>
-    element.addEventListener(event, onInteraction, { capture: true }),
+    element.addEventListener(event, handleInteraction, { capture: true }),
   )
 
   return () => {
     events.forEach((event) =>
-      element.removeEventListener(event, onInteraction, { capture: true }),
+      element.removeEventListener(event, handleInteraction, { capture: true }),
     )
   }
 }

@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from 'react'
 import { importMapsLibrary } from '@/lib/maps-loader'
 import {
   collectBoundsCoordinates,
+  getPartnerGeography,
+  getPartnerGeographySignature,
   normalizeCoordinate,
   resolveDriverHeading,
 } from '@/lib/tracking-map.mjs'
@@ -30,17 +32,32 @@ export function PartnerTrackingMap({
   const mapRef = useRef(null)
   const mapInstanceRef = useRef(null)
   const advancedMarkerCtorRef = useRef(null)
+  const pinCtorRef = useRef(null)
+  const boundsCtorRef = useRef(null)
   const carMarkerRef = useRef(null)
   const carInnerRef = useRef(null)
   const prevDriverRef = useRef(null)
   const staticMarkersRef = useRef([])
   const routePolylineRef = useRef(null)
+  const appliedGeographySignatureRef = useRef(null)
+  const initialViewportSetRef = useRef(false)
   const followingRef = useRef(true)
   const [following, setFollowing] = useState(true)
   const [status, setStatus] = useState('loading') // 'loading' | 'ready' | 'error'
 
   const driver = normalizeCoordinate(driverLocation)
   const hasValidDriver = driver != null
+  const geography = getPartnerGeography({
+    senderLocation,
+    receivers,
+    route,
+  })
+  const geographySignature = getPartnerGeographySignature(geography)
+  const hasStaticGeography =
+    geography.pickup != null ||
+    geography.destinations.length > 0 ||
+    geography.route.length > 0
+  const hasMapContent = hasValidDriver || hasStaticGeography
 
   function recenter() {
     if (!driver || !mapInstanceRef.current) return
@@ -50,14 +67,15 @@ export function PartnerTrackingMap({
     mapInstanceRef.current.panTo(driver)
   }
 
-  // Initialise the map, route line and pickup/destination pins exactly once,
-  // from whatever geography is available — pickup, destinations and route
-  // are known up front regardless of whether a driver has been assigned yet.
-  // The car marker is added here too if a driver is already present, but
-  // its absence must never block the rest of the map from rendering: a
-  // pending order (no driver) still has pickup/destination/route to show.
+  // Initialise the Map and driver independently from the static delivery
+  // layers. The reconciliation effect below owns pickup, stops and route.
   useEffect(() => {
     if (mapInstanceRef.current) {
+      return undefined
+    }
+
+    if (!hasMapContent) {
+      setStatus('error')
       return undefined
     }
 
@@ -77,41 +95,13 @@ export function PartnerTrackingMap({
         }
 
         advancedMarkerCtorRef.current = AdvancedMarkerElement
-
-        // Route polyline. NOTE: route.coordinates is intentionally only the
-        // sender → first-stop leg (matches the backend's current
-        // sender-to-first-stop-only scope from step 4a). The destination pins
-        // below are drawn for EVERY receiver, so with multiple stops the line
-        // will reach only the first pin. This asymmetry is deliberate, not a
-        // bug — it tracks the backend's deferred multi-waypoint route scope.
-        const routePath = (Array.isArray(route?.coordinates)
-          ? route.coordinates
-          : []
-        )
-          .map(normalizeCoordinate)
-          .filter(Boolean)
-
-        const sender = normalizeCoordinate(senderLocation)
-        const receiverList = Array.isArray(receivers) ? receivers : []
-        const receiverPositions = receiverList.map((receiver) =>
-          normalizeCoordinate(receiver?.receiverLocation ?? receiver),
-        )
-
-        // Nothing at all to plot yet (no sender, no driver, no receivers, no
-        // route) — genuinely nothing to render, unlike the old "no driver"
-        // gate which blocked rendering even when pickup/destination existed.
-        if (
-          !sender &&
-          !driver &&
-          routePath.length === 0 &&
-          !receiverPositions.some(Boolean)
-        ) {
-          setStatus('error')
-          return
-        }
-
+        pinCtorRef.current = PinElement
+        boundsCtorRef.current = LatLngBounds
         const initialCenter =
-          sender ?? driver ?? receiverPositions.find(Boolean) ?? routePath[0]
+          geography.pickup ??
+          driver ??
+          geography.destinations[0]?.position ??
+          geography.route[0]
 
         const map = new Map(mapRef.current, {
           center: initialCenter,
@@ -120,68 +110,6 @@ export function PartnerTrackingMap({
           mapTypeControl: false,
           streetViewControl: false,
           fullscreenControl: false,
-        })
-
-        const bounds = new LatLngBounds()
-        const boundsPoints = collectBoundsCoordinates({
-          driver,
-          pickup: sender,
-          destinations: receiverPositions,
-          route: routePath,
-        })
-        boundsPoints.forEach((point) => bounds.extend(point))
-
-        if (routePath.length >= 2) {
-          const polyline = new window.google.maps.Polyline({
-            path: routePath,
-            geodesic: true,
-            strokeColor: '#7c3aed',
-            strokeOpacity: 0.9,
-            strokeWeight: 4,
-          })
-          polyline.setMap(map)
-          routePolylineRef.current = polyline
-        }
-
-        // Pickup pin (sender).
-        if (sender) {
-          const pickupPin = new PinElement({
-            background: '#10b981',
-            borderColor: '#047857',
-            glyphColor: '#ffffff',
-            glyph: 'A',
-          })
-          staticMarkersRef.current.push(
-            new AdvancedMarkerElement({
-              map,
-              position: sender,
-              content: pickupPin.element,
-              title: 'Pickup',
-            }),
-          )
-        }
-
-        // Destination pin for every receiver, numbered in order.
-        receiverList.forEach((receiver, index) => {
-          const position = receiverPositions[index]
-          if (!position) {
-            return
-          }
-
-          const pin = new PinElement({
-            background: '#7c3aed',
-            borderColor: '#5b21b6',
-            glyphColor: '#ffffff',
-            glyph: String(index + 1),
-          })
-          staticMarkersRef.current.push(
-            new AdvancedMarkerElement({
-              map,
-              position,
-              content: pin.element,
-              title: receiver?.receiverName || `Stop ${index + 1}`,
-            }),
-          )
         })
 
         // Car marker for the live driver position, if already assigned. If
@@ -203,16 +131,6 @@ export function PartnerTrackingMap({
         }
 
         mapInstanceRef.current = map
-
-        // Frame everything on first paint; a single-point bounds makes
-        // fitBounds over-zoom, so fall back to a sensible default instead.
-        if (!bounds.isEmpty()) {
-          map.fitBounds(bounds, 64)
-          if (boundsPoints.length <= 1) {
-            map.setZoom(DEFAULT_ZOOM)
-          }
-        }
-
         setStatus('ready')
       } catch (error) {
         if (!cancelled) {
@@ -226,8 +144,118 @@ export function PartnerTrackingMap({
     return () => {
       cancelled = true
     }
+    // `hasMapContent` changes only when the page transitions from having
+    // nothing plottable to having at least one valid point.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [hasMapContent])
+
+  // Reconcile only the authorized static geography. A stable normalized
+  // signature makes equivalent polling payloads a no-op even when every raw
+  // object is freshly allocated. The Map and driver marker are never replaced.
+  useEffect(() => {
+    const map = mapInstanceRef.current
+    const AdvancedMarkerElement = advancedMarkerCtorRef.current
+    const PinElement = pinCtorRef.current
+    const LatLngBounds = boundsCtorRef.current
+
+    if (
+      status !== 'ready' ||
+      !map ||
+      !AdvancedMarkerElement ||
+      !PinElement ||
+      !LatLngBounds ||
+      appliedGeographySignatureRef.current === geographySignature
+    ) {
+      return
+    }
+
+    staticMarkersRef.current.forEach((marker) => {
+      marker.map = null
+    })
+    staticMarkersRef.current = []
+    routePolylineRef.current?.setMap(null)
+    routePolylineRef.current = null
+
+    try {
+      if (geography.pickup) {
+        const pickupPin = new PinElement({
+          background: '#10b981',
+          borderColor: '#047857',
+          glyphColor: '#ffffff',
+          glyph: 'A',
+        })
+        staticMarkersRef.current.push(
+          new AdvancedMarkerElement({
+            map,
+            position: geography.pickup,
+            content: pickupPin.element,
+            title: 'Pickup',
+          }),
+        )
+      }
+
+      geography.destinations.forEach(({ position, stopNumber, title }) => {
+        const pin = new PinElement({
+          background: '#7c3aed',
+          borderColor: '#5b21b6',
+          glyphColor: '#ffffff',
+          glyph: String(stopNumber),
+        })
+        staticMarkersRef.current.push(
+          new AdvancedMarkerElement({
+            map,
+            position,
+            content: pin.element,
+            title,
+          }),
+        )
+      })
+
+      // The backend path may cover only pickup → first destination. Render it
+      // exactly as supplied; never manufacture missing multi-stop legs.
+      if (geography.route.length >= 2) {
+        routePolylineRef.current = new window.google.maps.Polyline({
+          map,
+          path: geography.route,
+          geodesic: true,
+          strokeColor: '#7c3aed',
+          strokeOpacity: 0.9,
+          strokeWeight: 4,
+        })
+      }
+
+      appliedGeographySignatureRef.current = geographySignature
+
+      const shouldFitGeography =
+        !initialViewportSetRef.current ||
+        (!hasValidDriver && followingRef.current)
+      if (shouldFitGeography) {
+        const boundsPoints = collectBoundsCoordinates({
+          driver,
+          pickup: geography.pickup,
+          destinations: geography.destinations.map(({ position }) => position),
+          route: geography.route,
+        })
+        const bounds = new LatLngBounds()
+        boundsPoints.forEach((point) => bounds.extend(point))
+
+        if (!bounds.isEmpty()) {
+          map.fitBounds(bounds, 64)
+          if (boundsPoints.length <= 1) map.setZoom(DEFAULT_ZOOM)
+        }
+      }
+      initialViewportSetRef.current = true
+    } catch (error) {
+      staticMarkersRef.current.forEach((marker) => {
+        marker.map = null
+      })
+      staticMarkersRef.current = []
+      routePolylineRef.current?.setMap(null)
+      routePolylineRef.current = null
+      setStatus('error')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geographySignature, status])
 
   // Move + rotate the car on each driver update, panning to keep it in view.
   // Prefer a backend heading; otherwise derive it from the movement delta.
@@ -289,9 +317,14 @@ export function PartnerTrackingMap({
       if (carMarkerRef.current) carMarkerRef.current.map = null
       routePolylineRef.current?.setMap(null)
       routePolylineRef.current = null
+      appliedGeographySignatureRef.current = null
+      initialViewportSetRef.current = false
       carMarkerRef.current = null
       carInnerRef.current = null
       prevDriverRef.current = null
+      advancedMarkerCtorRef.current = null
+      pinCtorRef.current = null
+      boundsCtorRef.current = null
       mapInstanceRef.current = null
     }
   }, [])
@@ -331,7 +364,14 @@ export function PartnerTrackingMap({
           </div>
         )}
         {status === 'ready' && !following && driver ? (
-          <TrackingMapRecenter onClick={recenter} />
+          <TrackingMapRecenter
+            onClick={recenter}
+            label={
+              isLive
+                ? 'Recenter map on driver'
+                : 'Recenter map on last known driver position'
+            }
+          />
         ) : null}
       </div>
     </section>

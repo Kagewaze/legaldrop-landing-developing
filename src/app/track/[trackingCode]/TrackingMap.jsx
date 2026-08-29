@@ -165,7 +165,14 @@ export function TrackingMap({ driverLocation, isLive = true }) {
           </div>
         )}
         {status === 'ready' && !following ? (
-          <TrackingMapRecenter onClick={recenter} />
+          <TrackingMapRecenter
+            onClick={recenter}
+            label={
+              isLive
+                ? 'Recenter map on driver'
+                : 'Recenter map on last known driver position'
+            }
+          />
         ) : null}
       </div>
     </section>

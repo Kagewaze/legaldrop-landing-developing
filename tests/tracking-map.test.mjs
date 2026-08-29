@@ -4,6 +4,8 @@ import test from 'node:test'
 import {
   collectBoundsCoordinates,
   computeMovementHeading,
+  getPartnerGeography,
+  getPartnerGeographySignature,
   normalizeCoordinate,
   normalizeHeading,
   resolveDriverHeading,
@@ -107,5 +109,109 @@ test('ignores missing optional bounds values', () => {
   assert.deepEqual(
     collectBoundsCoordinates({ destinations: [null, { lat: 1, lng: 2 }] }),
     [{ lat: 1, lng: 2 }],
+  )
+})
+
+function geographySignature(input) {
+  return getPartnerGeographySignature(getPartnerGeography(input))
+}
+
+test('equivalent fresh partner geography objects have the same signature', () => {
+  const first = geographySignature({
+    senderLocation: { latitude: 43.65, longitude: -79.38 },
+    receivers: [
+      {
+        receiverName: 'First stop',
+        receiverLocation: { latitude: 43.66, longitude: -79.37 },
+      },
+    ],
+    route: { coordinates: [[-79.38, 43.65], [-79.37, 43.66]] },
+  })
+  const second = geographySignature({
+    senderLocation: { lat: 43.65, lng: -79.38 },
+    receivers: [
+      {
+        receiverName: 'First stop',
+        receiverLocation: { lat: 43.66, lng: -79.37 },
+      },
+    ],
+    route: {
+      coordinates: [
+        { lat: 43.65, lng: -79.38 },
+        { lat: 43.66, lng: -79.37 },
+      ],
+    },
+  })
+  assert.equal(first, second)
+})
+
+test('partner geography signature changes for pickup corrections', () => {
+  const base = { senderLocation: { lat: 1, lng: 2 } }
+  assert.notEqual(
+    geographySignature(base),
+    geographySignature({ senderLocation: { lat: 1.1, lng: 2 } }),
+  )
+})
+
+test('partner geography signature changes for destination corrections', () => {
+  const base = {
+    receivers: [{ receiverLocation: { lat: 1, lng: 2 } }],
+  }
+  assert.notEqual(
+    geographySignature(base),
+    geographySignature({
+      receivers: [{ receiverLocation: { lat: 1, lng: 2.1 } }],
+    }),
+  )
+})
+
+test('destination additions, removals, and order change the signature', () => {
+  const first = { receiverLocation: { lat: 1, lng: 2 } }
+  const second = { receiverLocation: { lat: 3, lng: 4 } }
+  const one = geographySignature({ receivers: [first] })
+  const two = geographySignature({ receivers: [first, second] })
+  const reversed = geographySignature({ receivers: [second, first] })
+
+  assert.notEqual(one, two)
+  assert.notEqual(two, reversed)
+  assert.equal(one, geographySignature({ receivers: [first, null] }))
+})
+
+test('partner geography signature changes for backend route corrections', () => {
+  assert.notEqual(
+    geographySignature({ route: { coordinates: [[2, 1], [4, 3]] } }),
+    geographySignature({ route: { coordinates: [[2, 1], [5, 3]] } }),
+  )
+})
+
+test('invalid partner geography points normalize safely', () => {
+  assert.deepEqual(
+    getPartnerGeography({
+      senderLocation: { lat: 100, lng: 0 },
+      receivers: [null, { receiverLocation: { lat: 1, lng: 2 } }],
+      route: { coordinates: [null, ['invalid', 3], [4, 5]] },
+    }),
+    {
+      pickup: null,
+      destinations: [
+        {
+          position: { lat: 1, lng: 2 },
+          stopNumber: 2,
+          title: 'Stop 2',
+        },
+      ],
+      route: [{ lat: 5, lng: 4 }],
+    },
+  )
+})
+
+test('driver coordinates are excluded from static partner geography signature', () => {
+  const geography = getPartnerGeography({
+    senderLocation: { lat: 1, lng: 2 },
+    driverLocation: { lat: 3, lng: 4 },
+  })
+  assert.equal(
+    getPartnerGeographySignature(geography),
+    geographySignature({ senderLocation: { lat: 1, lng: 2 } }),
   )
 })
