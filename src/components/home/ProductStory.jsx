@@ -131,6 +131,8 @@ function RequestVisual() {
 }
 
 function TrackVisual() {
+  const progress = ['Booked', 'Assigned', 'In progress', 'Delivered']
+
   return (
     <ProductCanvas label="An illustrative Druppr live delivery tracking view">
       <div className="overflow-hidden rounded-[20px] border border-[#d9c5e8] bg-white shadow-hero">
@@ -152,57 +154,163 @@ function TrackVisual() {
               <p className="text-xs font-semibold text-[#74677c]">7.4 km</p>
             </div>
           </div>
-          <div aria-hidden="true" className="mt-5 grid grid-cols-4 gap-1.5">
-            <span className="h-1.5 rounded-full bg-brand-600" />
-            <span className="h-1.5 rounded-full bg-brand-600" />
-            <span className="h-1.5 rounded-full bg-brand-500" />
-            <span className="h-1.5 rounded-full bg-[#e2d6ea]" />
+
+          <div aria-hidden="true" className="mt-5 grid grid-cols-4 px-1">
+            {progress.map((label, index) => (
+              <div key={label} className="relative flex flex-col items-center">
+                {index > 0 ? (
+                  <span
+                    className={`absolute right-1/2 top-[6px] h-0.5 w-full ${
+                      index <= 2 ? 'bg-brand-600' : 'bg-[#e2d7e9]'
+                    }`}
+                  />
+                ) : null}
+                <span
+                  className={`relative z-10 h-3.5 w-3.5 rounded-full border-2 border-white ${
+                    index <= 2
+                      ? 'bg-brand-600 shadow-[0_0_0_3px_rgba(123,47,190,0.13)]'
+                      : 'bg-[#c9bdcf] shadow-[0_0_0_3px_rgba(226,215,233,0.6)]'
+                  }`}
+                />
+                <span
+                  className={`mt-2 px-0.5 text-center text-[8px] font-bold leading-3 sm:text-[9px] ${
+                    index <= 2 ? 'text-[#34213f]' : 'text-[#887a90]'
+                  }`}
+                >
+                  {label}
+                </span>
+              </div>
+            ))}
           </div>
-          <div className="relative mt-5 h-[190px] overflow-hidden rounded-[16px] border border-[#decfe9] bg-[#eee7f3] sm:h-[230px]">
+
+          <div className="relative mt-5 h-[210px] overflow-hidden rounded-[16px] border border-[#d9d1df] bg-[#eeecf0] sm:h-[250px]">
             <svg
-              viewBox="0 0 560 230"
-              preserveAspectRatio="none"
+              viewBox="0 0 560 250"
+              preserveAspectRatio="xMidYMid slice"
               className="absolute inset-0 h-full w-full"
             >
-              <rect width="560" height="230" fill="#f1ebf5" />
+              <rect width="560" height="250" fill="#efedf1" />
+
+              {/* Quiet city blocks and parcels. */}
+              <g fill="#e3e0e5" stroke="#dad6dd" strokeWidth="1">
+                <rect x="18" y="14" width="104" height="48" rx="5" />
+                <rect x="146" y="14" width="86" height="48" rx="5" />
+                <rect x="256" y="14" width="112" height="48" rx="5" />
+                <rect x="392" y="14" width="148" height="48" rx="5" />
+                <rect x="18" y="88" width="72" height="54" rx="5" />
+                <rect x="114" y="88" width="118" height="54" rx="5" />
+                <rect x="256" y="88" width="76" height="54" rx="5" />
+                <rect x="356" y="88" width="88" height="54" rx="5" />
+                <rect x="468" y="88" width="72" height="54" rx="5" />
+                <rect x="18" y="168" width="104" height="66" rx="5" />
+                <rect x="146" y="168" width="86" height="66" rx="5" />
+                <rect x="256" y="168" width="112" height="66" rx="5" />
+                <rect x="392" y="168" width="148" height="66" rx="5" />
+              </g>
+
+              {/* Major and local streets: straight, connected city geometry. */}
+              <g fill="none" strokeLinecap="square">
+                <path d="M0 75H560" stroke="#ffffff" strokeWidth="18" />
+                <path d="M0 155H560" stroke="#ffffff" strokeWidth="20" />
+                <path d="M102 0V250" stroke="#ffffff" strokeWidth="16" />
+                <path d="M244 0V250" stroke="#ffffff" strokeWidth="16" />
+                <path d="M380 0V250" stroke="#ffffff" strokeWidth="18" />
+                <path d="M456 0V250" stroke="#ffffff" strokeWidth="12" />
+                <path
+                  d="M0 75H560M0 155H560M102 0V250M244 0V250M380 0V250M456 0V250"
+                  stroke="#d8d4dc"
+                  strokeWidth="1"
+                />
+              </g>
+
+              {/* A plausible courier route following the street grid. */}
               <path
-                d="M-30 55C80 90 120 18 235 54s170 82 355 32"
+                d="M150 213H102V155H244V75H380V44"
                 fill="none"
-                stroke="#fff"
-                strokeWidth="18"
+                stroke="#ffffff"
+                strokeWidth="10"
+                strokeLinejoin="round"
+                strokeLinecap="round"
               />
               <path
-                d="M70 250c34-88 89-97 149-122s112-29 175-148"
-                fill="none"
-                stroke="#fff"
-                strokeWidth="14"
-              />
-              <path
-                d="M-30 170c135-25 213 7 320-28s164-27 300 24"
-                fill="none"
-                stroke="#e2d8e9"
-                strokeWidth="3"
-              />
-              <path
-                d="M112 202C174 156 212 150 272 128s104-56 170-93"
+                d="M150 213H102V155H244V75H380V44"
                 fill="none"
                 stroke="#7B2FBE"
-                strokeWidth="5"
+                strokeWidth="5.5"
+                strokeLinejoin="round"
                 strokeLinecap="round"
-                strokeDasharray="2 10"
               />
+
+              {/* Pickup and destination context. */}
+              <circle
+                cx="150"
+                cy="213"
+                r="8"
+                fill="#ffffff"
+                stroke="#1c6742"
+                strokeWidth="3"
+              />
+              <circle cx="150" cy="213" r="3" fill="#1c6742" />
+              <circle
+                cx="380"
+                cy="44"
+                r="10"
+                fill="#281632"
+                stroke="#ffffff"
+                strokeWidth="3"
+              />
+              <text
+                x="380"
+                y="47.5"
+                textAnchor="middle"
+                fontSize="9"
+                fontWeight="700"
+                fill="#ffffff"
+              >
+                B
+              </text>
+
+              {/* Small directional vehicle marker, matching the live tracker. */}
+              <g transform="translate(304 75) rotate(90)">
+                <circle
+                  cx="0"
+                  cy="0"
+                  r="16"
+                  fill="#ffffff"
+                  stroke="#7B2FBE"
+                  strokeWidth="2"
+                />
+                <path d="M0-10 4-4h-8l4-6Z" fill="#7B2FBE" />
+                <rect
+                  x="-4"
+                  y="-4"
+                  width="8"
+                  height="11"
+                  rx="2"
+                  fill="#7B2FBE"
+                />
+                <rect
+                  x="-3"
+                  y="-2"
+                  width="6"
+                  height="3"
+                  rx="1"
+                  fill="#ffffff"
+                />
+              </g>
             </svg>
-            <span className="absolute left-[18%] top-[72%] h-4 w-4 rounded-full border-[3px] border-white bg-brand-600 shadow-md" />
-            <span className="absolute right-[18%] top-[14%] flex h-7 w-7 items-center justify-center rounded-full border-[3px] border-white bg-[#24152f] text-[10px] font-bold text-white shadow-md">
-              B
-            </span>
-            <span className="absolute left-[52%] top-[43%] flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 border-white bg-brand-600 text-white shadow-[0_10px_24px_-8px_rgba(82,28,130,0.75)]">
-              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor">
-                <path d="m12 3 4.5 7H15v7.5a3 3 0 0 1-6 0V10H7.5L12 3Z" />
+
+            <span className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-[#d6c1e5] bg-white text-brand-700 shadow-card">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="12" cy="12" r="3" />
+                <path d="M12 3v3M12 18v3M3 12h3M18 12h3" />
               </svg>
-            </span>
-            <span className="absolute bottom-3 left-3 rounded-full border border-white/80 bg-white/90 px-3 py-1.5 text-[10px] font-bold uppercase tracking-label text-brand-700 shadow-card">
-              Tracking preview
             </span>
           </div>
         </div>

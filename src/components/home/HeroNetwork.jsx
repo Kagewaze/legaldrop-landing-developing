@@ -27,9 +27,8 @@ import { RecentRequestFlashcards } from '@/components/home/RecentRequestFlashcar
 //
 //   THE FOUR-STOP SCRIM IS GONE WITH THE PHOTOGRAPH. Its stops were measured
 //   against that specific image's paving and are meaningless without it. The
-//   ground here is a flat surface-ink, so text contrast is a fixed, trivially
-//   verified number instead of a gradient that had to be re-measured whenever
-//   the crop moved.
+//   ground here is a controlled light surface, so text contrast is fixed rather
+//   than dependent on a photograph crop.
 //
 // WHAT DID NOT CHANGE: the section is still server-rendered and still ships no
 // Maps SDK.
@@ -38,14 +37,11 @@ import { RecentRequestFlashcards } from '@/components/home/RecentRequestFlashcar
 const FOCUS =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-page'
 
-const CTA_PRIMARY =
-  `inline-flex items-center justify-center rounded-control bg-brand-600 px-[30px] py-4 text-base font-semibold text-white transition-colors duration-base motion-reduce:transition-none hover:bg-brand-700 ${FOCUS}`
+const CTA_PRIMARY = `inline-flex items-center justify-center rounded-control bg-brand-600 px-[30px] py-4 text-base font-semibold text-white shadow-[0_10px_24px_-14px_rgba(82,28,130,0.75)] transition-colors duration-base motion-reduce:transition-none hover:bg-brand-700 ${FOCUS}`
 
-// Secondary is a bordered ghost, not a second filled button: two solid CTAs of
-// equal weight is how a page fails to have a primary action at all.
-// Underlined link below sm, bordered button from sm.
-const CTA_SECONDARY =
-  `inline-flex min-h-11 items-center justify-center rounded-control px-0 py-2 text-base font-semibold text-[#17131c] underline decoration-[#17131c]/30 underline-offset-4 transition-colors duration-base motion-reduce:transition-none hover:decoration-[#17131c] sm:border sm:border-[#e3dfe8] sm:px-[30px] sm:py-4 sm:no-underline sm:hover:bg-surface-tint ${FOCUS}`
+// Secondary is a white bordered button, not a second brand-filled button: two
+// solid CTAs of equal weight is how a page fails to have a primary action.
+const CTA_SECONDARY = `inline-flex min-h-11 items-center justify-center rounded-control border border-[#d9c7e6] bg-white px-[30px] py-3 text-base font-semibold text-[#281632] shadow-card transition-colors duration-base motion-reduce:transition-none hover:bg-[#f4eafb] sm:py-4 ${FOCUS}`
 
 // THE CATEGORY ROW WAS REMOVED IN PHASE 2.1, and its removal is the single
 // largest saving in the mobile hero.
@@ -68,20 +64,27 @@ export function HeroNetwork() {
   // home-coverage-baystreet.jpg (night scene; too dark for this light hero and
   // its Bay St cue too small to read at hero scale). Do not reintroduce either.
   return (
-    // ⚠️ NO BACKGROUND ON THIS SECTION. The ground is the [data-hero-light]
-    // wrapper in src/app/(main)/page.jsx, which spans this section AND
-    // OperationalProof so the two read as one surface. Adding a background
-    // here reintroduces the seam that wrapper exists to remove.
-    <section className="text-[#17131c]">
+    // A local tint connects the hero to the tracking product without changing
+    // the shared [data-hero-light] wrapper or OperationalProof below it. It
+    // resolves to surface.page at the bottom so the existing transition holds.
+    <section className="relative isolate overflow-hidden bg-[linear-gradient(180deg,#f6eefb_0%,#faf6fc_62%,#fbf9f8_100%)] text-[#281632]">
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-32 -top-40 -z-10 h-[520px] w-[520px] rounded-full bg-brand-500/[0.09] blur-3xl"
+      />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-56 left-[18%] -z-10 h-[420px] w-[420px] rounded-full bg-brand-600/[0.055] blur-3xl"
+      />
       {/* Padding is deliberately asymmetric: the hero is measured against the
           first viewport, so mobile padding is proposition pushed below the
           fold. Keep mobile tight; spend the room on desktop. */}
-      <div className="mx-auto max-w-[1200px] px-8 py-8 sm:py-24 lg:py-32">
+      <div className="relative mx-auto max-w-[1200px] px-8 py-8 sm:py-24 lg:py-32">
         {/* items-start, not items-center: with a tall booking surface on the
             left, vertical centring drops the visual into dead space. */}
         <div className="grid grid-cols-1 items-start gap-6 sm:gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16">
           <div>
-            <h1 className="text-balance font-display text-3xl font-extrabold text-[#17131c] sm:text-5xl lg:text-6xl 2xl:text-7xl">
+            <h1 className="text-balance font-display text-3xl font-extrabold text-[#281632] sm:text-5xl lg:text-6xl 2xl:text-7xl">
               Same-day logistics infrastructure for the GTA
             </h1>
 
@@ -100,7 +103,7 @@ export function HeroNetwork() {
                 above body minimum. The measure is unchanged. */}
             {/* #5f5868 is 6.81:1 on surface.page. NOT #8d8695 — 3.51:1, fails
                 AA for normal text. */}
-            <p className="mt-4 max-w-[560px] text-base text-[#5f5868] sm:mt-5 sm:text-lg">
+            <p className="mt-4 max-w-[560px] text-base text-[#62566a] sm:mt-5 sm:text-lg">
               Specimens, filings, business deliveries and parcels — dispatched,
               tracked and recorded on one platform.
             </p>
@@ -136,7 +139,7 @@ export function HeroNetwork() {
                 the form would hide and an empty white card would remain. */}
             <div
               data-hero-entry
-              className="mt-6 rounded-[28px] bg-surface-raised p-5 shadow-hero ring-1 ring-[#17131c]/[0.06] sm:mt-10 sm:p-8"
+              className="mt-6 rounded-[28px] border border-[#ddcbea] bg-surface-raised p-5 shadow-[0_2px_4px_rgba(82,28,130,0.06),0_22px_54px_-24px_rgba(82,28,130,0.34)] sm:mt-10 sm:p-8"
             >
               <HeroAddressEntry />
             </div>
@@ -175,7 +178,11 @@ export function HeroNetwork() {
               1200px; 520/560 keeps the field proportionate to the card inside
               it. lg:mt-2 aligns it against the headline's cap height, since
               items-start aligns the two columns on their box tops. */}
-          <div className="max-w-[520px] lg:mt-2 lg:max-w-[560px]">
+          <div className="relative max-w-[520px] rounded-[28px] border border-[#ddcbea] bg-white/55 p-3 shadow-[0_2px_4px_rgba(82,28,130,0.04),0_20px_48px_-28px_rgba(82,28,130,0.3)] sm:p-5 lg:mt-2 lg:max-w-[560px]">
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-10 -top-8 h-20 rounded-full bg-brand-500/10 blur-2xl"
+            />
             <RecentRequestFlashcards />
           </div>
         </div>

@@ -6,10 +6,7 @@ import Link from 'next/link'
 
 import { importMapsLibrary } from '@/lib/maps-loader'
 import { ROUTES } from '@/lib/navigation'
-import {
-  SEND_FLOW_STORAGE_KEY,
-  isPlace,
-} from '@/lib/send-flow-contract'
+import { SEND_FLOW_STORAGE_KEY, isPlace } from '@/lib/send-flow-contract'
 
 // The homepage's pickup / drop-off entry. ONE client island; the hero around it
 // stays a server component and NetworkDemo keeps its own separate boundary.
@@ -536,14 +533,14 @@ export function HeroAddressEntry() {
         <button
           type="submit"
           disabled={!ready}
-          className="inline-flex min-h-11 w-full items-center justify-center rounded-control bg-brand-600 px-[30px] py-3 text-base sm:py-4 font-semibold text-white transition-colors motion-reduce:transition-none hover:bg-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:bg-[#ece7f1] disabled:text-[#6b6474] sm:w-auto"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-control bg-brand-600 px-[30px] py-3 text-base font-semibold text-white transition-colors hover:bg-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:bg-[#ece7f1] disabled:text-[#6b6474] motion-reduce:transition-none sm:w-auto sm:py-4"
         >
           Continue to booking
         </button>
 
         <Link
           href={ROUTES.contact.href}
-          className="inline-flex min-h-11 w-full items-center justify-center rounded-control px-2 text-base font-semibold text-[#17131c] underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 sm:w-auto sm:px-0"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-control border border-[#d9c7e6] bg-white px-5 text-base font-semibold text-[#281632] shadow-card transition-colors hover:bg-[#f4eafb] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 sm:w-auto"
         >
           Talk to our team
         </Link>
@@ -551,12 +548,12 @@ export function HeroAddressEntry() {
 
       <p className="mt-3 text-sm text-[#5f5868] sm:mt-3.5">
         {ready
-          // PHASE 7.1: both helper strings are kept to ONE line at 390. The
-          // ready message previously wrapped to two, so selecting the second
-          // address nudged the whole network panel down by ~21px — a layout
-          // shift caused by the user succeeding, which is the worst moment to
-          // move the page.
-          ? 'Ready — continue to choose a vehicle.'
+          ? // PHASE 7.1: both helper strings are kept to ONE line at 390. The
+            // ready message previously wrapped to two, so selecting the second
+            // address nudged the whole network panel down by ~21px — a layout
+            // shift caused by the user succeeding, which is the worst moment to
+            // move the page.
+            'Ready — continue to choose a vehicle.'
           : 'Choose a suggestion for each address.'}
       </p>
 
