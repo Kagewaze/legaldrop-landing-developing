@@ -5,9 +5,11 @@ import { useEffect, useRef, useState } from 'react'
 import { importMapsLibrary, subscribeMapsAuthFailure } from '@/lib/maps-loader'
 import {
   computeMovementHeading,
+  distanceBetweenCoordinates,
   normalizeCoordinate,
 } from '@/lib/tracking-map.mjs'
 import {
+  animateDriverMarker,
   createDriverMarker,
   observeMapInteraction,
   setDriverMarkerHeading,
@@ -17,7 +19,7 @@ import { TrackingMapRecenter } from '@/components/track/TrackingMapRecenter'
 // Production Cloud Console Map ID for the legal-drop project. Vector map —
 // required by AdvancedMarkerElement.
 const MAP_ID = 'ea0f34dfd1b56b44758f5576'
-const DEFAULT_ZOOM = 15
+const DEFAULT_ZOOM = 16
 
 export function TrackingMap({ driverLocation, isLive = true }) {
   const mapRef = useRef(null)
@@ -25,6 +27,8 @@ export function TrackingMap({ driverLocation, isLive = true }) {
   const markerRef = useRef(null)
   const markerVehicleRef = useRef(null)
   const previousDriverRef = useRef(null)
+  const animatedDriverRef = useRef(null)
+  const cancelMarkerAnimationRef = useRef(null)
   const followingRef = useRef(true)
   const mapUnavailableRef = useRef(false)
   const [following, setFollowing] = useState(true)
@@ -37,6 +41,8 @@ export function TrackingMap({ driverLocation, isLive = true }) {
     if (mapUnavailableRef.current) return
 
     mapUnavailableRef.current = true
+    cancelMarkerAnimationRef.current?.()
+    cancelMarkerAnimationRef.current = null
     followingRef.current = false
     setFollowing(false)
     setStatus('error')
@@ -63,7 +69,10 @@ export function TrackingMap({ driverLocation, isLive = true }) {
     followingRef.current = true
     setFollowing(true)
     runMapOperation('recenter failed', () => {
-      mapInstanceRef.current.setZoom(DEFAULT_ZOOM)
+      const zoom = mapInstanceRef.current.getZoom()
+      if (!Number.isFinite(zoom) || zoom < 14 || zoom > 18) {
+        mapInstanceRef.current.setZoom(DEFAULT_ZOOM)
+      }
       mapInstanceRef.current.panTo(driver)
     })
   }
@@ -128,6 +137,7 @@ export function TrackingMap({ driverLocation, isLive = true }) {
         markerRef.current = marker
         markerVehicleRef.current = vehicle
         previousDriverRef.current = driver
+        animatedDriverRef.current = driver
         mapInstanceRef.current = map
 
         setStatus('ready')
@@ -159,9 +169,12 @@ export function TrackingMap({ driverLocation, isLive = true }) {
       return
     }
 
-    const heading = computeMovementHeading(previousDriverRef.current, driver)
+    const previous = previousDriverRef.current
+    const distance = distanceBetweenCoordinates(previous, driver)
+    if (distance == null || distance < 1) return
+
+    const heading = computeMovementHeading(previous, driver)
     const updated = runMapOperation('driver update failed', () => {
-      markerRef.current.position = driver
       setDriverMarkerHeading(markerVehicleRef.current, heading)
 
       if (followingRef.current) {
@@ -169,7 +182,20 @@ export function TrackingMap({ driverLocation, isLive = true }) {
       }
     })
 
-    if (updated) previousDriverRef.current = driver
+    if (updated) {
+      cancelMarkerAnimationRef.current?.()
+      cancelMarkerAnimationRef.current = animateDriverMarker({
+        marker: markerRef.current,
+        from: animatedDriverRef.current ?? previous,
+        to: driver,
+        onPosition: (position) => {
+          animatedDriverRef.current = position
+        },
+        onError: (error) =>
+          markMapUnavailable(error, 'driver animation failed'),
+      })
+      previousDriverRef.current = driver
+    }
     // The normalized `driver` object is recreated during render. Coordinates
     // are the intentional update contract; depending on the object would rerun
     // this Google mutation after unrelated state changes.
@@ -178,6 +204,8 @@ export function TrackingMap({ driverLocation, isLive = true }) {
 
   useEffect(() => {
     return () => {
+      cancelMarkerAnimationRef.current?.()
+      cancelMarkerAnimationRef.current = null
       try {
         if (markerRef.current) markerRef.current.map = null
       } catch (error) {
@@ -187,6 +215,7 @@ export function TrackingMap({ driverLocation, isLive = true }) {
       markerRef.current = null
       markerVehicleRef.current = null
       previousDriverRef.current = null
+      animatedDriverRef.current = null
       mapInstanceRef.current = null
     }
   }, [])

@@ -6,16 +6,49 @@ import {
   computeMovementHeading,
   getPartnerGeography,
   getPartnerGeographySignature,
+  easeInOutCubic,
+  interpolateCoordinate,
   normalizeCoordinate,
   normalizeHeading,
   resolveDriverHeading,
 } from '../src/lib/tracking-map.mjs'
 
+test('interpolates only between normalized successive coordinates', () => {
+  assert.deepEqual(
+    interpolateCoordinate(
+      { lat: 43.65, lng: -79.4 },
+      { lat: 43.67, lng: -79.36 },
+      0.5,
+    ),
+    { lat: 43.66, lng: -79.38 },
+  )
+  assert.deepEqual(
+    interpolateCoordinate({ lat: 1, lng: 2 }, { lat: 3, lng: 4 }, -1),
+    { lat: 1, lng: 2 },
+  )
+  assert.deepEqual(
+    interpolateCoordinate({ lat: 1, lng: 2 }, { lat: 3, lng: 4 }, 2),
+    { lat: 3, lng: 4 },
+  )
+  assert.equal(interpolateCoordinate(null, { lat: 3, lng: 4 }, 0.5), null)
+})
+
+test('uses a clamped ease that starts and ends at actual coordinates', () => {
+  assert.equal(easeInOutCubic(-1), 0)
+  assert.equal(easeInOutCubic(0), 0)
+  assert.equal(easeInOutCubic(0.5), 0.5)
+  assert.equal(easeInOutCubic(1), 1)
+  assert.equal(easeInOutCubic(2), 1)
+})
+
 test('normalizes supported coordinate shapes', () => {
-  assert.deepEqual(normalizeCoordinate({ latitude: 43.65, longitude: -79.38 }), {
-    lat: 43.65,
-    lng: -79.38,
-  })
+  assert.deepEqual(
+    normalizeCoordinate({ latitude: 43.65, longitude: -79.38 }),
+    {
+      lat: 43.65,
+      lng: -79.38,
+    },
+  )
   assert.deepEqual(normalizeCoordinate({ lat: 43.65, lng: -79.38 }), {
     lat: 43.65,
     lng: -79.38,
@@ -41,10 +74,18 @@ test('rejects missing, non-finite, and out-of-range coordinates', () => {
 
 test('computes cardinal movement headings clockwise from north', () => {
   const origin = { lat: 0, lng: 0 }
-  assert.ok(Math.abs(computeMovementHeading(origin, { lat: 1, lng: 0 }) - 0) < 0.001)
-  assert.ok(Math.abs(computeMovementHeading(origin, { lat: 0, lng: 1 }) - 90) < 0.001)
-  assert.ok(Math.abs(computeMovementHeading(origin, { lat: -1, lng: 0 }) - 180) < 0.001)
-  assert.ok(Math.abs(computeMovementHeading(origin, { lat: 0, lng: -1 }) - 270) < 0.001)
+  assert.ok(
+    Math.abs(computeMovementHeading(origin, { lat: 1, lng: 0 }) - 0) < 0.001,
+  )
+  assert.ok(
+    Math.abs(computeMovementHeading(origin, { lat: 0, lng: 1 }) - 90) < 0.001,
+  )
+  assert.ok(
+    Math.abs(computeMovementHeading(origin, { lat: -1, lng: 0 }) - 180) < 0.001,
+  )
+  assert.ok(
+    Math.abs(computeMovementHeading(origin, { lat: 0, lng: -1 }) - 270) < 0.001,
+  )
 })
 
 test('does not derive heading from invalid, unchanged, or negligible movement', () => {
@@ -63,7 +104,10 @@ test('prefers valid backend heading and otherwise derives it from movement', () 
     current: { lat: 0, lng: 0 },
   }
   assert.equal(resolveDriverHeading({ backendHeading: 45, ...westward }), 45)
-  assert.equal(resolveDriverHeading({ backendHeading: 'invalid', ...westward }), 270)
+  assert.equal(
+    resolveDriverHeading({ backendHeading: 'invalid', ...westward }),
+    270,
+  )
   assert.equal(normalizeHeading(360), 0)
   assert.equal(normalizeHeading(-1), null)
   assert.equal(normalizeHeading(361), null)
@@ -82,15 +126,8 @@ test('collects partner pickup, destinations, route, and driver in order', () => 
   assert.deepEqual(
     collectBoundsCoordinates({
       pickup: { lat: 1, lng: 2 },
-      destinations: [
-        { latitude: 3, longitude: 4 },
-        [6, 5],
-        null,
-      ],
-      route: [
-        [8, 7],
-        { lat: 9, lng: 10 },
-      ],
+      destinations: [{ latitude: 3, longitude: 4 }, [6, 5], null],
+      route: [[8, 7], { lat: 9, lng: 10 }],
       driver: { lat: 11, lng: 12 },
     }),
     [
@@ -125,7 +162,12 @@ test('equivalent fresh partner geography objects have the same signature', () =>
         receiverLocation: { latitude: 43.66, longitude: -79.37 },
       },
     ],
-    route: { coordinates: [[-79.38, 43.65], [-79.37, 43.66]] },
+    route: {
+      coordinates: [
+        [-79.38, 43.65],
+        [-79.37, 43.66],
+      ],
+    },
   })
   const second = geographySignature({
     senderLocation: { lat: 43.65, lng: -79.38 },
@@ -179,8 +221,22 @@ test('destination additions, removals, and order change the signature', () => {
 
 test('partner geography signature changes for backend route corrections', () => {
   assert.notEqual(
-    geographySignature({ route: { coordinates: [[2, 1], [4, 3]] } }),
-    geographySignature({ route: { coordinates: [[2, 1], [5, 3]] } }),
+    geographySignature({
+      route: {
+        coordinates: [
+          [2, 1],
+          [4, 3],
+        ],
+      },
+    }),
+    geographySignature({
+      route: {
+        coordinates: [
+          [2, 1],
+          [5, 3],
+        ],
+      },
+    }),
   )
 })
 

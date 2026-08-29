@@ -5,12 +5,14 @@ import { useEffect, useRef, useState } from 'react'
 import { importMapsLibrary, subscribeMapsAuthFailure } from '@/lib/maps-loader'
 import {
   collectBoundsCoordinates,
+  distanceBetweenCoordinates,
   getPartnerGeography,
   getPartnerGeographySignature,
   normalizeCoordinate,
   resolveDriverHeading,
 } from '@/lib/tracking-map.mjs'
 import {
+  animateDriverMarker,
   createDriverMarker,
   observeMapInteraction,
   setDriverMarkerHeading,
@@ -20,7 +22,7 @@ import { TrackingMapRecenter } from '@/components/track/TrackingMapRecenter'
 // Production Cloud Console Map ID for the legal-drop project. Vector map —
 // required by AdvancedMarkerElement.
 const MAP_ID = 'ea0f34dfd1b56b44758f5576'
-const DEFAULT_ZOOM = 14
+const DEFAULT_ZOOM = 15
 
 export function PartnerTrackingMap({
   driverLocation,
@@ -37,8 +39,10 @@ export function PartnerTrackingMap({
   const carMarkerRef = useRef(null)
   const carInnerRef = useRef(null)
   const prevDriverRef = useRef(null)
+  const animatedDriverRef = useRef(null)
+  const cancelMarkerAnimationRef = useRef(null)
   const staticMarkersRef = useRef([])
-  const routePolylineRef = useRef(null)
+  const routePolylinesRef = useRef([])
   const appliedGeographySignatureRef = useRef(null)
   const initialViewportSetRef = useRef(false)
   const followingRef = useRef(true)
@@ -64,6 +68,8 @@ export function PartnerTrackingMap({
     if (mapUnavailableRef.current) return
 
     mapUnavailableRef.current = true
+    cancelMarkerAnimationRef.current?.()
+    cancelMarkerAnimationRef.current = null
     followingRef.current = false
     setFollowing(false)
     setStatus('error')
@@ -90,7 +96,10 @@ export function PartnerTrackingMap({
     followingRef.current = true
     setFollowing(true)
     runMapOperation('recenter failed', () => {
-      mapInstanceRef.current.setZoom(DEFAULT_ZOOM)
+      const zoom = mapInstanceRef.current.getZoom()
+      if (!Number.isFinite(zoom) || zoom < 13 || zoom > 18) {
+        mapInstanceRef.current.setZoom(DEFAULT_ZOOM)
+      }
       mapInstanceRef.current.panTo(driver)
     })
   }
@@ -182,6 +191,7 @@ export function PartnerTrackingMap({
           carMarkerRef.current = marker
           carInnerRef.current = vehicle
           prevDriverRef.current = driver
+          animatedDriverRef.current = driver
         }
 
         mapInstanceRef.current = map
@@ -228,8 +238,8 @@ export function PartnerTrackingMap({
         marker.map = null
       })
       staticMarkersRef.current = []
-      routePolylineRef.current?.setMap(null)
-      routePolylineRef.current = null
+      routePolylinesRef.current.forEach((polyline) => polyline.setMap(null))
+      routePolylinesRef.current = []
 
       if (geography.pickup) {
         const pickupPin = new PinElement({
@@ -268,14 +278,28 @@ export function PartnerTrackingMap({
       // The backend path may cover only pickup → first destination. Render it
       // exactly as supplied; never manufacture missing multi-stop legs.
       if (geography.route.length >= 2) {
-        routePolylineRef.current = new window.google.maps.Polyline({
+        const routeOptions = {
           map,
           path: geography.route,
           geodesic: true,
-          strokeColor: '#7c3aed',
-          strokeOpacity: 0.9,
-          strokeWeight: 4,
-        })
+          clickable: false,
+        }
+        routePolylinesRef.current = [
+          new window.google.maps.Polyline({
+            ...routeOptions,
+            strokeColor: '#eadcf4',
+            strokeOpacity: 0.9,
+            strokeWeight: 10,
+            zIndex: 1,
+          }),
+          new window.google.maps.Polyline({
+            ...routeOptions,
+            strokeColor: '#7B2FBE',
+            strokeOpacity: 0.92,
+            strokeWeight: 5,
+            zIndex: 2,
+          }),
+        ]
       }
 
       appliedGeographySignatureRef.current = geographySignature
@@ -344,6 +368,7 @@ export function PartnerTrackingMap({
       carMarkerRef.current = marker
       carInnerRef.current = vehicle
       prevDriverRef.current = driver
+      animatedDriverRef.current = driver
       if (followingRef.current) {
         runMapOperation('driver follow failed', () => {
           mapInstanceRef.current.panTo(driver)
@@ -353,15 +378,14 @@ export function PartnerTrackingMap({
     }
 
     const previous = prevDriverRef.current
-    const moved =
-      previous && (previous.lat !== driver.lat || previous.lng !== driver.lng)
+    const distance = distanceBetweenCoordinates(previous, driver)
+    const moved = distance != null && distance >= 1
     const heading = resolveDriverHeading({
       backendHeading: driverLocation?.heading,
       previous,
       current: driver,
     })
     const updated = runMapOperation('driver update failed', () => {
-      carMarkerRef.current.position = driver
       setDriverMarkerHeading(carInnerRef.current, heading)
 
       if (moved && followingRef.current) {
@@ -369,7 +393,20 @@ export function PartnerTrackingMap({
       }
     })
 
-    if (updated) prevDriverRef.current = driver
+    if (updated && moved) {
+      cancelMarkerAnimationRef.current?.()
+      cancelMarkerAnimationRef.current = animateDriverMarker({
+        marker: carMarkerRef.current,
+        from: animatedDriverRef.current ?? previous,
+        to: driver,
+        onPosition: (position) => {
+          animatedDriverRef.current = position
+        },
+        onError: (error) =>
+          markMapUnavailable(error, 'driver animation failed'),
+      })
+      prevDriverRef.current = driver
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     driver?.lat,
@@ -381,23 +418,26 @@ export function PartnerTrackingMap({
 
   useEffect(() => {
     return () => {
+      cancelMarkerAnimationRef.current?.()
+      cancelMarkerAnimationRef.current = null
       try {
         staticMarkersRef.current.forEach((marker) => {
           marker.map = null
         })
         if (carMarkerRef.current) carMarkerRef.current.map = null
-        routePolylineRef.current?.setMap(null)
+        routePolylinesRef.current.forEach((polyline) => polyline.setMap(null))
       } catch (error) {
         // An unauthorized Maps runtime can reject teardown mutations too. The
         // container is being removed, so clearing local references is enough.
       }
       staticMarkersRef.current = []
-      routePolylineRef.current = null
+      routePolylinesRef.current = []
       appliedGeographySignatureRef.current = null
       initialViewportSetRef.current = false
       carMarkerRef.current = null
       carInnerRef.current = null
       prevDriverRef.current = null
+      animatedDriverRef.current = null
       advancedMarkerCtorRef.current = null
       pinCtorRef.current = null
       boundsCtorRef.current = null

@@ -9,7 +9,9 @@ function finiteNumber(value) {
 export function normalizeCoordinate(point) {
   if (!point) return null
 
-  const lat = finiteNumber(Array.isArray(point) ? point[1] : point.latitude ?? point.lat)
+  const lat = finiteNumber(
+    Array.isArray(point) ? point[1] : point.latitude ?? point.lat,
+  )
   const lng = finiteNumber(
     Array.isArray(point) ? point[0] : point.longitude ?? point.lng,
   )
@@ -18,6 +20,23 @@ export function normalizeCoordinate(point) {
   if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null
 
   return { lat, lng }
+}
+
+export function easeInOutCubic(progress) {
+  const value = Math.min(1, Math.max(0, Number(progress) || 0))
+  return value < 0.5 ? 4 * value ** 3 : 1 - Math.pow(-2 * value + 2, 3) / 2
+}
+
+export function interpolateCoordinate(fromValue, toValue, progress) {
+  const from = normalizeCoordinate(fromValue)
+  const to = normalizeCoordinate(toValue)
+  if (!from || !to) return null
+
+  const amount = Math.min(1, Math.max(0, Number(progress) || 0))
+  return {
+    lat: from.lat + (to.lat - from.lat) * amount,
+    lng: from.lng + (to.lng - from.lng) * amount,
+  }
 }
 
 export function distanceBetweenCoordinates(fromValue, toValue) {
@@ -56,9 +75,7 @@ export function computeMovementHeading(fromValue, toValue, minimumMetres = 1) {
   const y = Math.sin(longitudeDelta) * Math.cos(toLatitude)
   const x =
     Math.cos(fromLatitude) * Math.sin(toLatitude) -
-    Math.sin(fromLatitude) *
-      Math.cos(toLatitude) *
-      Math.cos(longitudeDelta)
+    Math.sin(fromLatitude) * Math.cos(toLatitude) * Math.cos(longitudeDelta)
 
   return (toDegrees(Math.atan2(y, x)) + 360) % 360
 }
