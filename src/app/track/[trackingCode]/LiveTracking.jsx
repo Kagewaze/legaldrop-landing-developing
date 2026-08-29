@@ -29,7 +29,8 @@ export function LiveTracking({
   initialMessage,
   initialDriverLocation,
   initialEta,
-  children,
+  driverSummary,
+  deliveryDetails,
 }) {
   const [status, setStatus] = useState(initialStatus)
   const [message, setMessage] = useState(initialMessage)
@@ -60,68 +61,91 @@ export function LiveTracking({
   }, [trackingCode, status])
 
   return (
-    <>
-      <TrackingLiveStatus status={status} message={message} eta={eta} />
+    <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.35fr)] lg:gap-7">
+      <div className="lg:col-start-1 lg:row-start-1">
+        <TrackingLiveStatus status={status} message={message} eta={eta} />
+      </div>
 
-      {children}
+      <div className="lg:sticky lg:top-8 lg:col-start-2 lg:row-span-4 lg:row-start-1 lg:self-start">
+        {driverLocation ? (
+          <TrackingMap
+            driverLocation={driverLocation}
+            isLive={!isTerminalStatus(status)}
+          />
+        ) : (
+          // No location exists yet, so there is nothing to map. The neutral
+          // route motif must not imply geography the consumer API does not
+          // provide.
+          <section className="overflow-hidden rounded-card border border-[#e5dfea] bg-surface-raised shadow-card">
+            <div className="flex min-h-[220px] flex-col items-center justify-center bg-surface-tint px-6 py-10 text-center sm:min-h-[260px]">
+              <svg
+                viewBox="0 0 64 12"
+                aria-hidden="true"
+                focusable="false"
+                className="h-3 w-16"
+              >
+                <circle
+                  cx="5"
+                  cy="6"
+                  r="4"
+                  fill="#7B2FBE"
+                  fillOpacity="0.55"
+                />
+                <path
+                  d="M 12 6 H 46"
+                  fill="none"
+                  stroke="#7B2FBE"
+                  strokeOpacity="0.28"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeDasharray="3 5"
+                />
+                <circle
+                  cx="57"
+                  cy="6"
+                  r="4"
+                  fill="none"
+                  stroke="#7B2FBE"
+                  strokeOpacity="0.55"
+                  strokeWidth="2"
+                />
+              </svg>
+              <p className="mt-5 text-xs font-semibold uppercase tracking-label text-[#5f5868]">
+                Live driver location
+              </p>
+              <p className="mt-2 max-w-sm text-[15px] text-[#5f5868]">
+                {isTerminalStatus(status)
+                  ? 'No live location is available for this delivery.'
+                  : 'Live location will appear when your driver is on the way.'}
+              </p>
+            </div>
+          </section>
+        )}
+      </div>
 
-      {driverLocation ? (
-        <TrackingMap driverLocation={driverLocation} />
-      ) : (
-        // ⚠️ THIS REPLACED A 📍 EMOJI RENDERED AT 24px.
-        //
-        // No location exists yet, so there is nothing to map. The panel now
-        // says that with the same route motif the rest of the product uses,
-        // drawn on the tint rather than borrowing a map's appearance — it must
-        // not imply geography it does not have.
-        //
-        // ⚠️ AND IT IS HIDDEN ONCE THE ORDER IS TERMINAL. Previously a
-        // DELIVERED order still displayed "we'll show your driver's location
-        // here once they're on the way", promising a future event for a job
-        // that had already finished. Display-only: the status logic above is
-        // untouched.
-        isTerminalStatus(status) ? null : (
-        <section className="rounded-card border border-[#eeebf1] bg-surface-raised p-6 text-center shadow-card">
-          <p className="text-xs font-semibold uppercase tracking-label text-[#5f5868]">
-            Driver location
-          </p>
-          <div className="mt-4 flex h-32 items-center justify-center rounded-[14px] bg-surface-tint">
-            <svg
-              viewBox="0 0 64 12"
-              aria-hidden="true"
-              focusable="false"
-              className="h-3 w-16"
-            >
-              <circle cx="5" cy="6" r="4" fill="#7B2FBE" fillOpacity="0.55" />
-              <path
-                d="M 12 6 H 46"
-                fill="none"
-                stroke="#7B2FBE"
-                strokeOpacity="0.28"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeDasharray="3 5"
-              />
-              <circle
-                cx="57"
-                cy="6"
-                r="4"
-                fill="none"
-                stroke="#7B2FBE"
-                strokeOpacity="0.55"
-                strokeWidth="2"
-              />
-            </svg>
-          </div>
-          <p className="mt-4 text-[15px] text-[#5f5868]">
-            We&rsquo;ll show your driver&rsquo;s location here once they&rsquo;re
-            on the way.
-          </p>
-        </section>
-        )
-      )}
+      {driverSummary ? (
+        <div className="lg:col-start-1 lg:row-start-2">{driverSummary}</div>
+      ) : null}
 
-      <TrackingLiveFooter status={status} />
-    </>
+      <div
+        className={
+          driverSummary
+            ? 'lg:col-start-1 lg:row-start-3'
+            : 'lg:col-start-1 lg:row-start-2'
+        }
+      >
+        {deliveryDetails}
+      </div>
+
+      <div
+        className={
+          driverSummary
+            ? 'lg:col-start-1 lg:row-start-4'
+            : 'lg:col-start-1 lg:row-start-3'
+        }
+      >
+        <TrackingLiveFooter status={status} />
+      </div>
+    </div>
   )
 }

@@ -4,7 +4,6 @@ import {
   CompletionMarker,
   InfoList,
   TrackingHeader,
-  TrackingShell,
 } from '@/components/track/TrackingChrome'
 import { TrackingDriverSummary } from '@/components/track/TrackingPresentation'
 
@@ -99,16 +98,19 @@ export default async function TrackOrderPage({ params }) {
 
   if (!tracking) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-surface-page px-5 py-16">
-        <div className="w-full max-w-xl rounded-card border border-[#eeebf1] bg-surface-raised p-10 text-center shadow-card">
-          <h1 className="font-display text-2xl font-extrabold tracking-[-0.02em] text-[#17131c]">
-            Tracking unavailable
-          </h1>
-          <p className="mt-4 text-[15px] text-[#5f5868]">
-            {trackingError
-              ? trackingError
-              : 'We couldn’t find tracking details for this code. Please double-check it or contact the sender for assistance.'}
-          </p>
+      <main className="min-h-screen bg-surface-page px-4 py-8 sm:px-6 sm:py-12">
+        <div className="mx-auto flex w-full max-w-xl flex-col gap-8">
+          <TrackingHeader eyebrow="Order tracking" title="Track your delivery" />
+          <section className="rounded-card border border-[#eeebf1] bg-surface-raised p-8 text-center shadow-card sm:p-10">
+            <h2 className="font-display text-2xl font-extrabold tracking-[-0.02em] text-[#17131c]">
+              Tracking unavailable
+            </h2>
+            <p className="mt-4 text-[15px] text-[#5f5868]">
+              {trackingError
+                ? trackingError
+                : 'We couldn’t find tracking details for this code. Please double-check it or contact the sender for assistance.'}
+            </p>
+          </section>
         </div>
       </main>
     )
@@ -159,7 +161,8 @@ export default async function TrackOrderPage({ params }) {
   ].filter(Boolean)
 
   return (
-    <TrackingShell>
+    <main className="min-h-screen bg-surface-page px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+      <div className="mx-auto flex w-full max-w-[1320px] flex-col gap-6">
         <TrackingHeader eyebrow="Order tracking" title="Track your delivery" />
 
         <LiveTracking
@@ -168,19 +171,20 @@ export default async function TrackOrderPage({ params }) {
           initialMessage={message}
           initialDriverLocation={driverLocation}
           initialEta={eta}
-        >
-          <div className="grid items-start gap-5 sm:grid-cols-2">
-            {/* The marker renders only for the real terminal delivered
-                status, so the record card states its own outcome. */}
+          driverSummary={
+            driverPresentation ? (
+              <TrackingDriverSummary driver={driverPresentation} />
+            ) : null
+          }
+          deliveryDetails={
             <InfoList
-              title="Order details"
+              title="Delivery details"
               items={orderItems}
               footer={status === 'delivered' ? <CompletionMarker /> : null}
             />
-
-            <TrackingDriverSummary driver={driverPresentation} />
-          </div>
-        </LiveTracking>
-    </TrackingShell>
+          }
+        />
+      </div>
+    </main>
   )
 }

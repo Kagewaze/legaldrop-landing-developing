@@ -19,7 +19,7 @@ import { TrackingMapRecenter } from '@/components/track/TrackingMapRecenter'
 const MAP_ID = 'ea0f34dfd1b56b44758f5576'
 const DEFAULT_ZOOM = 15
 
-export function TrackingMap({ driverLocation }) {
+export function TrackingMap({ driverLocation, isLive = true }) {
   const mapRef = useRef(null)
   const mapInstanceRef = useRef(null)
   const markerRef = useRef(null)
@@ -143,15 +143,19 @@ export function TrackingMap({ driverLocation }) {
   }, [])
 
   return (
-    <section className="rounded-card border border-[#eeebf1] bg-surface-raised p-6 shadow-card">
-      <p className="text-xs font-semibold uppercase tracking-label text-[#5f5868]">
-        Driver Location
-      </p>
-      <div className="relative mt-4 h-64 w-full overflow-hidden rounded-[14px] bg-surface-tint">
+    <section className="overflow-hidden rounded-card border border-[#e5dfea] bg-surface-raised shadow-lift">
+      <h2 className="sr-only">
+        {isLive ? 'Live driver location' : "Driver's last known location"}
+      </h2>
+      <div className="relative h-[clamp(360px,46vh,560px)] w-full bg-surface-tint">
         <div
           ref={mapRef}
           className="h-full w-full"
-          aria-label="Map showing the driver's current location"
+          aria-label={
+            isLive
+              ? "Map showing the driver's current location"
+              : "Map showing the driver's last known location"
+          }
         />
         {status !== 'ready' && (
           <div className="absolute inset-0 flex items-center justify-center px-4 text-center text-[13px] text-[#5f5868]">
