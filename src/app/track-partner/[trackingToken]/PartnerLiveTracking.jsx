@@ -75,7 +75,7 @@ export function PartnerLiveTracking({
   }, [trackingToken, status])
 
   return (
-    <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.35fr)] lg:gap-7">
+    <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,0.78fr)_minmax(0,1.42fr)] lg:gap-8">
       <div className="lg:col-start-1 lg:row-start-1">
         <TrackingLiveStatus status={status} message={message} eta={eta} />
       </div>

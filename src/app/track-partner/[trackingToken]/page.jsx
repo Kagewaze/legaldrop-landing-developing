@@ -104,9 +104,12 @@ export default async function TrackPartnerPage({ params }) {
 
   if (!tracking) {
     return (
-      <main className="min-h-screen bg-surface-page px-4 py-8 sm:px-6 sm:py-12">
+      <main className="min-h-screen bg-[linear-gradient(180deg,#f6eefb_0%,#fbf9f8_38%,#fbf9f8_100%)] px-4 py-8 sm:px-6 sm:py-12">
         <div className="mx-auto flex w-full max-w-xl flex-col gap-8">
-          <TrackingHeader eyebrow="Order tracking" title="Track your delivery" />
+          <TrackingHeader
+            eyebrow="Order tracking"
+            title="Track your delivery"
+          />
           <section className="rounded-card border border-[#eeebf1] bg-surface-raised p-8 text-center shadow-card sm:p-10">
             <h2 className="font-display text-2xl font-extrabold tracking-[-0.02em] text-[#17131c]">
               Tracking unavailable
@@ -162,7 +165,11 @@ export default async function TrackPartnerPage({ params }) {
 
   const routeSummaryItems = [
     // Never the token: it is a credential, not a label.
-    { key: 'tracking-code', label: 'Tracking Code', value: displayCode ?? '--' },
+    {
+      key: 'tracking-code',
+      label: 'Tracking Code',
+      value: displayCode ?? '--',
+    },
     {
       key: 'stops',
       label: 'Delivery Stops',
@@ -203,8 +210,8 @@ export default async function TrackPartnerPage({ params }) {
   ].filter((item) => item.value)
 
   return (
-    <main className="min-h-screen bg-surface-page px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-      <div className="mx-auto flex w-full max-w-[1320px] flex-col gap-6">
+    <main className="min-h-screen bg-[linear-gradient(180deg,#f6eefb_0%,#fbf9f8_38%,#fbf9f8_100%)] px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6">
         <TrackingHeader eyebrow="Order tracking" title="Track your delivery" />
 
         <PartnerLiveTracking

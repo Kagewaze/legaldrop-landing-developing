@@ -25,15 +25,15 @@ export function TrackingHeader({ eyebrow, title }) {
     <header className="flex flex-col items-center gap-5 text-center">
       <Link
         href="/"
-        className="text-2xl font-bold text-[#17131c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-page"
+        className="font-display text-2xl font-extrabold text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f8f2fc]"
       >
         {BRAND.name}
       </Link>
       <div>
-        <p className="text-xs font-semibold uppercase tracking-label text-[#5f5868]">
+        <p className="text-xs font-bold uppercase tracking-label text-brand-700">
           {eyebrow}
         </p>
-        <h1 className="mt-2 font-display text-3xl font-extrabold tracking-[-0.02em] text-[#17131c] sm:text-4xl">
+        <h1 className="mt-2 font-display text-3xl font-extrabold tracking-[-0.02em] text-[#281632] sm:text-4xl">
           {title}
         </h1>
       </div>
@@ -52,18 +52,22 @@ export function InfoList({ title, items, footer = null, className = '' }) {
 
   return (
     <section
-      className={`rounded-card border border-[#eeebf1] bg-surface-raised p-6 shadow-card ${className}`}
+      className={`rounded-card border border-[#e2d5eb] bg-surface-raised p-6 shadow-[0_1px_2px_rgba(82,28,130,0.04),0_8px_22px_-18px_rgba(82,28,130,0.28)] ${className}`}
     >
-      <h2 className="text-xs font-semibold uppercase tracking-label text-[#5f5868]">
+      <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-label text-brand-700">
+        <span
+          aria-hidden="true"
+          className="h-2 w-2 rounded-full bg-brand-600"
+        />
         {title}
       </h2>
-      <dl className="mt-5 space-y-4">
+      <dl className="mt-4 divide-y divide-[#f0e9f4]">
         {items.map(({ key, label, value }) => (
-          <div key={key ?? label}>
-            <dt className="text-[11px] font-semibold uppercase tracking-label text-[#8d8695]">
+          <div key={key ?? label} className="py-3 first:pt-0 last:pb-0">
+            <dt className="text-[10px] font-bold uppercase tracking-label text-[#87798e]">
               {label}
             </dt>
-            <dd className="mt-1 text-[15px] font-semibold text-[#17131c]">
+            <dd className="mt-1 text-[15px] font-semibold leading-6 text-[#302438]">
               {value || '--'}
             </dd>
           </div>

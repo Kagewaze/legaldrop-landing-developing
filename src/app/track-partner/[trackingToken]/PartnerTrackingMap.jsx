@@ -2,10 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-import {
-  importMapsLibrary,
-  subscribeMapsAuthFailure,
-} from '@/lib/maps-loader'
+import { importMapsLibrary, subscribeMapsAuthFailure } from '@/lib/maps-loader'
 import {
   collectBoundsCoordinates,
   getPartnerGeography,
@@ -125,12 +122,15 @@ export function PartnerTrackingMap({
 
     async function initMap() {
       try {
-        const [{ Map }, { AdvancedMarkerElement, PinElement }, { LatLngBounds }] =
-          await Promise.all([
-            importMapsLibrary('maps'),
-            importMapsLibrary('marker'),
-            importMapsLibrary('core'),
-          ])
+        const [
+          { Map },
+          { AdvancedMarkerElement, PinElement },
+          { LatLngBounds },
+        ] = await Promise.all([
+          importMapsLibrary('maps'),
+          importMapsLibrary('marker'),
+          importMapsLibrary('core'),
+        ])
 
         if (cancelled || !mapRef.current || mapInstanceRef.current) {
           return
@@ -371,7 +371,13 @@ export function PartnerTrackingMap({
 
     if (updated) prevDriverRef.current = driver
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [driver?.lat, driver?.lng, driverLocation?.heading, hasValidDriver, status])
+  }, [
+    driver?.lat,
+    driver?.lng,
+    driverLocation?.heading,
+    hasValidDriver,
+    status,
+  ])
 
   useEffect(() => {
     return () => {
@@ -412,11 +418,11 @@ export function PartnerTrackingMap({
   }, [])
 
   return (
-    <section className="overflow-hidden rounded-card border border-[#e5dfea] bg-surface-raised shadow-lift">
+    <section className="overflow-hidden rounded-card border border-[#d9c7e6] bg-surface-raised shadow-[0_2px_4px_rgba(82,28,130,0.06),0_18px_42px_-24px_rgba(82,28,130,0.38)]">
       <h2 className="sr-only">
         {isLive ? 'Live delivery route' : 'Delivery route and final positions'}
       </h2>
-      <div className="relative h-[clamp(360px,46vh,560px)] w-full bg-surface-tint">
+      <div className="relative h-[clamp(360px,50vh,560px)] w-full bg-[#f3eafa] lg:h-[clamp(520px,62vh,720px)]">
         <div
           ref={mapRef}
           className="h-full w-full"
@@ -427,10 +433,26 @@ export function PartnerTrackingMap({
           }
         />
         {status !== 'ready' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface-tint px-4 text-center text-[#5f5868]">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[radial-gradient(circle_at_50%_35%,#ffffff_0%,#f4eafb_58%,#eee0f8_100%)] px-6 text-center text-[#5f5868]">
             {status === 'error' ? (
               <>
-                <p className="text-sm font-semibold text-[#17131c]">
+                <span
+                  aria-hidden="true"
+                  className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-white text-brand-700 shadow-card ring-1 ring-[#ddcbea]"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-6 w-6"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                  >
+                    <path d="M4 18 9 6l6 12 5-9" />
+                    <circle cx="4" cy="18" r="1.5" fill="currentColor" />
+                    <circle cx="20" cy="9" r="1.5" fill="currentColor" />
+                  </svg>
+                </span>
+                <p className="font-display text-lg font-extrabold text-[#281632]">
                   Map temporarily unavailable
                 </p>
                 <p className="mt-2 text-[13px]">
