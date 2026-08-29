@@ -3,6 +3,16 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { importMapsLibrary } from '@/lib/maps-loader'
+import {
+  computeMovementHeading,
+  normalizeCoordinate,
+} from '@/lib/tracking-map.mjs'
+import {
+  createDriverMarker,
+  observeMapInteraction,
+  setDriverMarkerHeading,
+} from '@/lib/tracking-map-browser'
+import { TrackingMapRecenter } from '@/components/track/TrackingMapRecenter'
 
 // Production Cloud Console Map ID for the legal-drop project. Vector map —
 // required by AdvancedMarkerElement.
@@ -13,11 +23,22 @@ export function TrackingMap({ driverLocation }) {
   const mapRef = useRef(null)
   const mapInstanceRef = useRef(null)
   const markerRef = useRef(null)
+  const markerVehicleRef = useRef(null)
+  const previousDriverRef = useRef(null)
+  const followingRef = useRef(true)
+  const [following, setFollowing] = useState(true)
   const [status, setStatus] = useState('loading') // 'loading' | 'ready' | 'error'
 
-  const latitude = Number(driverLocation?.latitude)
-  const longitude = Number(driverLocation?.longitude)
-  const hasValidCoords = !Number.isNaN(latitude) && !Number.isNaN(longitude)
+  const driver = normalizeCoordinate(driverLocation)
+  const hasValidCoords = driver != null
+
+  function recenter() {
+    if (!driver || !mapInstanceRef.current) return
+    followingRef.current = true
+    setFollowing(true)
+    mapInstanceRef.current.setZoom(DEFAULT_ZOOM)
+    mapInstanceRef.current.panTo(driver)
+  }
 
   // Initialise the map + marker exactly once. The bootstrap loader / Map ID
   // logic is reused untouched; later coordinate changes only pan the map.
@@ -44,10 +65,8 @@ export function TrackingMap({ driverLocation }) {
           return
         }
 
-        const position = { lat: latitude, lng: longitude }
-
         const map = new Map(mapRef.current, {
-          center: position,
+          center: driver,
           zoom: DEFAULT_ZOOM,
           mapId: MAP_ID,
           mapTypeControl: false,
@@ -55,7 +74,15 @@ export function TrackingMap({ driverLocation }) {
           fullscreenControl: false,
         })
 
-        markerRef.current = new AdvancedMarkerElement({ map, position })
+        const { marker, vehicle } = createDriverMarker({
+          AdvancedMarkerElement,
+          map,
+          position: driver,
+          heading: null,
+        })
+        markerRef.current = marker
+        markerVehicleRef.current = vehicle
+        previousDriverRef.current = driver
         mapInstanceRef.current = map
 
         setStatus('ready')
@@ -74,17 +101,46 @@ export function TrackingMap({ driverLocation }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasValidCoords])
 
-  // Smoothly pan the existing map to the driver's new position on each
-  // update, rather than tearing down and rebuilding the map instance.
+  // Move the existing marker in place. Movement supplies a conservative
+  // heading because the consumer payload has no heading field. Camera updates
+  // happen only while follow mode remains enabled.
   useEffect(() => {
-    if (!hasValidCoords || !mapInstanceRef.current || !markerRef.current) {
+    if (!driver || !mapInstanceRef.current || !markerRef.current) {
       return
     }
 
-    const position = { lat: latitude, lng: longitude }
-    mapInstanceRef.current.panTo(position)
-    markerRef.current.position = position
-  }, [latitude, longitude, hasValidCoords])
+    const heading = computeMovementHeading(previousDriverRef.current, driver)
+    markerRef.current.position = driver
+    setDriverMarkerHeading(markerVehicleRef.current, heading)
+
+    if (followingRef.current) {
+      mapInstanceRef.current.panTo(driver)
+    }
+
+    previousDriverRef.current = driver
+  }, [driver?.lat, driver?.lng])
+
+  useEffect(() => {
+    return () => {
+      if (markerRef.current) markerRef.current.map = null
+      markerRef.current = null
+      markerVehicleRef.current = null
+      previousDriverRef.current = null
+      mapInstanceRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    const element = mapRef.current
+    if (!element) return undefined
+
+    const disableFollow = () => {
+      if (!followingRef.current) return
+      followingRef.current = false
+      setFollowing(false)
+    }
+    return observeMapInteraction(element, disableFollow)
+  }, [])
 
   return (
     <section className="rounded-card border border-[#eeebf1] bg-surface-raised p-6 shadow-card">
@@ -104,6 +160,9 @@ export function TrackingMap({ driverLocation }) {
               : 'Loading map…'}
           </div>
         )}
+        {status === 'ready' && !following ? (
+          <TrackingMapRecenter onClick={recenter} />
+        ) : null}
       </div>
     </section>
   )

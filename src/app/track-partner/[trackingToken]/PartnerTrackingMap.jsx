@@ -3,86 +3,22 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { importMapsLibrary } from '@/lib/maps-loader'
+import {
+  collectBoundsCoordinates,
+  normalizeCoordinate,
+  resolveDriverHeading,
+} from '@/lib/tracking-map.mjs'
+import {
+  createDriverMarker,
+  observeMapInteraction,
+  setDriverMarkerHeading,
+} from '@/lib/tracking-map-browser'
+import { TrackingMapRecenter } from '@/components/track/TrackingMapRecenter'
 
 // Production Cloud Console Map ID for the legal-drop project. Vector map —
 // required by AdvancedMarkerElement.
 const MAP_ID = 'ea0f34dfd1b56b44758f5576'
 const DEFAULT_ZOOM = 14
-
-// The backend hands back coordinates in several shapes across fields
-// (driverLocation/senderLocation use { latitude, longitude }; route
-// coordinates may arrive as objects or [lng, lat] pairs). Normalise them all
-// to Google's { lat, lng }. Returns null for anything unparseable so callers
-// can filter it out.
-function toLatLng(point) {
-  if (!point) {
-    return null
-  }
-
-  let lat
-  let lng
-
-  if (Array.isArray(point)) {
-    // GeoJSON-style [longitude, latitude].
-    lng = Number(point[0])
-    lat = Number(point[1])
-  } else {
-    lat = Number(point.latitude ?? point.lat)
-    lng = Number(point.longitude ?? point.lng)
-  }
-
-  if (Number.isNaN(lat) || Number.isNaN(lng)) {
-    return null
-  }
-
-  return { lat, lng }
-}
-
-// Bearing from one point to the next, in degrees clockwise from north — used
-// to rotate the car icon so it faces its direction of travel. Prefer a
-// backend-provided heading when present; otherwise derive it from movement.
-function computeHeading(from, to) {
-  const toRad = (deg) => (deg * Math.PI) / 180
-  const toDeg = (rad) => (rad * 180) / Math.PI
-
-  const lat1 = toRad(from.lat)
-  const lat2 = toRad(to.lat)
-  const dLng = toRad(to.lng - from.lng)
-
-  const y = Math.sin(dLng) * Math.cos(lat2)
-  const x =
-    Math.cos(lat1) * Math.sin(lat2) -
-    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng)
-
-  return (toDeg(Math.atan2(y, x)) + 360) % 360
-}
-
-// A top-down car glyph. The outer wrapper is what AdvancedMarkerElement
-// anchors; the inner element is rotated so the whole marker stays centred.
-function createCarElement() {
-  const wrapper = document.createElement('div')
-  wrapper.style.width = '34px'
-  wrapper.style.height = '34px'
-
-  const inner = document.createElement('div')
-  inner.style.width = '100%'
-  inner.style.height = '100%'
-  inner.style.transformOrigin = 'center'
-  inner.style.transition = 'transform 300ms ease-out'
-  inner.style.display = 'flex'
-  inner.style.alignItems = 'center'
-  inner.style.justifyContent = 'center'
-  inner.innerHTML = `
-    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <circle cx="12" cy="12" r="11" fill="#ffffff" stroke="#7c3aed" stroke-width="1.5"/>
-      <path d="M12 4l4 6h-8l4-6z" fill="#7c3aed"/>
-      <rect x="8" y="9" width="8" height="9" rx="2" fill="#7c3aed"/>
-      <rect x="9" y="10.5" width="6" height="3" rx="1" fill="#ffffff"/>
-    </svg>`
-
-  wrapper.appendChild(inner)
-  return { wrapper, inner }
-}
 
 export function PartnerTrackingMap({
   driverLocation,
@@ -96,10 +32,22 @@ export function PartnerTrackingMap({
   const carMarkerRef = useRef(null)
   const carInnerRef = useRef(null)
   const prevDriverRef = useRef(null)
+  const staticMarkersRef = useRef([])
+  const routePolylineRef = useRef(null)
+  const followingRef = useRef(true)
+  const [following, setFollowing] = useState(true)
   const [status, setStatus] = useState('loading') // 'loading' | 'ready' | 'error'
 
-  const driver = toLatLng(driverLocation)
+  const driver = normalizeCoordinate(driverLocation)
   const hasValidDriver = driver != null
+
+  function recenter() {
+    if (!driver || !mapInstanceRef.current) return
+    followingRef.current = true
+    setFollowing(true)
+    mapInstanceRef.current.setZoom(DEFAULT_ZOOM)
+    mapInstanceRef.current.panTo(driver)
+  }
 
   // Initialise the map, route line and pickup/destination pins exactly once,
   // from whatever geography is available — pickup, destinations and route
@@ -139,13 +87,13 @@ export function PartnerTrackingMap({
           ? route.coordinates
           : []
         )
-          .map(toLatLng)
+          .map(normalizeCoordinate)
           .filter(Boolean)
 
-        const sender = toLatLng(senderLocation)
+        const sender = normalizeCoordinate(senderLocation)
         const receiverList = Array.isArray(receivers) ? receivers : []
         const receiverPositions = receiverList.map((receiver) =>
-          toLatLng(receiver?.receiverLocation ?? receiver),
+          normalizeCoordinate(receiver?.receiverLocation ?? receiver),
         )
 
         // Nothing at all to plot yet (no sender, no driver, no receivers, no
@@ -174,11 +122,13 @@ export function PartnerTrackingMap({
         })
 
         const bounds = new LatLngBounds()
-        let pointCount = 0
-        const extend = (point) => {
-          bounds.extend(point)
-          pointCount += 1
-        }
+        const boundsPoints = collectBoundsCoordinates({
+          driver,
+          pickup: sender,
+          destinations: receiverPositions,
+          route: routePath,
+        })
+        boundsPoints.forEach((point) => bounds.extend(point))
 
         if (routePath.length >= 2) {
           const polyline = new window.google.maps.Polyline({
@@ -189,7 +139,7 @@ export function PartnerTrackingMap({
             strokeWeight: 4,
           })
           polyline.setMap(map)
-          routePath.forEach(extend)
+          routePolylineRef.current = polyline
         }
 
         // Pickup pin (sender).
@@ -200,13 +150,14 @@ export function PartnerTrackingMap({
             glyphColor: '#ffffff',
             glyph: 'A',
           })
-          new AdvancedMarkerElement({
-            map,
-            position: sender,
-            content: pickupPin.element,
-            title: 'Pickup',
-          })
-          extend(sender)
+          staticMarkersRef.current.push(
+            new AdvancedMarkerElement({
+              map,
+              position: sender,
+              content: pickupPin.element,
+              title: 'Pickup',
+            }),
+          )
         }
 
         // Destination pin for every receiver, numbered in order.
@@ -222,32 +173,32 @@ export function PartnerTrackingMap({
             glyphColor: '#ffffff',
             glyph: String(index + 1),
           })
-          new AdvancedMarkerElement({
-            map,
-            position,
-            content: pin.element,
-            title: receiver?.receiverName || `Stop ${index + 1}`,
-          })
-          extend(position)
+          staticMarkersRef.current.push(
+            new AdvancedMarkerElement({
+              map,
+              position,
+              content: pin.element,
+              title: receiver?.receiverName || `Stop ${index + 1}`,
+            }),
+          )
         })
 
         // Car marker for the live driver position, if already assigned. If
         // the driver is assigned later, the update effect below creates it.
         if (driver) {
-          const { wrapper, inner } = createCarElement()
-          const initialHeading = Number(driverLocation?.heading)
-          if (!Number.isNaN(initialHeading)) {
-            inner.style.transform = `rotate(${initialHeading}deg)`
-          }
-          carMarkerRef.current = new AdvancedMarkerElement({
+          const { marker, vehicle } = createDriverMarker({
+            AdvancedMarkerElement,
             map,
             position: driver,
-            content: wrapper,
-            title: 'Driver',
+            heading: resolveDriverHeading({
+              backendHeading: driverLocation?.heading,
+              previous: null,
+              current: driver,
+            }),
           })
-          carInnerRef.current = inner
+          carMarkerRef.current = marker
+          carInnerRef.current = vehicle
           prevDriverRef.current = driver
-          extend(driver)
         }
 
         mapInstanceRef.current = map
@@ -256,7 +207,7 @@ export function PartnerTrackingMap({
         // fitBounds over-zoom, so fall back to a sensible default instead.
         if (!bounds.isEmpty()) {
           map.fitBounds(bounds, 64)
-          if (pointCount <= 1) {
+          if (boundsPoints.length <= 1) {
             map.setZoom(DEFAULT_ZOOM)
           }
         }
@@ -292,43 +243,69 @@ export function PartnerTrackingMap({
         return
       }
 
-      const { wrapper, inner } = createCarElement()
-      const initialHeading = Number(driverLocation?.heading)
-      if (!Number.isNaN(initialHeading)) {
-        inner.style.transform = `rotate(${initialHeading}deg)`
-      }
-      carMarkerRef.current = new advancedMarkerCtorRef.current({
+      const { marker, vehicle } = createDriverMarker({
+        AdvancedMarkerElement: advancedMarkerCtorRef.current,
         map: mapInstanceRef.current,
         position: driver,
-        content: wrapper,
-        title: 'Driver',
+        heading: resolveDriverHeading({
+          backendHeading: driverLocation?.heading,
+          previous: null,
+          current: driver,
+        }),
       })
-      carInnerRef.current = inner
+      carMarkerRef.current = marker
+      carInnerRef.current = vehicle
       prevDriverRef.current = driver
-      mapInstanceRef.current.panTo(driver)
+      if (followingRef.current) mapInstanceRef.current.panTo(driver)
       return
     }
 
     carMarkerRef.current.position = driver
-    mapInstanceRef.current.panTo(driver)
+    const previous = prevDriverRef.current
+    const moved =
+      previous && (previous.lat !== driver.lat || previous.lng !== driver.lng)
+    const heading = resolveDriverHeading({
+      backendHeading: driverLocation?.heading,
+      previous,
+      current: driver,
+    })
+    setDriverMarkerHeading(carInnerRef.current, heading)
 
-    const backendHeading = Number(driverLocation?.heading)
-    let heading = Number.isNaN(backendHeading) ? null : backendHeading
-
-    if (heading == null && prevDriverRef.current) {
-      const prev = prevDriverRef.current
-      if (prev.lat !== driver.lat || prev.lng !== driver.lng) {
-        heading = computeHeading(prev, driver)
-      }
-    }
-
-    if (heading != null && carInnerRef.current) {
-      carInnerRef.current.style.transform = `rotate(${heading}deg)`
+    if (moved && followingRef.current) {
+      mapInstanceRef.current.panTo(driver)
     }
 
     prevDriverRef.current = driver
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [driver?.lat, driver?.lng, hasValidDriver, status])
+  }, [driver?.lat, driver?.lng, driverLocation?.heading, hasValidDriver, status])
+
+  useEffect(() => {
+    return () => {
+      staticMarkersRef.current.forEach((marker) => {
+        marker.map = null
+      })
+      staticMarkersRef.current = []
+      if (carMarkerRef.current) carMarkerRef.current.map = null
+      routePolylineRef.current?.setMap(null)
+      routePolylineRef.current = null
+      carMarkerRef.current = null
+      carInnerRef.current = null
+      prevDriverRef.current = null
+      mapInstanceRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    const element = mapRef.current
+    if (!element) return undefined
+
+    const disableFollow = () => {
+      if (!followingRef.current) return
+      followingRef.current = false
+      setFollowing(false)
+    }
+    return observeMapInteraction(element, disableFollow)
+  }, [])
 
   return (
     <section className="rounded-card border border-[#eeebf1] bg-surface-raised p-6 shadow-card">
@@ -348,6 +325,9 @@ export function PartnerTrackingMap({
               : 'Loading map…'}
           </div>
         )}
+        {status === 'ready' && !following && driver ? (
+          <TrackingMapRecenter onClick={recenter} />
+        ) : null}
       </div>
     </section>
   )
