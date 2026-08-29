@@ -5,7 +5,6 @@ import {
   CompletionMarker,
   InfoList,
   TrackingHeader,
-  TrackingShell,
 } from '@/components/track/TrackingChrome'
 import { TrackingDriverSummary } from '@/components/track/TrackingPresentation'
 
@@ -105,16 +104,19 @@ export default async function TrackPartnerPage({ params }) {
 
   if (!tracking) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-surface-page px-5 py-16">
-        <div className="w-full max-w-xl rounded-card border border-[#eeebf1] bg-surface-raised p-10 text-center shadow-card">
-          <h1 className="font-display text-2xl font-extrabold tracking-[-0.02em] text-[#17131c]">
-            Tracking unavailable
-          </h1>
-          <p className="mt-4 text-[15px] text-[#5f5868]">
-            {trackingError
-              ? trackingError
-              : 'We couldn’t find tracking details for this link. Please double-check it or contact the sender for assistance.'}
-          </p>
+      <main className="min-h-screen bg-surface-page px-4 py-8 sm:px-6 sm:py-12">
+        <div className="mx-auto flex w-full max-w-xl flex-col gap-8">
+          <TrackingHeader eyebrow="Order tracking" title="Track your delivery" />
+          <section className="rounded-card border border-[#eeebf1] bg-surface-raised p-8 text-center shadow-card sm:p-10">
+            <h2 className="font-display text-2xl font-extrabold tracking-[-0.02em] text-[#17131c]">
+              Tracking unavailable
+            </h2>
+            <p className="mt-4 text-[15px] text-[#5f5868]">
+              {trackingError
+                ? trackingError
+                : 'We couldn’t find tracking details for this link. Please double-check it or contact the sender for assistance.'}
+            </p>
+          </section>
         </div>
       </main>
     )
@@ -158,12 +160,14 @@ export default async function TrackPartnerPage({ params }) {
 
   const receiverList = Array.isArray(receivers) ? receivers : []
 
-  const orderItems = [
+  const routeSummaryItems = [
     // Never the token: it is a credential, not a label.
     { key: 'tracking-code', label: 'Tracking Code', value: displayCode ?? '--' },
-    { key: 'category', label: 'Category', value: titleCase(orderCategory) },
-    { key: 'vehicle', label: 'Vehicle', value: titleCase(vehicle) },
-    { key: 'created', label: 'Order Placed', value: formatDate(createdAt) },
+    {
+      key: 'stops',
+      label: 'Delivery Stops',
+      value: `${receiverList.length} ${receiverList.length === 1 ? 'stop' : 'stops'}`,
+    },
     route?.distanceInKm != null
       ? {
           key: 'distance',
@@ -171,6 +175,12 @@ export default async function TrackPartnerPage({ params }) {
           value: `${Number(route.distanceInKm).toFixed(1)} km`,
         }
       : null,
+  ].filter(Boolean)
+
+  const deliveryItems = [
+    { key: 'category', label: 'Category', value: titleCase(orderCategory) },
+    { key: 'vehicle', label: 'Vehicle', value: titleCase(vehicle) },
+    { key: 'created', label: 'Order Placed', value: formatDate(createdAt) },
     onRouteToPickup
       ? {
           key: 'on-route-pickup',
@@ -193,7 +203,8 @@ export default async function TrackPartnerPage({ params }) {
   ].filter((item) => item.value)
 
   return (
-    <TrackingShell>
+    <main className="min-h-screen bg-surface-page px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+      <div className="mx-auto flex w-full max-w-[1320px] flex-col gap-6">
         <TrackingHeader eyebrow="Order tracking" title="Track your delivery" />
 
         <PartnerLiveTracking
@@ -205,24 +216,25 @@ export default async function TrackPartnerPage({ params }) {
           initialSenderLocation={senderLocation}
           initialReceivers={receiverList}
           initialRoute={route}
-        >
-          <div className="grid items-start gap-5 sm:grid-cols-2">
-            {/* Same conditional completion marker as the public route. */}
-            <InfoList
-              title="Order Details"
-              items={orderItems}
-              footer={status === 'delivered' ? <CompletionMarker /> : null}
-            />
-
-            {senderItems.length > 0 ? (
+          driverSummary={
+            driverPresentation ? (
+              <TrackingDriverSummary driver={driverPresentation} />
+            ) : null
+          }
+          routeSummary={
+            <InfoList title="Route summary" items={routeSummaryItems} />
+          }
+          pickupDetails={
+            senderItems.length > 0 ? (
               <InfoList title="Pickup" items={senderItems} />
-            ) : null}
-
-            {receiverList.length > 0 ? (
-              <div className="rounded-card border border-[#eeebf1] bg-surface-raised p-6 shadow-card sm:col-span-2">
-                <h3 className="text-xs font-semibold uppercase tracking-label text-[#5f5868]">
+            ) : null
+          }
+          destinationsDetails={
+            receiverList.length > 0 ? (
+              <section className="rounded-card border border-[#eeebf1] bg-surface-raised p-6 shadow-card">
+                <h2 className="text-xs font-semibold uppercase tracking-label text-[#5f5868]">
                   Destinations
-                </h3>
+                </h2>
                 <ol className="mt-5 space-y-4">
                   {receiverList.map((receiver, index) => (
                     <li
@@ -237,9 +249,14 @@ export default async function TrackPartnerPage({ params }) {
                         {index + 1}
                       </span>
                       <span className="flex flex-col">
-                        <span className="text-[15px] font-semibold text-[#17131c]">
-                          {receiver?.receiverName || `Stop ${index + 1}`}
+                        <span className="text-[11px] font-semibold uppercase tracking-label text-[#8d8695]">
+                          Stop {index + 1}
                         </span>
+                        {receiver?.receiverName ? (
+                          <span className="mt-1 text-[15px] font-semibold text-[#17131c]">
+                            {receiver.receiverName}
+                          </span>
+                        ) : null}
                         <span className="text-[13px] text-[#5f5868]">
                           {receiver?.receiverAddress || '--'}
                         </span>
@@ -247,15 +264,18 @@ export default async function TrackPartnerPage({ params }) {
                     </li>
                   ))}
                 </ol>
-              </div>
-            ) : null}
-
-            <TrackingDriverSummary
-              driver={driverPresentation}
-              className="sm:col-span-2"
+              </section>
+            ) : null
+          }
+          deliveryDetails={
+            <InfoList
+              title="Delivery details"
+              items={deliveryItems}
+              footer={status === 'delivered' ? <CompletionMarker /> : null}
             />
-          </div>
-        </PartnerLiveTracking>
-    </TrackingShell>
+          }
+        />
+      </div>
+    </main>
   )
 }

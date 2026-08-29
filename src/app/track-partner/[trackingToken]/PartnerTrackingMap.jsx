@@ -25,6 +25,7 @@ export function PartnerTrackingMap({
   senderLocation,
   receivers,
   route,
+  isLive = true,
 }) {
   const mapRef = useRef(null)
   const mapInstanceRef = useRef(null)
@@ -308,15 +309,19 @@ export function PartnerTrackingMap({
   }, [])
 
   return (
-    <section className="rounded-card border border-[#eeebf1] bg-surface-raised p-6 shadow-card">
-      <p className="text-xs font-semibold uppercase tracking-label text-[#5f5868]">
-        Live Route
-      </p>
-      <div className="relative mt-4 h-80 w-full overflow-hidden rounded-[14px] bg-surface-tint">
+    <section className="overflow-hidden rounded-card border border-[#e5dfea] bg-surface-raised shadow-lift">
+      <h2 className="sr-only">
+        {isLive ? 'Live delivery route' : 'Delivery route and final positions'}
+      </h2>
+      <div className="relative h-[clamp(360px,46vh,560px)] w-full bg-surface-tint">
         <div
           ref={mapRef}
           className="h-full w-full"
-          aria-label="Map showing the driver's live position along the delivery route"
+          aria-label={
+            isLive
+              ? "Map showing the driver's live position, pickup, and delivery stops"
+              : "Map showing the driver's last known position, pickup, and delivery stops"
+          }
         />
         {status !== 'ready' && (
           <div className="absolute inset-0 flex items-center justify-center px-4 text-center text-[13px] text-[#5f5868]">

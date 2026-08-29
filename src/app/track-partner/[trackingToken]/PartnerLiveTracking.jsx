@@ -32,14 +32,19 @@ export function PartnerLiveTracking({
   initialSenderLocation,
   initialReceivers,
   initialRoute,
-  children,
+  driverSummary,
+  routeSummary,
+  pickupDetails,
+  destinationsDetails,
+  deliveryDetails,
 }) {
   const [status, setStatus] = useState(initialStatus)
   const [message, setMessage] = useState(initialMessage)
   const [driverLocation, setDriverLocation] = useState(initialDriverLocation)
   const [eta, setEta] = useState(initialEta)
-  // Sender / receivers / route are stable for an order, but we refresh them
-  // from each poll anyway so a mid-flight backend correction is reflected.
+  // Keep accepting refreshed geography from the existing payload. The map's
+  // pickup, stop and route objects intentionally remain first-load geometry
+  // until the deferred dynamic-geography batch; driver updates remain live.
   const [senderLocation, setSenderLocation] = useState(initialSenderLocation)
   const [receivers, setReceivers] = useState(initialReceivers ?? [])
   const [route, setRoute] = useState(initialRoute)
@@ -70,19 +75,29 @@ export function PartnerLiveTracking({
   }, [trackingToken, status])
 
   return (
-    <>
-      <TrackingLiveStatus status={status} message={message} eta={eta} />
+    <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.35fr)] lg:gap-7">
+      <div className="lg:col-start-1 lg:row-start-1">
+        <TrackingLiveStatus status={status} message={message} eta={eta} />
+      </div>
 
-      {children}
+      <div className="lg:sticky lg:top-8 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">
+        <PartnerTrackingMap
+          driverLocation={driverLocation}
+          senderLocation={senderLocation}
+          receivers={receivers}
+          route={route}
+          isLive={!isTerminalStatus(status)}
+        />
+      </div>
 
-      <PartnerTrackingMap
-        driverLocation={driverLocation}
-        senderLocation={senderLocation}
-        receivers={receivers}
-        route={route}
-      />
-
-      <TrackingLiveFooter status={status} />
-    </>
+      <div className="space-y-5 lg:col-start-1 lg:row-start-2">
+        {driverSummary}
+        {routeSummary}
+        {pickupDetails}
+        {destinationsDetails}
+        {deliveryDetails}
+        <TrackingLiveFooter status={status} />
+      </div>
+    </div>
   )
 }
