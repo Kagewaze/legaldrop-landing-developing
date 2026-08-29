@@ -11,7 +11,10 @@ import {
   startTrackingPoll,
   trackingPollUrl,
 } from '@/lib/tracking.mjs'
-import { statusPillClass } from '@/components/track/TrackingChrome'
+import {
+  TrackingLiveFooter,
+  TrackingLiveStatus,
+} from '@/components/track/TrackingPresentation'
 
 import { TrackingMap } from './TrackingMap'
 
@@ -19,33 +22,6 @@ const TRACK_ENDPOINT = `${API_BASE_URL}/public/track`
 
 // Poll cadence for live driver location + ETA updates.
 const POLL_INTERVAL_MS = 6000
-
-// Small formatting helpers, mirrored from page.jsx so the live status card
-// renders identically. Kept local to avoid a shared-module refactor.
-function titleCase(value) {
-  if (!value || typeof value !== 'string') {
-    return value || '--'
-  }
-
-  return value
-    .split('_')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
-}
-
-function formatEta(eta) {
-  const parts = []
-
-  if (eta?.durationText) {
-    parts.push(`${eta.durationText} away`)
-  }
-
-  if (eta?.distanceText) {
-    parts.push(eta.distanceText)
-  }
-
-  return parts.join(' · ')
-}
 
 export function LiveTracking({
   trackingCode,
@@ -83,48 +59,14 @@ export function LiveTracking({
     })
   }, [trackingCode, status])
 
-  const etaText = formatEta(eta)
-
   return (
     <>
-      <section className="rounded-card border border-[#eeebf1] bg-surface-raised p-8 text-center shadow-card">
-        <span
-          className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-label ring-1 ring-inset ${statusPillClass(
-            status,
-          )}`}
-        >
-          {titleCase(status)}
-        </span>
-        <h2 className="mt-5 font-display text-2xl font-extrabold tracking-[-0.02em] text-[#17131c]">
-          {message?.header ?? 'Order status'}
-        </h2>
-        <p className="mt-2 text-[15px] text-[#5f5868]">
-          {message?.description ??
-            'We’ll keep this page updated as your order progresses.'}
-        </p>
-      </section>
+      <TrackingLiveStatus status={status} message={message} eta={eta} />
 
       {children}
 
       {driverLocation ? (
-        <>
-          <section className="rounded-card border border-[#eeebf1] bg-surface-raised p-6 text-center shadow-card">
-            <p className="text-xs font-semibold uppercase tracking-label text-[#5f5868]">
-              Estimated arrival
-            </p>
-            {etaText ? (
-              <p className="mt-3 font-display text-3xl font-extrabold tracking-[-0.02em] text-[#17131c]">
-                {etaText}
-              </p>
-            ) : (
-              <p className="mt-3 text-lg font-semibold text-[#8d8695]">
-                Calculating…
-              </p>
-            )}
-          </section>
-
-          <TrackingMap driverLocation={driverLocation} />
-        </>
+        <TrackingMap driverLocation={driverLocation} />
       ) : (
         // ⚠️ THIS REPLACED A 📍 EMOJI RENDERED AT 24px.
         //
@@ -179,11 +121,7 @@ export function LiveTracking({
         )
       )}
 
-      <footer className="pt-2 text-center text-[13px] text-[#5f5868]">
-        {isTerminalStatus(status)
-          ? 'This order is complete — no further updates.'
-          : 'This page updates automatically as your driver moves.'}
-      </footer>
+      <TrackingLiveFooter status={status} />
     </>
   )
 }

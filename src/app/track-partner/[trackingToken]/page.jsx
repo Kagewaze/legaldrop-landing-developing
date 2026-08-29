@@ -1,13 +1,13 @@
-import Image from 'next/image'
-
 import { API_BASE_URL } from '@/lib/config'
 import { partnerTrackingIdentity, trackingPollUrl } from '@/lib/tracking.mjs'
+import { getDriverPresentation } from '@/lib/tracking-presentation.mjs'
 import {
   CompletionMarker,
   InfoList,
   TrackingHeader,
   TrackingShell,
 } from '@/components/track/TrackingChrome'
+import { TrackingDriverSummary } from '@/components/track/TrackingPresentation'
 
 import { PartnerLiveTracking } from './PartnerLiveTracking'
 
@@ -147,12 +147,14 @@ export default async function TrackPartnerPage({ params }) {
     route,
   } = tracking
 
-  const driverInitial = driver?.firstName?.charAt(0)?.toUpperCase() ?? 'D'
-
-  // Same rating-presence rule as the public route (track/[trackingCode]/page.jsx
-  // :136). `0` is the absence of a rating in this payload, not a score.
-  const ratingValue = Number(driver?.overAllRating)
-  const hasRating = Number.isFinite(ratingValue) && ratingValue > 0
+  const driverPresentation = driver
+    ? getDriverPresentation({
+        firstName: driver.firstName,
+        photoUrl: driver.photoUrl,
+        vehicleType: driver.vehicleType,
+        rating: driver.overAllRating,
+      })
+    : null
 
   const receiverList = Array.isArray(receivers) ? receivers : []
 
@@ -248,53 +250,10 @@ export default async function TrackPartnerPage({ params }) {
               </div>
             ) : null}
 
-            {driver ? (
-              <div className="rounded-card border border-[#eeebf1] bg-surface-raised p-6 shadow-card sm:col-span-2">
-                <h3 className="text-xs font-semibold uppercase tracking-label text-[#5f5868]">
-                  Your Driver
-                </h3>
-                <div className="mt-4 flex items-center gap-4">
-                  <div className="relative h-12 w-12 overflow-hidden rounded-full border border-[#eeebf1] bg-surface-raised">
-                    {driver.photoUrl ? (
-                      <Image
-                        src={driver.photoUrl}
-                        alt={`${driver.firstName ?? 'Driver'} photo`}
-                        fill
-                        className="object-cover"
-                        sizes="56px"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-brand-600 text-base font-bold text-white">
-                        {driverInitial}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-[15px] font-semibold text-[#17131c]">
-                      {driver.firstName || 'Your driver'}
-                    </p>
-                    <p className="mt-0.5 text-[13px] text-[#5f5868]">
-                      {titleCase(driver.vehicleType)}
-                    </p>
-                    {/* ⚠️ THIS USED TO READ `Number(driver.overAllRating ?? 0)
-                        .toFixed(1)`, which printed "0.0" for every driver the
-                        API returns no rating for — showing a partner an unrated
-                        driver as a zero-star driver. The public route fixed this
-                        first; the partner route kept the legacy default until a
-                        smoke test caught it. Do not reinstate a default. */}
-                    {hasRating ? (
-                      <p className="mt-1 text-sm font-medium text-amber-600">
-                        <span role="img" aria-hidden>
-                          ★
-                        </span>{' '}
-                        {ratingValue.toFixed(1)}
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-            ) : null}
+            <TrackingDriverSummary
+              driver={driverPresentation}
+              className="sm:col-span-2"
+            />
           </div>
         </PartnerLiveTracking>
     </TrackingShell>

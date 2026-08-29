@@ -1,12 +1,12 @@
-import Image from 'next/image'
-
 import { API_BASE_URL } from '@/lib/config'
+import { getDriverPresentation } from '@/lib/tracking-presentation.mjs'
 import {
   CompletionMarker,
   InfoList,
   TrackingHeader,
   TrackingShell,
 } from '@/components/track/TrackingChrome'
+import { TrackingDriverSummary } from '@/components/track/TrackingPresentation'
 
 import { LiveTracking } from './LiveTracking'
 
@@ -128,13 +128,14 @@ export default async function TrackOrderPage({ params }) {
     eta,
   } = tracking
 
-  const driverInitial = driver?.firstName?.charAt(0)?.toUpperCase() ?? 'D'
-
-  // The payload sends no rating for a driver who has not been rated, and the
-  // previous `?? 0` turned that absence into a displayed 0.0. Treat only a
-  // finite number above zero as a rating.
-  const ratingValue = Number(driver?.overAllRating)
-  const hasRating = Number.isFinite(ratingValue) && ratingValue > 0
+  const driverPresentation = driver
+    ? getDriverPresentation({
+        firstName: driver.firstName,
+        photoUrl: driver.photoUrl,
+        vehicleType: driver.vehicleType,
+        rating: driver.overAllRating,
+      })
+    : null
 
   const orderItems = [
     { key: 'tracking-code', label: 'Tracking Code', value: code ?? trackingCode },
@@ -177,55 +178,7 @@ export default async function TrackOrderPage({ params }) {
               footer={status === 'delivered' ? <CompletionMarker /> : null}
             />
 
-            {driver ? (
-              <section className="rounded-card border border-[#eeebf1] bg-surface-raised p-6 shadow-card">
-                <h2 className="text-xs font-semibold uppercase tracking-label text-[#5f5868]">
-                  Your driver
-                </h2>
-                <div className="mt-5 flex items-center gap-4">
-                  <div className="relative h-12 w-12 overflow-hidden rounded-full border border-[#eeebf1] bg-surface-raised">
-                    {driver.photoUrl ? (
-                      <Image
-                        src={driver.photoUrl}
-                        alt=""
-                        fill
-                        className="object-cover"
-                        sizes="48px"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-brand-600 text-base font-bold text-white">
-                        {driverInitial}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-[15px] font-semibold text-[#17131c]">
-                      {driver.firstName || 'Your driver'}
-                    </p>
-                    <p className="mt-0.5 text-[13px] text-[#5f5868]">
-                      {titleCase(driver.vehicleType)}
-                    </p>
-                    {/* ⚠️ THIS USED TO READ `Number(rating ?? 0).toFixed(1)`,
-                        which printed "0.0" for every driver the API returns no
-                        rating for — an unrated driver was shown to the customer
-                        as a zero-star driver. `0` is the absence of a rating in
-                        this payload, not a score, so the row renders only when
-                        the value is a real number above zero. Do not reinstate
-                        a default. */}
-                    {hasRating ? (
-                      <p className="mt-1.5 text-[13px] font-semibold text-[#5f5868]">
-                        <span aria-hidden="true" className="text-brand-600">
-                          ★
-                        </span>{' '}
-                        {ratingValue.toFixed(1)}
-                        <span className="sr-only"> out of 5 driver rating</span>
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
-              </section>
-            ) : null}
+            <TrackingDriverSummary driver={driverPresentation} />
           </div>
         </LiveTracking>
     </TrackingShell>
