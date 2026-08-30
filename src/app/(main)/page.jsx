@@ -1,6 +1,7 @@
 import { getGoogleReviews } from '@/lib/google-reviews'
 import { APPROVED_PARTNERS } from '@/data/partners'
 import { HeroNetwork } from '@/components/home/HeroNetwork'
+import { HomeTrackingBar } from '@/components/home/HomeTrackingBar'
 import { OperationalProof } from '@/components/home/OperationalProof'
 import { PartnerStrip } from '@/components/home/PartnerStrip'
 import { ProductStory } from '@/components/home/ProductStory'
@@ -143,6 +144,7 @@ export default async function Home() {
             previous hero is a two-line change here. It is removed in a later
             phase once this one has settled. */}
         <HeroNetwork />
+        <HomeTrackingBar />
         {/* Immediately after the hero: the claim, then the evidence for it. All
             three figures are founder-confirmed — see the provenance block in
             OperationalProof.jsx. Nothing else on the page moved. */}
