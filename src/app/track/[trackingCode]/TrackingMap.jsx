@@ -272,6 +272,7 @@ export function TrackingMap({
             mapTypeControl: false,
             streetViewControl: false,
             fullscreenControl: false,
+            gestureHandling: 'greedy',
           })
           if (driver) {
             markerResult = createDriverMarker({

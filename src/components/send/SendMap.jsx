@@ -71,6 +71,7 @@ export function SendMap({ pickup, dropoff }) {
             streetViewControl: false,
             fullscreenControl: false,
             mapId: MAP_ID,
+            gestureHandling: 'greedy',
           })
         }
 

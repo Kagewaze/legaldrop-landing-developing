@@ -163,6 +163,7 @@ export function PartnerTrackingMap({
             mapTypeControl: false,
             streetViewControl: false,
             fullscreenControl: false,
+            gestureHandling: 'greedy',
           })
         })
         if (!mapCreated || cancelled) return
