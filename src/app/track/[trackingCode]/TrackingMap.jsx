@@ -9,6 +9,7 @@ import {
   distanceBetweenCoordinates,
   getConsumerRouteGeography,
   getConsumerRouteGeographySignature,
+  getRemainingConsumerRoute,
   normalizeCoordinate,
 } from '@/lib/tracking-map.mjs'
 import {
@@ -41,6 +42,11 @@ export function TrackingMap({
   const boundsCtorRef = useRef(null)
   const destinationMarkerRef = useRef(null)
   const routePolylinesRef = useRef([])
+  const appliedDestinationSignatureRef = useRef(null)
+  const authoritativeRouteRef = useRef([])
+  const remainingRouteRef = useRef([])
+  const routeProgressRef = useRef(null)
+  const showingAuthoritativeRouteRef = useRef(false)
   const appliedRouteSignatureRef = useRef(null)
   const initialJourneyFramedRef = useRef(false)
   const lastCameraDriverRef = useRef(null)
@@ -89,6 +95,62 @@ export function TrackingMap({
     }
   }
 
+  function updateVisibleRoute(driverPosition) {
+    if (
+      mapUnavailableRef.current ||
+      authoritativeRouteRef.current.length < 2 ||
+      routePolylinesRef.current.length === 0
+    ) {
+      return remainingRouteRef.current
+    }
+
+    const projection = getRemainingConsumerRoute({
+      driver: driverPosition,
+      route: authoritativeRouteRef.current,
+      previousProgress: routeProgressRef.current,
+    })
+    if (!projection.snapped) {
+      if (!showingAuthoritativeRouteRef.current) {
+        const restored = runMapOperation(
+          'route snap safety update failed',
+          () => {
+            routePolylinesRef.current.forEach((polyline) =>
+              polyline.setPath(projection.remainingRoute),
+            )
+          },
+        )
+        if (restored) {
+          remainingRouteRef.current = projection.remainingRoute
+          showingAuthoritativeRouteRef.current = true
+        }
+      }
+      return remainingRouteRef.current
+    }
+
+    const previousDistance = Number(
+      routeProgressRef.current?.distanceFromStartMetres,
+    )
+    if (
+      Number.isFinite(previousDistance) &&
+      !showingAuthoritativeRouteRef.current &&
+      projection.progress.distanceFromStartMetres - previousDistance < 0.02
+    ) {
+      return remainingRouteRef.current
+    }
+
+    const updated = runMapOperation('route progress update failed', () => {
+      routePolylinesRef.current.forEach((polyline) =>
+        polyline.setPath(projection.remainingRoute),
+      )
+    })
+    if (updated) {
+      routeProgressRef.current = projection.progress
+      remainingRouteRef.current = projection.remainingRoute
+      showingAuthoritativeRouteRef.current = false
+    }
+    return remainingRouteRef.current
+  }
+
   function frameActiveJourney(driverPosition = driver) {
     const map = mapInstanceRef.current
     const LatLngBounds = boundsCtorRef.current
@@ -103,10 +165,18 @@ export function TrackingMap({
     }
 
     return runMapOperation('journey framing failed', () => {
+      const projectedRoute = getRemainingConsumerRoute({
+        driver: driverPosition,
+        route: authoritativeRouteRef.current,
+        previousProgress: routeProgressRef.current,
+      })
+      const framingRoute = projectedRoute.snapped
+        ? projectedRoute.remainingRoute
+        : remainingRouteRef.current
       const points = collectBoundsCoordinates({
         driver: driverPosition,
         destinations: [geography.destination],
-        route: geography.route,
+        route: framingRoute,
       })
       const bounds = new LatLngBounds()
       points.forEach((point) => bounds.extend(point))
@@ -135,7 +205,9 @@ export function TrackingMap({
     setFollowing(true)
     runMapOperation('recenter failed', () => {
       if (geography.destination) {
-        frameActiveJourney(driver)
+        const currentPosition = animatedDriverRef.current ?? driver
+        updateVisibleRoute(currentPosition)
+        frameActiveJourney(currentPosition)
         return
       }
       const zoom = mapInstanceRef.current.getZoom()
@@ -254,53 +326,78 @@ export function TrackingMap({
     }
 
     runMapOperation('route update failed', () => {
-      if (destinationMarkerRef.current) {
-        destinationMarkerRef.current.map = null
-        destinationMarkerRef.current = null
-      }
-      routePolylinesRef.current.forEach((polyline) => polyline.setMap(null))
-      routePolylinesRef.current = []
+      authoritativeRouteRef.current = geography.route
+      routeProgressRef.current = null
+      const projection = getRemainingConsumerRoute({
+        driver: animatedDriverRef.current ?? driver,
+        route: geography.route,
+      })
+      remainingRouteRef.current = projection.snapped
+        ? projection.remainingRoute
+        : geography.route
+      routeProgressRef.current = projection.snapped ? projection.progress : null
+      showingAuthoritativeRouteRef.current = !projection.snapped
 
-      if (geography.destination) {
-        const destinationPin = new PinElement({
-          background: '#7B2FBE',
-          borderColor: '#4f176f',
-          glyphColor: '#ffffff',
-          glyph: 'B',
-          scale: 0.95,
-        })
-        destinationMarkerRef.current = new AdvancedMarkerElement({
-          map,
-          position: geography.destination,
-          content: destinationPin.element,
-          title: 'Delivery destination',
-          zIndex: 10,
-        })
+      const destinationSignature = geography.destination
+        ? `${geography.destination.lat},${geography.destination.lng}`
+        : null
+      if (appliedDestinationSignatureRef.current !== destinationSignature) {
+        if (destinationMarkerRef.current) {
+          destinationMarkerRef.current.map = null
+          destinationMarkerRef.current = null
+        }
+        if (geography.destination) {
+          const destinationPin = new PinElement({
+            background: '#7B2FBE',
+            borderColor: '#4f176f',
+            glyphColor: '#ffffff',
+            glyph: 'B',
+            scale: 0.95,
+          })
+          destinationMarkerRef.current = new AdvancedMarkerElement({
+            map,
+            position: geography.destination,
+            content: destinationPin.element,
+            title: 'Delivery destination',
+            zIndex: 10,
+          })
+        }
+        appliedDestinationSignatureRef.current = destinationSignature
       }
 
       if (geography.route.length >= 2) {
-        const routeOptions = {
-          map,
-          path: geography.route,
-          geodesic: true,
-          clickable: false,
+        if (routePolylinesRef.current.length === 2) {
+          routePolylinesRef.current.forEach((polyline) => {
+            polyline.setMap(map)
+            polyline.setPath(remainingRouteRef.current)
+          })
+        } else {
+          const routeOptions = {
+            map,
+            path: remainingRouteRef.current,
+            geodesic: true,
+            clickable: false,
+          }
+          routePolylinesRef.current = [
+            new window.google.maps.Polyline({
+              ...routeOptions,
+              strokeColor: '#eadcf4',
+              strokeOpacity: 0.9,
+              strokeWeight: 10,
+              zIndex: 1,
+            }),
+            new window.google.maps.Polyline({
+              ...routeOptions,
+              strokeColor: '#7B2FBE',
+              strokeOpacity: 0.92,
+              strokeWeight: 5,
+              zIndex: 2,
+            }),
+          ]
         }
-        routePolylinesRef.current = [
-          new window.google.maps.Polyline({
-            ...routeOptions,
-            strokeColor: '#eadcf4',
-            strokeOpacity: 0.9,
-            strokeWeight: 10,
-            zIndex: 1,
-          }),
-          new window.google.maps.Polyline({
-            ...routeOptions,
-            strokeColor: '#7B2FBE',
-            strokeOpacity: 0.92,
-            strokeWeight: 5,
-            zIndex: 2,
-          }),
-        ]
+      } else {
+        routePolylinesRef.current.forEach((polyline) => polyline.setMap(null))
+        routePolylinesRef.current = []
       }
 
       appliedRouteSignatureRef.current = routeSignature
@@ -366,6 +463,7 @@ export function TrackingMap({
         to: driver,
         onPosition: (position) => {
           animatedDriverRef.current = position
+          updateVisibleRoute(position)
         },
         onError: (error) =>
           markMapUnavailable(error, 'driver animation failed'),
@@ -409,7 +507,12 @@ export function TrackingMap({
       }
       markerRef.current = null
       destinationMarkerRef.current = null
+      appliedDestinationSignatureRef.current = null
       routePolylinesRef.current = []
+      authoritativeRouteRef.current = []
+      remainingRouteRef.current = []
+      routeProgressRef.current = null
+      showingAuthoritativeRouteRef.current = false
       appliedRouteSignatureRef.current = null
       initialJourneyFramedRef.current = false
       lastCameraDriverRef.current = null

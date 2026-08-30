@@ -6,6 +6,7 @@ import {
   computeMovementHeading,
   getConsumerRouteGeography,
   getConsumerRouteGeographySignature,
+  getRemainingConsumerRoute,
   getPartnerGeography,
   getPartnerGeographySignature,
   easeInOutCubic,
@@ -14,6 +15,185 @@ import {
   normalizeHeading,
   resolveDriverHeading,
 } from '../src/lib/tracking-map.mjs'
+
+function assertCoordinateClose(actual, expected, tolerance = 1e-6) {
+  assert.ok(Math.abs(actual.lat - expected.lat) <= tolerance)
+  assert.ok(Math.abs(actual.lng - expected.lng) <= tolerance)
+}
+
+const SIMPLE_ROUTE = [
+  { lat: 43.65, lng: -79.4 },
+  { lat: 43.65, lng: -79.39 },
+  { lat: 43.66, lng: -79.39 },
+]
+
+test('route projection at the start preserves the full route', () => {
+  const result = getRemainingConsumerRoute({
+    driver: SIMPLE_ROUTE[0],
+    route: SIMPLE_ROUTE,
+  })
+  assert.equal(result.snapped, true)
+  assert.deepEqual(result.remainingRoute, SIMPLE_ROUTE)
+})
+
+test('route projection uses a segment interior and returns only its suffix', () => {
+  const result = getRemainingConsumerRoute({
+    driver: { lat: 43.6501, lng: -79.395 },
+    route: SIMPLE_ROUTE,
+  })
+  assert.equal(result.snapped, true)
+  assert.equal(result.progress.segmentIndex, 0)
+  assert.ok(result.progress.segmentFraction > 0.49)
+  assert.ok(result.progress.segmentFraction < 0.51)
+  assertCoordinateClose(result.remainingRoute[0], {
+    lat: 43.65,
+    lng: -79.395,
+  })
+  assert.deepEqual(result.remainingRoute.slice(1), SIMPLE_ROUTE.slice(1))
+  assert.ok(!result.remainingRoute.some((point) => point.lng === -79.4))
+})
+
+test('route projection near the end retains the provider destination', () => {
+  const result = getRemainingConsumerRoute({
+    driver: { lat: 43.6599, lng: -79.39 },
+    route: SIMPLE_ROUTE,
+  })
+  assert.equal(result.progress.segmentIndex, 1)
+  assert.equal(result.remainingRoute.length, 2)
+  assert.deepEqual(result.remainingRoute.at(-1), SIMPLE_ROUTE.at(-1))
+})
+
+test('route projection does not mutate its provider route input', () => {
+  const route = SIMPLE_ROUTE.map((point) => ({ ...point }))
+  const snapshot = structuredClone(route)
+  getRemainingConsumerRoute({
+    driver: { lat: 43.65, lng: -79.395 },
+    route,
+  })
+  assert.deepEqual(route, snapshot)
+})
+
+test('invalid drivers preserve a valid provider route safely', () => {
+  const result = getRemainingConsumerRoute({
+    driver: null,
+    route: SIMPLE_ROUTE,
+  })
+  assert.equal(result.snapped, false)
+  assert.deepEqual(result.remainingRoute, SIMPLE_ROUTE)
+})
+
+test('routes with fewer than two valid points fail safely', () => {
+  assert.deepEqual(
+    getRemainingConsumerRoute({
+      driver: SIMPLE_ROUTE[0],
+      route: [SIMPLE_ROUTE[0], null],
+    }).remainingRoute,
+    [],
+  )
+})
+
+test('drivers beyond the snap threshold do not alter provider geometry', () => {
+  const result = getRemainingConsumerRoute({
+    driver: { lat: 43.7, lng: -79.5 },
+    route: SIMPLE_ROUTE,
+    maxSnapDistanceMetres: 100,
+  })
+  assert.equal(result.snapped, false)
+  assert.deepEqual(result.remainingRoute, SIMPLE_ROUTE)
+})
+
+test('small backward GPS jitter cannot regrow consumed route', () => {
+  const forward = getRemainingConsumerRoute({
+    driver: { lat: 43.65, lng: -79.393 },
+    route: SIMPLE_ROUTE,
+  })
+  const jittered = getRemainingConsumerRoute({
+    driver: { lat: 43.65, lng: -79.3931 },
+    route: SIMPLE_ROUTE,
+    previousProgress: forward.progress,
+  })
+  assert.ok(
+    jittered.progress.distanceFromStartMetres >=
+      forward.progress.distanceFromStartMetres,
+  )
+  assertCoordinateClose(jittered.remainingRoute[0], forward.remainingRoute[0])
+})
+
+test('a clearly stale progress cursor can recover to nearby route geometry', () => {
+  const longRoute = [
+    { lat: 43.65, lng: -79.42 },
+    { lat: 43.65, lng: -79.4 },
+    { lat: 43.65, lng: -79.38 },
+  ]
+  const result = getRemainingConsumerRoute({
+    driver: { lat: 43.65, lng: -79.415 },
+    route: longRoute,
+    previousProgress: {
+      segmentIndex: 1,
+      segmentFraction: 0.9,
+      distanceFromStartMetres: 3000,
+    },
+  })
+  assert.equal(result.snapped, true)
+  assert.ok(result.progress.distanceFromStartMetres < 1000)
+})
+
+test('omitting old progress resets projection for new route authority', () => {
+  const old = getRemainingConsumerRoute({
+    driver: { lat: 43.65, lng: -79.391 },
+    route: SIMPLE_ROUTE,
+  })
+  const replacementRoute = [
+    { lat: 43.65, lng: -79.41 },
+    { lat: 43.65, lng: -79.39 },
+    { lat: 43.66, lng: -79.39 },
+  ]
+  const reset = getRemainingConsumerRoute({
+    driver: { lat: 43.65, lng: -79.405 },
+    route: replacementRoute,
+  })
+  assert.ok(
+    reset.progress.distanceFromStartMetres <
+      old.progress.distanceFromStartMetres,
+  )
+  assertCoordinateClose(reset.remainingRoute[0], {
+    lat: 43.65,
+    lng: -79.405,
+  })
+})
+
+test('previous progress selects the forward arm of a self-crossing route', () => {
+  const crossingRoute = [
+    { lat: 43.65, lng: -79.401 },
+    { lat: 43.651, lng: -79.399 },
+    { lat: 43.65, lng: -79.399 },
+    { lat: 43.651, lng: -79.401 },
+  ]
+  const previous = getRemainingConsumerRoute({
+    driver: { lat: 43.6508, lng: -79.4006 },
+    route: crossingRoute,
+  })
+  const atCrossing = getRemainingConsumerRoute({
+    driver: { lat: 43.6505, lng: -79.4 },
+    route: crossingRoute,
+    previousProgress: previous.progress,
+  })
+  assert.ok(atCrossing.progress.segmentIndex >= 2)
+})
+
+test('GeoJSON longitude-latitude route points project correctly', () => {
+  const result = getRemainingConsumerRoute({
+    driver: { latitude: 43.65, longitude: -79.395 },
+    route: [
+      [-79.4, 43.65],
+      [-79.39, 43.65],
+    ],
+  })
+  assertCoordinateClose(result.projectedCoordinate, {
+    lat: 43.65,
+    lng: -79.395,
+  })
+})
 
 function consumerRouteSignature(input) {
   return getConsumerRouteGeographySignature(getConsumerRouteGeography(input))
