@@ -40,9 +40,13 @@ test('uses only the authoritative public quote contract', () => {
   assert.match(hook, /id !== seq\.current/)
   assert.doesNotMatch(`${hook}\n${flow}`, /driverEarns|platformFee|trackingToken|internal breakdown/i)
   assert.match(hook, /if \(!isDropBatchSupportedVehicle\(vehicle\)\) return null/)
+  const requestBuilder = hook.slice(
+    hook.indexOf('export function buildDropBatchQuoteRequest'),
+    hook.indexOf('export function useDropBatchQuote'),
+  )
   assert.ok(
-    hook.indexOf('if (!isDropBatchSupportedVehicle(vehicle)) return null') <
-      hook.indexOf('await fetch('),
+    requestBuilder.indexOf('if (!isDropBatchSupportedVehicle(vehicle)) return null') <
+      requestBuilder.indexOf('return {'),
   )
 })
 

@@ -20,6 +20,10 @@ const requestPage = read('app/(main)/drop-batch/request/page.jsx')
 const requestFlow = read('components/dropbatch/DropBatchRequestFlow.jsx')
 const card = read('components/send/DropBatchQuoteCard.jsx')
 const services = read('components/home/Services.jsx')
+const requestBuilder = hook.slice(
+  hook.indexOf('export function buildDropBatchQuoteRequest'),
+  hook.indexOf('export function useDropBatchQuote'),
+)
 
 const visibleNavLabels = navigation.NAV_LINKS.filter((link) => link.live).map(
   (link) => link.label,
@@ -52,12 +56,13 @@ check('send hook does not use marketplace flag', !hook.includes('DROPBATCH_MARKE
 check('send hook does not use booking flag', !hook.includes('DROPBATCH_BOOKING_ENABLED'))
 check(
   'comparison disable guard precedes public quote fetch',
-  hook.indexOf('if (!enabled) return null') < hook.indexOf('await fetch('),
+  requestBuilder.indexOf('if (!enabled) return null') <
+    requestBuilder.indexOf('return {'),
 )
 check(
   'unsupported vehicle guard precedes public quote fetch',
-  hook.indexOf('if (!isDropBatchSupportedVehicle(vehicle)) return null') <
-    hook.indexOf('await fetch('),
+  requestBuilder.indexOf('if (!isDropBatchSupportedVehicle(vehicle)) return null') <
+    requestBuilder.indexOf('return {'),
 )
 check('marketplace board remains absent from explainer', !/TripBoard|fetchPublicTrips/.test(page))
 check(

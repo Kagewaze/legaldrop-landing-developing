@@ -158,8 +158,8 @@ test('the priced inputs and the paymentIntent rename are unchanged', () => {
   assert.equal('paymentIntentId' in payload, false)
 })
 
-// The whole containment claim in one assertion: bookingDirection is the ONLY key A1 added.
-test('bookingDirection is the only key added to the order contract', () => {
+// DropBatch checkout adds the server-owned pricing discriminator; no amount field is added.
+test('bookingDirection and pricingMode are the only keys added to the order contract', () => {
   const PRE_A1_KEYS = [
     'senderLocation',
     'senderAddress',
@@ -175,8 +175,14 @@ test('bookingDirection is the only key added to the order contract', () => {
 
   assert.deepEqual(
     Object.keys(build()).sort(),
-    [...PRE_A1_KEYS, 'bookingDirection'].sort(),
+    [...PRE_A1_KEYS, 'bookingDirection', 'pricingMode'].sort(),
   )
+})
+
+test('order payload defaults to standard and carries an explicit DropBatch selection', () => {
+  assert.equal(build().pricingMode, 'standard')
+  assert.equal(build({ pricingMode: 'dropbatch' }).pricingMode, 'dropbatch')
+  assert.equal('senderPays' in build({ pricingMode: 'dropbatch' }), false)
 })
 
 test('the receiver contract gained no key', () => {
