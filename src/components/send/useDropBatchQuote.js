@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-import { API_BASE_URL, DROPBATCH_ENABLED } from '@/lib/config'
+import { API_BASE_URL, DROPBATCH_SEND_COMPARISON_ENABLED } from '@/lib/config'
 import { apiKeyFor } from '@/components/send/vehicles'
 import { isFutureInstant } from '@/lib/toronto-time'
 
@@ -21,9 +21,9 @@ import { isFutureInstant } from '@/lib/toronto-time'
 // nobody requested. So ASAP never quotes, and the card never appears for it.
 //
 // ⚠️ THE RESULT IS INFORMATIONAL. There is no verified App Store, Play Store or
-// deep-link destination in this repository, and the public projection carries no
-// trip id, so the web cannot address or book a specific trip. The card shows a real
-// price and says booking happens in the app. Do not add a CTA here.
+// public projection carries no trip id, so the web cannot address or book a
+// specific trip. Links may explain the product or open another read-only quote;
+// they must never imply a reservation or checkout.
 
 const IDLE = { status: 'idle', quote: null }
 
@@ -41,19 +41,20 @@ function inputSignature(input) {
     input.scheduledPickupAt,
     input.vehicle,
     input.packageCount,
+    input.requestKey,
   ].join('|')
 }
 
 // Everything the DTO requires must be present and committed. A typed address with no
 // committed place has no coordinates and is therefore not enough.
-function buildRequest(input) {
+export function buildDropBatchQuoteRequest(input, enabled = true) {
   // The containment switch, applied where the question is formed rather than
   // where the answer is rendered: returning null here means no DTO, so no
   // request is ever sent to /drop-batch/public/quote and the hook stays IDLE —
   // `show` is false and the card never mounts. Gating the JSX instead would
   // still have quoted a hidden feature on every scheduled pickup. See
-  // DROPBATCH_ENABLED in lib/config.
-  if (!DROPBATCH_ENABLED) return null
+  // the independent exposure flags in lib/config.
+  if (!enabled) return null
 
   const { pickup, dropoff, pickupTiming, scheduledPickupAt, vehicle, packageCount } = input ?? {}
 
@@ -85,7 +86,10 @@ function buildRequest(input) {
   }
 }
 
-export function useDropBatchQuote(input) {
+export function useDropBatchQuote(
+  input,
+  { enabled = DROPBATCH_SEND_COMPARISON_ENABLED } = {},
+) {
   const [state, setState] = useState(IDLE)
 
   // Monotonic id. A slow earlier request must never overwrite a faster later one,
@@ -102,7 +106,7 @@ export function useDropBatchQuote(input) {
     // cannot be applied.
     controller.current?.abort()
 
-    const request = buildRequest(input)
+    const request = buildDropBatchQuoteRequest(input, enabled)
 
     // Not enough committed information — or an ASAP order. Either way there is no
     // question to ask, and any previous answer is stale. Clear it immediately.
@@ -156,7 +160,7 @@ export function useDropBatchQuote(input) {
 
     return () => abort.abort()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signature])
+  }, [signature, enabled])
 
   const quote = state.quote
 
@@ -187,6 +191,8 @@ export function useDropBatchQuote(input) {
 
   return {
     status: state.status,
+    quote,
+    matches,
     show,
     senderPays,
     matchCount: matches.length,

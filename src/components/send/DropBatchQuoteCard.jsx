@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 import { formatMoney } from '@/components/send/PriceBreakdown'
 
 // A real DropBatch price for a real matching trip — shown for comparison only.
@@ -33,7 +35,7 @@ export function DropBatchQuoteCard({ senderPays, matchCount, soonestWindow, allO
           id="dropbatch-quote-heading"
           className="text-[13px] font-extrabold tracking-[0.08em] text-[#8d8695]"
         >
-          DROPBATCH
+          DROPBATCH · LONG-DISTANCE OPTION
         </h2>
         {/* Price and label sit together so the figure is never read without the mode
             it belongs to. */}
@@ -43,7 +45,8 @@ export function DropBatchQuoteCard({ senderPays, matchCount, soonestWindow, allO
       </div>
 
       <p className="mt-2 max-w-[52ch] text-[15px] text-[#5f5868]">
-        Send with a trip already heading that way, at the pickup time you chose.
+        A compatible trip is already travelling in that direction at the
+        scheduled time you chose.
       </p>
 
       {soonestWindow?.date && (
@@ -77,10 +80,14 @@ export function DropBatchQuoteCard({ senderPays, matchCount, soonestWindow, allO
         </p>
       )}
 
-      {/* The continuation, as plain text. Same wording as /drop-batch. */}
-      <p className="mt-4 border-t border-[#f0eef2] pt-3 text-[13px] text-[#5f5868]">
-        Posting and booking happen in the Druppr app.
-      </p>
+      <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t border-[#f0eef2] pt-3 text-[13px] font-semibold">
+        <Link className="text-brand-700 underline-offset-4 hover:underline" href="/drop-batch">
+          Learn about DropBatch
+        </Link>
+        <Link className="text-brand-700 underline-offset-4 hover:underline" href="/drop-batch/request">
+          Check availability
+        </Link>
+      </div>
     </section>
   )
 }
