@@ -2,8 +2,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import courierImage from '@/images/medical-pharma.jpg'
-import handoffImage from '@/images/legal-document.jpg'
+import courierImage from '@/images/dropbatch-hero.png'
+import handoffImage from '@/images/dropbatch-handoff.png'
 import { DROPBATCH_EXPLAINER_ENABLED } from '@/lib/config'
 
 export const metadata = {
@@ -43,7 +43,7 @@ export default function DropBatchPage() {
           </div>
         </div>
         <div className="relative min-h-[320px] overflow-hidden rounded-card sm:min-h-[460px]">
-          <Image src={courierImage} alt="A courier loading packages into a delivery van." fill priority sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
+          <Image src={courierImage} alt="A customer receiving a Druppr package at a doorway." fill priority sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
         </div>
       </section>
 
@@ -64,7 +64,7 @@ export default function DropBatchPage() {
 
       <section className="mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-10 px-6 py-16 sm:px-8 sm:py-24 lg:grid-cols-2">
         <div className="relative min-h-[300px] overflow-hidden rounded-card sm:min-h-[400px]">
-          <Image src={handoffImage} alt="Two people handing over a package envelope." fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
+          <Image src={handoffImage} alt="A driver handing a Druppr package to a customer beside a vehicle." fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
         </div>
         <div>
           <p className="text-sm font-extrabold uppercase tracking-label text-brand-700">A practical handoff</p>
