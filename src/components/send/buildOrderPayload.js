@@ -73,6 +73,10 @@ export function buildOrderPayload({ flow, quote, paymentIntentId }) {
     : { type: 'instant_pickup' }
 
   return {
+    // This selects a server pricing branch, never a client amount. POST /order
+    // independently recalculates the route and fare and verifies Stripe cents.
+    pricingMode:
+      flow.pricingMode === 'dropbatch' ? 'dropbatch' : 'standard',
     senderLocation: { latitude: pickup.lat, longitude: pickup.lng },
     senderAddress: pickup.address,
     senderName: contact.senderName.trim(),

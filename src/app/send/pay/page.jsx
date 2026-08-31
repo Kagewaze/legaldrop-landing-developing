@@ -24,6 +24,11 @@ import { PaymentForm } from '@/components/send/PaymentForm'
 import { PriceBreakdown, formatMoney } from '@/components/send/PriceBreakdown'
 import { buildOrderPayload } from '@/components/send/buildOrderPayload'
 import {
+  buildDropBatchQuoteRequest,
+  dropBatchQuoteSignature,
+  fetchDropBatchQuote,
+} from '@/components/send/useDropBatchQuote'
+import {
   apiKeyFor,
   packageCapacityRefusal,
   vehicleById,
@@ -210,45 +215,77 @@ export default function SendPayPage() {
         if (cancelled) return
         setPublishableKey(key)
 
-        // 2. Quote. Side-effect-free, and needed for the breakdown, for
-        //    receivers[].distance, and to validate the fee at confirm time.
-        const quoteResponse = await guestFetch('/order/quote-itemized', {
-          method: 'POST',
-          body: {
-            senderLocation: {
-              latitude: flow.pickup.lat,
-              longitude: flow.pickup.lng,
-            },
-            receivers: [
-              {
-                receiverLocation: {
-                  latitude: flow.dropoff.lat,
-                  longitude: flow.dropoff.lng,
-                },
-                weight: weightKgFor(flow.weight),
+        // 2. Re-quote the selected mode from its backend authority. DropBatch
+        // never trusts the amount shown on details; standard keeps its existing
+        // quote-itemized path byte-for-byte.
+        let normalizedQuote
+        if (flow.pricingMode === 'dropbatch') {
+          const request = buildDropBatchQuoteRequest(flow, true)
+          if (
+            !request ||
+            dropBatchQuoteSignature(request) !== flow.dropBatchSelectionKey
+          ) {
+            throw new Error(
+              'Your DropBatch selection is no longer valid. Please review your delivery options.',
+            )
+          }
+
+          const quoteData = await fetchDropBatchQuote(request)
+          const senderPays = Number(quoteData?.senderPays)
+          const routeDistanceKm = Number(quoteData?.routeDistanceKm)
+          if (
+            quoteData?.eligible !== true ||
+            !Number.isFinite(senderPays) ||
+            !Number.isFinite(routeDistanceKm)
+          ) {
+            throw new Error(
+              'DropBatch is no longer available for these delivery details. Please review your options.',
+            )
+          }
+          normalizedQuote = {
+            lineItems: null,
+            total: senderPays,
+            distanceKm: routeDistanceKm,
+          }
+        } else {
+          const quoteResponse = await guestFetch('/order/quote-itemized', {
+            method: 'POST',
+            body: {
+              senderLocation: {
+                latitude: flow.pickup.lat,
+                longitude: flow.pickup.lng,
               },
-            ],
-            vehicle: apiKeyFor(flow.vehicle),
-            packageCount: flow.packageCount,
-          },
-        })
+              receivers: [
+                {
+                  receiverLocation: {
+                    latitude: flow.dropoff.lat,
+                    longitude: flow.dropoff.lng,
+                  },
+                  weight: weightKgFor(flow.weight),
+                },
+              ],
+              vehicle: apiKeyFor(flow.vehicle),
+              packageCount: flow.packageCount,
+            },
+          })
 
-        if (!quoteResponse.ok) {
-          throw new Error('Could not price this delivery')
-        }
+          if (!quoteResponse.ok) {
+            throw new Error('Could not price this delivery')
+          }
 
-        const quoteBody = await quoteResponse.json()
-        const quoteData = quoteBody?.data ?? quoteBody
-        const normalizedQuote = {
-          lineItems: {
-            base: Number(quoteData?.lineItems?.base) || 0,
-            distance: Number(quoteData?.lineItems?.distance) || 0,
-            extraPackage: Number(quoteData?.lineItems?.extraPackage) || 0,
-            labour: Number(quoteData?.lineItems?.labour) || 0,
-            heavyFee: Number(quoteData?.lineItems?.heavyFee) || 0,
-          },
-          total: Number(quoteData?.total),
-          distanceKm: Number(quoteData?.distanceKm),
+          const quoteBody = await quoteResponse.json()
+          const quoteData = quoteBody?.data ?? quoteBody
+          normalizedQuote = {
+            lineItems: {
+              base: Number(quoteData?.lineItems?.base) || 0,
+              distance: Number(quoteData?.lineItems?.distance) || 0,
+              extraPackage: Number(quoteData?.lineItems?.extraPackage) || 0,
+              labour: Number(quoteData?.lineItems?.labour) || 0,
+              heavyFee: Number(quoteData?.lineItems?.heavyFee) || 0,
+            },
+            total: Number(quoteData?.total),
+            distanceKm: Number(quoteData?.distanceKm),
+          }
         }
 
         if (!Number.isFinite(normalizedQuote.total)) {
@@ -362,6 +399,13 @@ export default function SendPayPage() {
       const feeResponse = await guestFetch('/order/get-fee', {
         method: 'POST',
         body: {
+          ...(flow.pricingMode === 'dropbatch'
+            ? {
+                pricingMode: 'dropbatch',
+                type: 'scheduled_pickup',
+                pickUpTime: flow.scheduledPickupAt,
+              }
+            : {}),
           senderName: contact.senderName.trim(),
           senderPhone: contact.senderPhone.trim(),
           senderAddress: flow.pickup.address,
@@ -754,12 +798,27 @@ export default function SendPayPage() {
           </div>
         </div>
 
-        <PriceBreakdown
-          quote={quote}
-          vehicleName={vehicle.name}
-          packageCount={flow.packageCount}
-          weightLabel={weightLabel}
-        />
+        {flow.pricingMode === 'dropbatch' ? (
+          <div className="rounded-2xl bg-white p-5">
+            <div className="text-[12px] font-extrabold tracking-[0.1em] text-[#8d8695]">
+              DROPBATCH PRICE
+            </div>
+            <div className="mt-2 text-[30px] font-extrabold text-[#17131c]">
+              {formatMoney(quote.total)}
+            </div>
+            <p className="mt-2 text-[14px] leading-[1.6] text-[#5f5868]">
+              Backend-confirmed scheduled long-distance price for{' '}
+              {quote.distanceKm.toFixed(1)} km.
+            </p>
+          </div>
+        ) : (
+          <PriceBreakdown
+            quote={quote}
+            vehicleName={vehicle.name}
+            packageCount={flow.packageCount}
+            weightLabel={weightLabel}
+          />
+        )}
       </div>
     </div>
   )
