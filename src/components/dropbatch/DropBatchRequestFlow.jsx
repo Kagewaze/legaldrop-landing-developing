@@ -7,7 +7,7 @@ import { AddressAutocomplete } from '@/components/send/AddressAutocomplete'
 import { formatMoney } from '@/components/send/PriceBreakdown'
 import { SendMap } from '@/components/send/SendMap'
 import { useDropBatchQuote } from '@/components/send/useDropBatchQuote'
-import { VEHICLES } from '@/components/send/vehicles'
+import { DROPBATCH_VEHICLES } from '@/components/send/vehicles'
 import { DROPBATCH_PUBLIC_QUOTE_ENABLED } from '@/lib/config'
 import {
   DELIVERY_TIME_ZONE,
@@ -128,7 +128,7 @@ export function DropBatchRequestFlow() {
                 <label>
                   <span className="mb-1.5 block text-sm font-bold">Requested vehicle</span>
                   <select className={FIELD} value={vehicle} onChange={(event) => invalidate(() => setVehicle(event.target.value))}>
-                    {VEHICLES.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
+                    {DROPBATCH_VEHICLES.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
                   </select>
                 </label>
               </div>

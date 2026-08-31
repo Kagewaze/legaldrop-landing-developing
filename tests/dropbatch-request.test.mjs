@@ -6,6 +6,19 @@ import { fileURLToPath } from 'node:url'
 const read = (path) => readFileSync(fileURLToPath(new URL(path, import.meta.url)), 'utf8')
 const flow = read('../src/components/dropbatch/DropBatchRequestFlow.jsx')
 const hook = read('../src/components/send/useDropBatchQuote.js')
+const vehiclesSource = read('../src/components/send/vehicles.js')
+const vehicles = await import(`data:text/javascript;base64,${Buffer.from(vehiclesSource).toString('base64')}`)
+
+test('offers only backend-supported DropBatch vehicles while standard delivery keeps Bike', () => {
+  assert.deepEqual(
+    vehicles.DROPBATCH_VEHICLES.map((vehicle) => vehicle.name),
+    ['Car', 'SUV', 'Minivan', 'Cargo van', 'Box truck'],
+  )
+  assert.ok(vehicles.VEHICLES.some((vehicle) => vehicle.name === 'Bike'))
+  assert.equal(vehicles.isDropBatchSupportedVehicle('bike'), false)
+  assert.equal(vehicles.isDropBatchSupportedVehicle('car'), true)
+  assert.match(flow, /DROPBATCH_VEHICLES\.map/)
+})
 
 test('collects route, future schedule, package count and vehicle with package mode fixed', () => {
   assert.match(flow, /AddressAutocomplete[\s\S]*Pickup address/)
@@ -26,6 +39,11 @@ test('uses only the authoritative public quote contract', () => {
   assert.match(hook, /AbortController/)
   assert.match(hook, /id !== seq\.current/)
   assert.doesNotMatch(`${hook}\n${flow}`, /driverEarns|platformFee|trackingToken|internal breakdown/i)
+  assert.match(hook, /if \(!isDropBatchSupportedVehicle\(vehicle\)\) return null/)
+  assert.ok(
+    hook.indexOf('if (!isDropBatchSupportedVehicle(vehicle)) return null') <
+      hook.indexOf('await fetch('),
+  )
 })
 
 test('renders below-minimum, no-match, match, over-capacity and retry states', () => {
@@ -42,4 +60,14 @@ test('stops at quote and contains no transactional or payment call', () => {
   assert.match(flow, /online booking is being prepared/)
   assert.doesNotMatch(flow, /drop-batch\/book|POST \/order|PaymentIntent|Stripe|confirm order|checkout/i)
   assert.doesNotMatch(flow, /senderPays\s*[+*\-/]/)
+})
+
+test('ties outward state to the current request identity and preserves retry sequencing', () => {
+  assert.match(hook, /currentRequest && state\.signature === signature \? state : IDLE/)
+  assert.match(hook, /status: 'loading', quote: null, signature/)
+  assert.match(hook, /status: 'ready', quote: data, signature/)
+  assert.match(hook, /status: 'unavailable', quote: null, signature/)
+  assert.match(flow, /setQuoteInput\(null\)/)
+  assert.match(flow, /setRequestKey\(\(value\) => value \+ 1\)/)
+  assert.match(hook, /input\.requestKey/)
 })

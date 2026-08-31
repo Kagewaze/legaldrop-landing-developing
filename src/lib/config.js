@@ -67,6 +67,11 @@ export const BRAND = {
 export const DROPBATCH_EXPLAINER_ENABLED = true
 export const DROPBATCH_PUBLIC_QUOTE_ENABLED = true
 export const DROPBATCH_SEND_COMPARISON_ENABLED = true
+
+// Reserved future controls. No public marketplace or transactional booking UI
+// is currently wired to these constants; those surfaces remain absent. Keeping
+// the names records the intended future split without claiming they gate UI
+// that does not exist yet.
 export const DROPBATCH_MARKETPLACE_ENABLED = false
 export const DROPBATCH_BOOKING_ENABLED = false
 

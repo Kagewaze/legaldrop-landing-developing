@@ -63,6 +63,27 @@ export const VEHICLES = [
   },
 ]
 
+// DropBatch is a narrower vehicle product than standard delivery. Keep this
+// list in landing/API vocabulary so the quote hook can refuse unsupported
+// vehicles before a request and the dedicated selector can offer only classes
+// the backend's DropBatch normalizer and pricing service accept.
+const DROPBATCH_SUPPORTED_API_KEYS = new Set([
+  'car',
+  'suv',
+  'minivan',
+  'cargovan',
+  'boxtruck',
+])
+
+export function isDropBatchSupportedVehicle(id) {
+  const vehicle = VEHICLES.find((option) => option.id === id)
+  return Boolean(vehicle && DROPBATCH_SUPPORTED_API_KEYS.has(vehicle.apiKey))
+}
+
+export const DROPBATCH_VEHICLES = VEHICLES.filter((vehicle) =>
+  DROPBATCH_SUPPORTED_API_KEYS.has(vehicle.apiKey),
+)
+
 export function vehicleById(id) {
   return VEHICLES.find((vehicle) => vehicle.id === id) ?? VEHICLES[1]
 }

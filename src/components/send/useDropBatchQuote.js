@@ -3,7 +3,10 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { API_BASE_URL, DROPBATCH_SEND_COMPARISON_ENABLED } from '@/lib/config'
-import { apiKeyFor } from '@/components/send/vehicles'
+import {
+  apiKeyFor,
+  isDropBatchSupportedVehicle,
+} from '@/components/send/vehicles'
 import { isFutureInstant } from '@/lib/toronto-time'
 
 // The one and only place the web asks for a DropBatch price.
@@ -65,7 +68,7 @@ export function buildDropBatchQuoteRequest(input, enabled = true) {
     place && Number.isFinite(place.lat) && Number.isFinite(place.lng)
 
   if (!coordsValid(pickup) || !coordsValid(dropoff)) return null
-  if (!vehicle) return null
+  if (!isDropBatchSupportedVehicle(vehicle)) return null
   if (!Number.isInteger(packageCount) || packageCount < 1) return null
 
   return {
@@ -99,6 +102,7 @@ export function useDropBatchQuote(
   const controller = useRef(null)
 
   const signature = inputSignature(input)
+  const currentRequest = buildDropBatchQuoteRequest(input, enabled)
 
   useEffect(() => {
     // Abort whatever was in flight for the previous inputs. Combined with the seq
@@ -106,7 +110,7 @@ export function useDropBatchQuote(
     // cannot be applied.
     controller.current?.abort()
 
-    const request = buildDropBatchQuoteRequest(input, enabled)
+    const request = currentRequest
 
     // Not enough committed information — or an ASAP order. Either way there is no
     // question to ask, and any previous answer is stale. Clear it immediately.
@@ -122,7 +126,7 @@ export function useDropBatchQuote(
 
     // The previous price is dropped the moment inputs change, never left on screen
     // next to a new address while a replacement loads.
-    setState({ status: 'loading', quote: null })
+    setState({ status: 'loading', quote: null, signature })
 
     ;(async () => {
       try {
@@ -143,18 +147,18 @@ export function useDropBatchQuote(
         // A malformed envelope is treated as "no DropBatch", not as an error the
         // customer has to read. Standard delivery is unaffected either way.
         if (!data || typeof data !== 'object') {
-          setState({ status: 'unavailable', quote: null })
+          setState({ status: 'unavailable', quote: null, signature })
           return
         }
 
-        setState({ status: 'ready', quote: data })
+        setState({ status: 'ready', quote: data, signature })
       } catch (error) {
         if (abort.signal.aborted || id !== seq.current) return
 
         // ⚠️ ISOLATED FAILURE. DropBatch is a supplementary comparison; if it cannot
         // be reached the customer still has full standard pricing and checkout. This
         // deliberately does not surface a page-level error.
-        setState({ status: 'unavailable', quote: null })
+        setState({ status: 'unavailable', quote: null, signature })
       }
     })()
 
@@ -162,7 +166,12 @@ export function useDropBatchQuote(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signature, enabled])
 
-  const quote = state.quote
+  // Effects clear/replace internal state after render. Tie outward state to the
+  // exact current request identity as well, so a previous success/error cannot
+  // render for even one frame after inputs invalidate or change.
+  const visibleState =
+    currentRequest && state.signature === signature ? state : IDLE
+  const quote = visibleState.quote
 
   // THE SHOW RULE, and the whole of it. No distance check, no price check.
   const matches = Array.isArray(quote?.matches) ? quote.matches : []
@@ -190,7 +199,7 @@ export function useDropBatchQuote(
   const allOverCapacity = show && matches.every((match) => match.overCapacity === true)
 
   return {
-    status: state.status,
+    status: visibleState.status,
     quote,
     matches,
     show,
