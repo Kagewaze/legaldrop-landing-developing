@@ -281,7 +281,7 @@ export function AddressAutocomplete({
   selected,
   onSelect,
   onClear,
-  forceDrupprInput = false,
+  homepageStyle = false,
 }) {
   const containerRef = useRef(null)
 
@@ -325,10 +325,10 @@ export function AddressAutocomplete({
   // by the init effect, which compact mode deliberately skips — so without this
   // the mobile field showed a permanent "…" beside every address row.
   useEffect(() => {
-    if (isCompact === true || forceDrupprInput) {
+    if (isCompact === true || homepageStyle) {
       setStatus('ready')
     }
-  }, [isCompact, forceDrupprInput])
+  }, [isCompact, homepageStyle])
 
   // The mobile field is a controlled input, so its text lives here. Seeded from
   // a committed selection so returning to Step 1 shows the chosen address.
@@ -409,7 +409,7 @@ export function AddressAutocomplete({
     // if it is built, it takes the page over the moment the customer types.
     // `null` (unknown, pre-hydration) also does nothing — the widget waits until
     // the media query has actually resolved to desktop.
-    if (forceDrupprInput || isCompact !== false) {
+    if (homepageStyle || isCompact !== false) {
       return
     }
 
@@ -514,7 +514,7 @@ export function AddressAutocomplete({
     // only changes if the viewport actually crosses 640px, where rebuilding IS
     // the correct response: the two modes cannot share one element.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isCompact, forceDrupprInput])
+  }, [isCompact, homepageStyle])
 
   // ── Mount hydration — the one permitted .value write. See rule 2. ─────────
   //
@@ -584,11 +584,15 @@ export function AddressAutocomplete({
   return (
     <div>
       <div
-        className={`dp-place-field flex min-h-[56px] items-stretch gap-3 px-4 transition-colors focus-within:bg-[#faf8fc] ${
-          variant === 'pickup' ? 'rounded-t-2xl' : 'rounded-b-2xl'
-        }`}
+        className={
+          homepageStyle
+            ? ''
+            : `dp-place-field flex min-h-[56px] items-stretch gap-3 px-4 transition-colors focus-within:bg-[#faf8fc] ${
+                variant === 'pickup' ? 'rounded-t-2xl' : 'rounded-b-2xl'
+              }`
+        }
       >
-        <RailGlyph variant={variant} />
+        {!homepageStyle ? <RailGlyph variant={variant} /> : null}
 
         {/* min-w-0 is required on BOTH this flex item and the one below it.
           A flex item defaults to min-width:auto, i.e. it refuses to shrink
@@ -596,15 +600,19 @@ export function AddressAutocomplete({
           ~320px width pushes the committed-address check outside the rounded
           container (badly at mobile widths). */}
         <div
-          className={`flex min-w-0 flex-1 items-center gap-3 ${
-            variant === 'dropoff' ? 'border-t border-[#f0eef2]' : ''
-          }`}
+          className={
+            homepageStyle
+              ? 'min-w-0'
+              : `flex min-w-0 flex-1 items-center gap-3 ${
+                  variant === 'dropoff' ? 'border-t border-[#f0eef2]' : ''
+                }`
+          }
         >
           {/* Visually hidden, but still announced. The uppercase PICKUP/DROPOFF
             captions are gone; the placeholder carries that meaning visually. */}
-          <span className="sr-only">{label}</span>
+          {!homepageStyle ? <span className="sr-only">{label}</span> : null}
 
-          {forceDrupprInput || isCompact === true ? (
+          {homepageStyle || isCompact === true ? (
             <div className="min-w-0 flex-1">
               <MobileAddressField
                 label={label}
@@ -629,8 +637,7 @@ export function AddressAutocomplete({
                   // MobileAddressField. One contract, two presentations.
                   commitPredictionRef.current(prediction)
                 }}
-                embedded={forceDrupprInput}
-                overlaySuggestions={forceDrupprInput}
+                homepageStyle={homepageStyle}
               />
             </div>
           ) : (
@@ -678,7 +685,7 @@ export function AddressAutocomplete({
             Gated on `selected` alone, deliberately NOT on status === 'ready':
             a stale address has to stay clearable when Maps is degraded, which
             is exactly the moment someone most needs to be rid of it. */}
-          {selected && (
+          {selected && !homepageStyle && (
             <button
               type="button"
               onClick={handleClear}

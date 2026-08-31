@@ -7,6 +7,12 @@ import Link from 'next/link'
 import { importMapsLibrary } from '@/lib/maps-loader'
 import { ROUTES } from '@/lib/navigation'
 import { SEND_FLOW_STORAGE_KEY, isPlace } from '@/lib/send-flow-contract'
+import {
+  HOMEPAGE_ADDRESS_FIELD_BASE,
+  HOMEPAGE_ADDRESS_LABEL,
+  HOMEPAGE_ADDRESS_LIST,
+  homepageAddressBorderClass,
+} from '@/components/address/homepage-address-field'
 
 // The homepage's pickup / drop-off entry. ONE client island; the hero around it
 // stays a server component and NetworkDemo keeps its own separate boundary.
@@ -61,9 +67,6 @@ const REGION_CODES = ['ca']
 
 // Placeholder is #5f5868 (6.81:1 on the white field), NOT #8d8695 — that tone
 // measures 3.51:1 here and fails AA for normal text. Keep it above the floor.
-const FIELD_BASE =
-  'w-full rounded-control border-[1.5px] bg-white px-4 py-3 text-base text-[#17131c] placeholder:text-[#5f5868] transition-colors focus:outline-none focus:ring-0'
-
 // A prediction rendered as two lines: the place name and the rest of the
 // address. Google returns exactly this split, so no parsing is invented.
 function splitPrediction(prediction) {
@@ -254,15 +257,13 @@ function AddressField({
     }
   }
 
-  const borderClass = selected
-    ? 'border-brand-600'
-    : 'border-[#e3dfe8] focus:border-brand-600'
+  const borderClass = homepageAddressBorderClass(selected)
 
   return (
     <div className="relative">
       <label
         htmlFor={id}
-        className="mb-1 block text-sm font-semibold text-[#17131c] sm:mb-1.5"
+        className={HOMEPAGE_ADDRESS_LABEL}
       >
         {label}
       </label>
@@ -296,7 +297,7 @@ function AddressField({
             if (mounted.current) setOpen(false)
           }, 150)
         }}
-        className={`${FIELD_BASE} ${borderClass}`}
+        className={`${HOMEPAGE_ADDRESS_FIELD_BASE} ${borderClass}`}
       />
 
       {/* Status line. Deliberately NOT aria-live: suggestion counts changing on
@@ -334,7 +335,7 @@ function AddressField({
           role="listbox"
           aria-label={`${label} suggestions`}
           // z-30 clears the network demonstration beside it at lg.
-          className="absolute left-0 right-0 top-full z-30 mt-1.5 overflow-hidden rounded-control border-[1.5px] border-[#e3dfe8] bg-white py-1 shadow-lift"
+          className={HOMEPAGE_ADDRESS_LIST}
         >
           {suggestions.map((prediction, index) => {
             const { main, secondary } = splitPrediction(prediction)

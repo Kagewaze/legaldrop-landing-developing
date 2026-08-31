@@ -21,8 +21,8 @@ test('offers only backend-supported DropBatch vehicles while standard delivery k
 })
 
 test('collects route, future schedule, package count and vehicle with package mode fixed', () => {
-  assert.match(flow, /AddressAutocomplete[\s\S]*Pickup address/)
-  assert.match(flow, /AddressAutocomplete[\s\S]*Drop-off address/)
+  assert.match(flow, /AddressAutocomplete[\s\S]*Pickup location/)
+  assert.match(flow, /AddressAutocomplete[\s\S]*Drop-off location/)
   assert.match(flow, /type="date"/)
   assert.match(flow, /type="time"/)
   assert.match(flow, /type="number"[\s\S]*min="1"/)
