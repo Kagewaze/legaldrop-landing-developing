@@ -295,10 +295,18 @@ export default function SendPayPage() {
         if (cancelled) return
         setQuote(normalizedQuote)
 
-        // 3. Recover, or create an intent.
+        // 3. Recover a STANDARD intent only. A stored DropBatch intent is
+        // deliberately never payment authority for a later page load: the
+        // same shipment inputs can receive a different authoritative
+        // DropBatch price. The fresh quote above is shown now; get-fee remains
+        // behind the customer's explicit continue action below.
         const stored = readPaymentSession()
 
-        if (stored && stored.inputsHash === inputsHash) {
+        if (flow.pricingMode === 'dropbatch') {
+          if (stored && stored.inputsHash === inputsHash) {
+            clearPaymentSession()
+          }
+        } else if (stored && stored.inputsHash === inputsHash) {
           // An intent already exists for exactly these inputs. Before showing
           // any form, ask Stripe what actually happened to it — the customer
           // may already have paid and simply not have an order yet.
@@ -461,6 +469,12 @@ export default function SendPayPage() {
       // it has, something is wrong and the customer must not pay a number they
       // were never shown. Nothing has been charged at this point.
       if (Math.abs(feeAmount - quote.total) >= 0.01) {
+        // The newly-created intent has not entered active UI or storage, and
+        // any prior same-input DropBatch record must remain unusable. The
+        // customer reviews/requotes rather than silently paying Standard.
+        if (flow.pricingMode === 'dropbatch') {
+          clearPaymentSession()
+        }
         setFailureMessage(
           `The price changed from ${formatMoney(quote.total)} to ${formatMoney(
             feeAmount,
@@ -472,9 +486,11 @@ export default function SendPayPage() {
 
       paymentIntentIdRef.current = intentId
 
-      // Recorded as soon as it exists, so returning to this step reuses it
-      // rather than minting another. orderPayload is added just before
-      // confirmPayment, once the contact details are known.
+      // Recorded only after the authoritative fee has matched the fresh quote.
+      // Standard can recover/reuse this record on refresh; DropBatch will
+      // intentionally discard it and request a newly-authoritative intent.
+      // orderPayload is added just before confirmPayment, once the contact
+      // details are known.
       writePaymentSession({
         inputsHash,
         paymentIntentId: intentId,

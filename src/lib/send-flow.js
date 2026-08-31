@@ -160,10 +160,11 @@ export function weightKgFor(weightId) {
 // that runs on success.
 //
 // THE INVARIANT: a stored record means "a PaymentIntent exists and NO order has
-// been created for it yet". It is cleared in exactly one place — after
-// POST /order succeeds. That is what makes "stored record + intent already
-// succeeded" an unambiguous signal that the customer paid and we still owe them
-// an order.
+// been created for it yet". Standard retains it until POST /order succeeds so
+// paid-without-order recovery remains possible. DropBatch intentionally
+// invalidates its matching record on a later page load because unchanged
+// shipment inputs do not prove that an old intent still has the current
+// authoritative DropBatch amount.
 const PAYMENT_STORAGE_KEY = 'legaldrop.send-payment.v1'
 
 // Identifies the priced inputs. If any of these change, a PaymentIntent created
@@ -224,8 +225,10 @@ export function writePaymentSession(session) {
   }
 }
 
-// The ONLY place this is called is after POST /order succeeds. Do not add
-// another caller — clearing it early loses the record that the customer paid.
+// Standard calls this only after POST /order succeeds. DropBatch may also call
+// it before exposing a new payment state because DropBatch intents are never
+// restored across initialization and a mismatch must not leave an older record
+// reusable.
 export function clearPaymentSession() {
   if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') {
     return

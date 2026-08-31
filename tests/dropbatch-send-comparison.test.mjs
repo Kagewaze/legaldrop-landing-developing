@@ -81,3 +81,49 @@ test('DropBatch failure never silently falls back to standard at payment', () =>
   assert.match(payment, /DropBatch is no longer available/)
   assert.doesNotMatch(payment, /catch[\s\S]{0,300}pricingMode:\s*'standard'/)
 })
+
+test('DropBatch never restores a stored PaymentIntent while Standard recovery remains', () => {
+  assert.match(
+    payment,
+    /if \(flow\.pricingMode === 'dropbatch'\) \{[\s\S]*?clearPaymentSession\(\)[\s\S]*?\} else if \(stored && stored\.inputsHash === inputsHash\)/,
+  )
+
+  const standardRecovery = payment.slice(
+    payment.indexOf("} else if (stored && stored.inputsHash === inputsHash)"),
+    payment.indexOf('// 4. No usable intent'),
+  )
+  assert.match(standardRecovery, /stripe\.retrievePaymentIntent\(/)
+  assert.match(standardRecovery, /setClientSecret\(stored\.clientSecret\)/)
+  assert.match(standardRecovery, /setFee\(Number\(stored\.fee\)\)/)
+
+  const dropBatchBoot = payment.slice(
+    payment.indexOf("if (flow.pricingMode === 'dropbatch') {", payment.indexOf('const stored = readPaymentSession()')),
+    payment.indexOf("} else if (stored && stored.inputsHash === inputsHash)"),
+  )
+  assert.doesNotMatch(dropBatchBoot, /retrievePaymentIntent|setClientSecret|setFee/)
+})
+
+test('DropBatch persists and exposes a new intent only after fee equality succeeds', () => {
+  const comparison = payment.indexOf('Math.abs(feeAmount - quote.total) >= 0.01')
+  const persistence = payment.indexOf('writePaymentSession({', comparison)
+  const exposure = payment.indexOf('setClientSecret(secret)', comparison)
+
+  assert.ok(comparison >= 0)
+  assert.ok(persistence > comparison)
+  assert.ok(exposure > persistence)
+
+  const mismatchBranch = payment.slice(comparison, persistence)
+  assert.match(mismatchBranch, /clearPaymentSession\(\)/)
+  assert.doesNotMatch(mismatchBranch, /writePaymentSession|setClientSecret|pricingMode:\s*'standard'/)
+})
+
+test('DropBatch refresh and same-input price changes require a new get-fee intent', () => {
+  const storedRead = payment.indexOf('const stored = readPaymentSession()')
+  const getFee = payment.indexOf("guestFetch('/order/get-fee'")
+
+  assert.ok(storedRead >= 0)
+  assert.ok(getFee > storedRead)
+  assert.match(payment, /const confirmAndCreateIntent = useCallback/)
+  assert.match(payment, /pricingMode: 'dropbatch'/)
+  assert.doesNotMatch(payload, /senderPays|clientSecret|fee:/)
+})
