@@ -11,13 +11,18 @@ const payment = read('../src/app/send/pay/page.jsx')
 const payload = read('../src/components/send/buildOrderPayload.js')
 const vehicles = read('../src/components/send/vehicles.js')
 
-test('send comparison uses exact scheduled-match show rule and backend first-match price', () => {
+test('send comparison uses backend eligibility and senderPays without a trip prerequisite', () => {
   assert.match(hook, /pickupTiming !== 'scheduled'/)
-  assert.match(hook, /quote\?\.eligible === true && matches\.length > 0/)
-  assert.match(hook, /matches\[0\]\.senderPays/)
+  assert.match(hook, /quote\?\.eligible === true/)
+  assert.match(hook, /typeof senderPays === 'number'/)
+  assert.match(hook, /Number\.isFinite\(senderPays\)/)
+  assert.match(hook, /const senderPays = quote\?\.senderPays/)
+  assert.doesNotMatch(hook, /matches|departureWindow|overCapacity|remaining/)
   assert.doesNotMatch(hook, /Math\.min\([^\n]*senderPays|sort\([^\n]*senderPays|reduce\([^\n]*senderPays/)
   assert.match(details, /dropBatch\.show/)
   assert.match(details, /<DropBatchQuoteCard/)
+  assert.match(card, /posted to[\s\S]*eligible Druppr drivers after booking/)
+  assert.match(card, /No driver is required before you/)
 })
 
 test('comparison failure remains isolated from standard price, Continue, payment and order payload', () => {
@@ -31,6 +36,7 @@ test('comparison failure remains isolated from standard price, Continue, payment
 test('comparison enablement does not expose marketplace or booking mutations', () => {
   assert.doesNotMatch(`${hook}\n${details}\n${card}`, /TripBoard|fetchPublicTrips|drop-batch\/book/)
   assert.doesNotMatch(card, />\s*(Book|Pay|Checkout|Reserve)\s*</i)
+  assert.doesNotMatch(card, /compatible trip|departure|capacity|overCapacity/i)
 })
 
 test('unsupported Bike is refused before DropBatch fetch without leaving standard catalogue', () => {

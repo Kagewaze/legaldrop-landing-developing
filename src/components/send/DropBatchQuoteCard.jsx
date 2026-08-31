@@ -2,13 +2,13 @@ import Link from 'next/link'
 
 import { formatMoney } from '@/components/send/PriceBreakdown'
 
-// A real DropBatch price for a real matching trip — shown for comparison only.
+// A backend-authoritative DropBatch price — shown for comparison only.
 //
 // ⚠️ INFORMATIONAL BY CONSTRUCTION, NOT A DISABLED CONTROL.
 // There is no verified App Store, Play Store, download or deep-link destination
-// anywhere in this repository, and the public quote deliberately carries no trip id,
-// so the web cannot address — let alone book — the specific trip this price belongs
-// to. A button would therefore be a dead control, and a greyed-out one would imply
+// anywhere in this repository, and the public quote deliberately carries no order id
+// or payment authority, so the web cannot book the quoted delivery. A button would
+// therefore be a dead control, and a greyed-out one would imply
 // the flow exists and is merely unavailable.
 //
 // So this renders as a <section>, not a <button>: no onClick, no role="button", no
@@ -24,7 +24,7 @@ import { formatMoney } from '@/components/send/PriceBreakdown'
 // platformFee or any breakdown component. It is never called cheapest, discounted or
 // best value, and no saving is computed, even when it happens to be lower than the
 // standard fare. The price is stated; the customer compares.
-export function DropBatchQuoteCard({ senderPays, matchCount, soonestWindow, allOverCapacity }) {
+export function DropBatchQuoteCard({ senderPays }) {
   return (
     <section
       aria-labelledby="dropbatch-quote-heading"
@@ -45,47 +45,17 @@ export function DropBatchQuoteCard({ senderPays, matchCount, soonestWindow, allO
       </div>
 
       <p className="mt-2 max-w-[52ch] text-[15px] text-[#5f5868]">
-        A compatible trip is already travelling in that direction at the
-        scheduled time you chose.
+        Scheduled long-distance pricing for a delivery that will be posted to
+        eligible Druppr drivers after booking. No driver is required before you
+        receive this price.
       </p>
-
-      {soonestWindow?.date && (
-        <p className="mt-3 text-[13px] text-[#5f5868]">
-          {/* The trip's own departure window — the same public board data, carrying
-              no identity. It is a DATE plus two times-of-day, not an instant, so it
-              is rendered as-is rather than pushed through a timezone conversion that
-              would imply precision the field does not have. Seconds are trimmed:
-              a departure window is never specified to the second. */}
-          <span className="font-semibold text-[#17131c]">Trip departs</span>{' '}
-          {soonestWindow.date}
-          {soonestWindow.start && soonestWindow.end && (
-            <>
-              {', '}
-              {String(soonestWindow.start).slice(0, 5)}–{String(soonestWindow.end).slice(0, 5)}
-            </>
-          )}
-          {matchCount > 1 && ` · ${matchCount} compatible trips`}
-        </p>
-      )}
-
-      {/* overCapacity is passed through from the backend exactly as received. The
-          match is NOT hidden — the sender may still ask the trip owner — but it must
-          not read as guaranteed space. Only stated when EVERY match is flagged,
-          because otherwise at least one has room. */}
-      {allOverCapacity && (
-        <p className="mt-3 text-[13px] text-[#5f5868]">
-          This request is larger than the space currently left on{' '}
-          {matchCount > 1 ? 'these trips' : 'this trip'}. The trip owner decides
-          whether it still fits.
-        </p>
-      )}
 
       <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t border-[#f0eef2] pt-3 text-[13px] font-semibold">
         <Link className="text-brand-700 underline-offset-4 hover:underline" href="/drop-batch">
           Learn about DropBatch
         </Link>
         <Link className="text-brand-700 underline-offset-4 hover:underline" href="/drop-batch/request">
-          Check availability
+          Get DropBatch price
         </Link>
       </div>
     </section>

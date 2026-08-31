@@ -9,14 +9,14 @@ import { DROPBATCH_EXPLAINER_ENABLED } from '@/lib/config'
 export const metadata = {
   title: 'DropBatch long-distance delivery | Druppr',
   description:
-    'Check scheduled long-distance delivery availability on compatible trips already heading your way.',
+    'Get scheduled long-distance delivery pricing for eligible routes of at least 80 km.',
 }
 
 const STEPS = [
   ['01', 'Enter your route', 'Tell us where the package is travelling.'],
-  ['02', 'Schedule the trip', 'DropBatch is designed for scheduled long-distance deliveries.'],
-  ['03', 'We check matching trips', 'Druppr checks compatible trips already heading that way.'],
-  ['04', 'See your DropBatch price', 'When a compatible trip is available, we show the authoritative DropBatch price.'],
+  ['02', 'Schedule the delivery', 'DropBatch is designed for scheduled long-distance deliveries.'],
+  ['03', 'Get your price', 'Druppr checks eligibility and calculates the authoritative DropBatch price.'],
+  ['04', 'Post the scheduled job', 'Once booking is available, the delivery will join the normal Druppr driver job board.'],
 ]
 
 export default function DropBatchPage() {
@@ -31,11 +31,11 @@ export default function DropBatchPage() {
             Deliver farther for less with DropBatch.
           </h1>
           <p className="mt-5 max-w-[60ch] text-lg leading-8 text-[#5f5868]">
-            DropBatch matches scheduled long-distance deliveries with compatible trips already travelling in that direction, making better use of unused vehicle capacity. When a match is available, it can cost less.
+            DropBatch is Druppr&apos;s lower-cost option for eligible scheduled long-distance deliveries. Get an authoritative price now; once booked, the delivery will be posted for eligible Druppr drivers to accept ahead of pickup.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link href="/drop-batch/request" className="min-h-11 rounded-control bg-brand-600 px-6 py-3.5 text-center font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 hover:bg-brand-700">
-              Check DropBatch availability
+              Get my DropBatch price
             </Link>
             <Link href="/send" className="min-h-11 rounded-control border border-[#d9d2df] bg-white px-6 py-3.5 text-center font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700">
               Book a standard delivery
@@ -68,8 +68,8 @@ export default function DropBatchPage() {
         </div>
         <div>
           <p className="text-sm font-extrabold uppercase tracking-label text-brand-700">A practical handoff</p>
-          <h2 className="mt-3 font-display text-3xl font-extrabold sm:text-4xl">Your package joins a trip already being made.</h2>
-          <p className="mt-5 text-lg leading-8 text-[#5f5868]">DropBatch connects real routes, real packages and available vehicle space. It is designed for convenient, scheduled handoffs—not instant pickup.</p>
+          <h2 className="mt-3 font-display text-3xl font-extrabold sm:text-4xl">A scheduled job for Druppr drivers.</h2>
+          <p className="mt-5 text-lg leading-8 text-[#5f5868]">After booking, your long-distance delivery enters Druppr&apos;s normal driver job board. An eligible driver can accept it ahead of the planned pickup, but acceptance is not guaranteed.</p>
         </div>
       </section>
 
@@ -80,8 +80,8 @@ export default function DropBatchPage() {
             {[
               ['80 km minimum', 'The route must be at least 80 km.'],
               ['Scheduled pickup', 'Choose a future date and time.'],
-              ['Compatible vehicle', 'The trip must have a suitable vehicle and capacity.'],
-              ['Conditional availability', 'A price appears only when a compatible active trip matches.'],
+              ['Supported vehicle', 'Choose a DropBatch-supported vehicle for the package.'],
+              ['Driver job board', 'After booking, eligible Druppr drivers can accept the scheduled job.'],
             ].map(([title, body]) => (
               <div key={title} className="rounded-card border border-white/15 bg-white/5 p-5">
                 <h3 className="font-bold">{title}</h3>

@@ -12,20 +12,19 @@ import { isFutureInstant } from '@/lib/toronto-time'
 // The one and only place the web asks for a DropBatch price.
 //
 // ⚠️ THE BACKEND IS THE ONLY AUTHORITY. POST /drop-batch/public/quote decides
-// eligibility, the 80 km floor, OSRM route distance, trip matching, vehicle
-// compatibility, capacity and the price. Nothing here re-derives any of that — this
+// eligibility, the 80 km floor, OSRM route distance, vehicle compatibility and the
+// price. Nothing here re-derives any of that — this
 // hook builds the DTO, guards when it is safe to ask, and throws away answers that
 // have been overtaken. If you find yourself writing `>= 80` or a fare formula in
 // this file, stop.
 //
-// ⚠️ SCHEDULED PICKUPS ONLY. A DropBatch trip departs at a specific time, so a
+// ⚠️ SCHEDULED PICKUPS ONLY. DropBatch is a planned long-distance product, so a
 // quote needs the moment the customer actually chose. An ASAP order has no such
-// moment, and inventing `new Date()` would ask the backend to match against a time
-// nobody requested. So ASAP never quotes, and the card never appears for it.
+// moment. So ASAP never quotes, and the card never appears for it.
 //
 // ⚠️ THE RESULT IS INFORMATIONAL. There is no verified App Store, Play Store or
-// public projection carries no trip id, so the web cannot address or book a
-// specific trip. Links may explain the product or open another read-only quote;
+// public projection carries no order or payment authority, so the web cannot book
+// the quoted delivery. Links may explain the product or open another read-only quote;
 // they must never imply a reservation or checkout.
 
 const IDLE = { status: 'idle', quote: null }
@@ -82,8 +81,8 @@ export function buildDropBatchQuoteRequest(input, enabled = true) {
     pickupTime: scheduledPickupAt,
     mode: 'package',
     // Normalised on the wire exactly as the order payload does. The backend maps
-    // car -> sedan, cargovan -> cargo_van and so on, and returns no matches for a
-    // vehicle that is not a DropBatch class (bike) — which is its decision, not ours.
+    // car -> sedan, cargovan -> cargo_van and so on. Unsupported vehicles such as
+    // bike are rejected before this request is built.
     vehicle: apiKeyFor(vehicle),
     packageCount,
   }
@@ -173,39 +172,20 @@ export function useDropBatchQuote(
     currentRequest && state.signature === signature ? state : IDLE
   const quote = visibleState.quote
 
-  // THE SHOW RULE, and the whole of it. No distance check, no price check.
-  const matches = Array.isArray(quote?.matches) ? quote.matches : []
-  const show = quote?.eligible === true && matches.length > 0
-
-  // ⚠️ ONE PRICE, BY CONSTRUCTION — NOT A "CHEAPEST" CHOICE.
-  // matchTrip prices on the route distance, the SENDER's requested vehicle and the
-  // package count. None of those vary by trip, so every match in a single quote
-  // carries the same senderPays. Showing one figure is therefore accurate, and
-  // picking a "best" match would be inventing a policy the product does not have.
-  const senderPays = show ? matches[0].senderPays : null
-
-  // Soonest departure among the matches, purely as context for the price. Matches
-  // are not re-ordered or filtered.
-  const soonestWindow = show
-    ? matches
-        .map((match) => match.departureWindow)
-        .filter(Boolean)
-        .sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`))[0] ?? null
-    : null
-
-  // Backend returns an over-capacity match flagged rather than hidden, so the sender
-  // can still ask. Only when EVERY match is flagged does the space question apply to
-  // the option as a whole.
-  const allOverCapacity = show && matches.every((match) => match.overCapacity === true)
+  // THE SHOW RULE, and the whole of it. The backend has already established route
+  // eligibility and calculated this finite non-negative amount. There is no browser
+  // distance threshold or fare formula and no driver/trip prerequisite.
+  const senderPays = quote?.senderPays
+  const show =
+    quote?.eligible === true &&
+    typeof senderPays === 'number' &&
+    Number.isFinite(senderPays) &&
+    senderPays >= 0
 
   return {
     status: visibleState.status,
     quote,
-    matches,
     show,
-    senderPays,
-    matchCount: matches.length,
-    soonestWindow,
-    allOverCapacity,
+    senderPays: show ? senderPays : null,
   }
 }

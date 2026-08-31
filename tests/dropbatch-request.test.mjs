@@ -46,14 +46,13 @@ test('uses only the authoritative public quote contract', () => {
   )
 })
 
-test('renders below-minimum, no-match, match, over-capacity and retry states', () => {
+test('renders below-minimum, eligible price and retry states without match concepts', () => {
   assert.match(flow, /quote\?\.eligible === false/)
-  assert.match(flow, /quote\?\.eligible === true && matches\.length === 0/)
   assert.match(flow, /Your DropBatch price/)
   assert.match(flow, /result\.senderPays/)
-  assert.match(flow, /result\.allOverCapacity/)
   assert.match(flow, /We could not check DropBatch right now/)
   assert.match(flow, />Retry</)
+  assert.doesNotMatch(flow, /matches|compatible trip|departure window|over-capacity|overCapacity|remaining capacity/i)
 })
 
 test('stops at quote and contains no transactional or payment call', () => {

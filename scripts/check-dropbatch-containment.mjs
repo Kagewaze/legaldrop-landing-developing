@@ -68,8 +68,14 @@ check(
 )
 check(
   'homepage DropBatch copy describes scheduled long-distance trips',
-  services.includes('Scheduled long-distance delivery on trips heading your way') &&
+  services.includes('Scheduled long-distance delivery for routes of 80 km or more') &&
     !services.includes('Many stops on one optimised route'),
+)
+check(
+  'active public quote surfaces do not depend on legacy matching',
+  !/matches|departureWindow|overCapacity|remaining capacity|compatible (?:active )?trip|matching trip|already travelling|unused vehicle capacity/.test(
+    [page, requestFlow, hook, card].join('\n'),
+  ),
 )
 
 if (failures.length) {

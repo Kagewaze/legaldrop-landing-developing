@@ -190,18 +190,13 @@ export default function SendDetailsPage() {
           />
         </div>
 
-        {/* DropBatch, when the backend says a real trip matches this scheduled
+        {/* DropBatch, when the backend prices this eligible scheduled
             pickup. Rendered AFTER the vehicle choices and outside VehiclePicker
             because it is a delivery MODE, not another vehicle — and it is
             informational only, so it must not look selectable next to cards that
             are. Its absence is the normal case and costs the customer nothing. */}
         {dropBatch.show && (
-          <DropBatchQuoteCard
-            senderPays={dropBatch.senderPays}
-            matchCount={dropBatch.matchCount}
-            soonestWindow={dropBatch.soonestWindow}
-            allOverCapacity={dropBatch.allOverCapacity}
-          />
+          <DropBatchQuoteCard senderPays={dropBatch.senderPays} />
         )}
       </div>
 

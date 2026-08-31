@@ -23,7 +23,7 @@ test('renders the customer explainer with human imagery and request CTA', () => 
   assert.match(page, /dropbatch-hero\.png/)
   assert.match(page, /dropbatch-handoff\.png/)
   assert.doesNotMatch(page, /medical-pharma|legal-document/)
-  assert.match(page, /Check DropBatch availability/)
+  assert.match(page, /Get my DropBatch price/)
   assert.match(page, /href="\/drop-batch\/request"/)
   assert.match(page, /80 km minimum/)
 })
@@ -31,9 +31,10 @@ test('renders the customer explainer with human imagery and request CTA', () => 
 test('contains no marketplace board or unavailable app-booking promise', () => {
   assert.doesNotMatch(page, /TripBoard|fetchPublicTrips|booking happen in the app|request space in the app/i)
   assert.doesNotMatch(page, />\s*(Book|Pay|Checkout|Reserve)\s*</i)
+  assert.doesNotMatch(page, /compatible trip|matching trip|active trip|already travelling|heading that way|unused vehicle capacity/i)
 })
 
 test('homepage discovery copy describes the current scheduled long-distance product', () => {
-  assert.match(services, /Scheduled long-distance delivery on trips heading your way/)
+  assert.match(services, /Scheduled long-distance delivery for routes of 80 km or more/)
   assert.doesNotMatch(services, /Many stops on one optimised route/)
 })

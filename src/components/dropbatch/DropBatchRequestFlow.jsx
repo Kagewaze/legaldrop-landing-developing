@@ -71,19 +71,17 @@ export function DropBatchRequestFlow() {
   }
 
   const quote = result.quote
-  const matches = result.matches
   const belowMinimum = result.status === 'ready' && quote?.eligible === false
-  const noMatches = result.status === 'ready' && quote?.eligible === true && matches.length === 0
 
   return (
     <div className="bg-[#fbf9fc] text-[#17131c]">
       <div className="mx-auto max-w-[1100px] px-5 py-10 sm:px-8 sm:py-16">
         <p className="text-sm font-extrabold uppercase tracking-label text-brand-700">DropBatch</p>
         <h1 className="mt-2 font-display text-3xl font-extrabold tracking-[-0.02em] sm:text-5xl">
-          Check long-distance availability
+          Get your DropBatch price
         </h1>
         <p className="mt-4 max-w-[65ch] text-base leading-7 text-[#5f5868] sm:text-lg">
-          Enter a future scheduled route. Druppr will check for compatible active trips and return an authoritative DropBatch price when one is available.
+          Enter a future scheduled route. Druppr will check eligibility and return the authoritative DropBatch price for qualifying long-distance delivery.
         </p>
 
         <form onSubmit={submit} noValidate className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.8fr)]">
@@ -138,16 +136,16 @@ export function DropBatchRequestFlow() {
             {error && <p id="dropbatch-request-error" role="alert" className="rounded-control bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">{error}</p>}
 
             <button type="submit" className="min-h-11 w-full rounded-control bg-brand-600 px-6 py-4 text-base font-bold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 hover:bg-brand-700 sm:w-auto">
-              Check availability
+              Get my DropBatch price
             </button>
           </div>
 
           <aside aria-labelledby="quote-result-heading" aria-live="polite" className="lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-card border border-[#ebe6ef] bg-white p-5 shadow-sm sm:p-7">
               <p className="text-xs font-extrabold text-brand-700">STEP 4</p>
-              <h2 id="quote-result-heading" className="mt-1 text-2xl font-extrabold">Availability and quote</h2>
-              {!quoteInput && <p className="mt-4 leading-7 text-[#5f5868]">Complete the route, schedule and package details to check availability.</p>}
-              {result.status === 'loading' && <p className="mt-4 leading-7 text-[#5f5868]">Checking compatible trips and authoritative pricing…</p>}
+              <h2 id="quote-result-heading" className="mt-1 text-2xl font-extrabold">DropBatch price</h2>
+              {!quoteInput && <p className="mt-4 leading-7 text-[#5f5868]">Complete the route, schedule and package details to get your price.</p>}
+              {result.status === 'loading' && <p className="mt-4 leading-7 text-[#5f5868]">Checking eligibility and authoritative pricing…</p>}
               {result.status === 'unavailable' && (
                 <div className="mt-5" role="alert">
                   <p className="font-bold">We could not check DropBatch right now.</p>
@@ -162,21 +160,13 @@ export function DropBatchRequestFlow() {
                   <StandardDeliveryLink />
                 </div>
               )}
-              {noMatches && (
-                <div className="mt-5">
-                  <p className="text-xl font-extrabold">No compatible trip right now</p>
-                  <p className="mt-2 leading-7 text-[#5f5868]">No compatible DropBatch trip is available for this route and schedule right now. Adjust your inputs or use standard delivery.</p>
-                  <StandardDeliveryLink />
-                </div>
-              )}
               {result.show && (
                 <div className="mt-5">
                   <p className="text-sm font-bold text-[#5f5868]">Your DropBatch price</p>
                   <p className="mt-1 text-4xl font-extrabold">{formatMoney(result.senderPays)}</p>
                   {Number.isFinite(Number(quote?.routeDistanceKm)) && <p className="mt-3 text-sm text-[#5f5868]">Route distance: {Number(quote.routeDistanceKm).toFixed(1)} km</p>}
-                  <p className="mt-2 text-sm text-[#5f5868]">{result.matchCount} compatible {result.matchCount === 1 ? 'trip' : 'trips'} found{result.soonestWindow?.date ? ` · earliest departure ${result.soonestWindow.date}` : ''}.</p>
-                  {result.allOverCapacity && <p className="mt-4 rounded-control bg-amber-50 p-4 text-sm leading-6 text-amber-900">The posted remaining capacity may not accommodate this request. This result is not immediately usable.</p>}
-                  <p className="mt-5 border-t border-[#ebe6ef] pt-4 text-sm leading-6 text-[#5f5868]">Availability depends on a compatible active trip. DropBatch online booking is being prepared; this quote does not reserve or book a delivery.</p>
+                  <p className="mt-2 text-sm text-[#5f5868]">This is authoritative scheduled long-distance pricing. A driver is not required before you receive the price.</p>
+                  <p className="mt-5 border-t border-[#ebe6ef] pt-4 text-sm leading-6 text-[#5f5868]">DropBatch online booking is being prepared. This quote does not reserve a driver or book a delivery; once booking is available, the job will be posted for eligible Druppr drivers.</p>
                   <StandardDeliveryLink />
                 </div>
               )}
