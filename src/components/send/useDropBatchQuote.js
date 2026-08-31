@@ -22,10 +22,9 @@ import { isFutureInstant } from '@/lib/toronto-time'
 // quote needs the moment the customer actually chose. An ASAP order has no such
 // moment. So ASAP never quotes, and the card never appears for it.
 //
-// ⚠️ THE RESULT IS INFORMATIONAL. There is no verified App Store, Play Store or
-// public projection carries no order or payment authority, so the web cannot book
-// the quoted delivery. Links may explain the product or open another read-only quote;
-// they must never imply a reservation or checkout.
+// The public response is display authority only. Selecting DropBatch persists the
+// mode and request signature; /order/get-fee and POST /order independently re-route
+// and re-price before any money or order is accepted.
 
 const IDLE = { status: 'idle', quote: null }
 
@@ -45,6 +44,40 @@ function inputSignature(input) {
     input.packageCount,
     input.requestKey,
   ].join('|')
+}
+
+export function dropBatchQuoteSignature(request) {
+  if (!request) return ''
+  return [
+    request.pickupLatitude,
+    request.pickupLongitude,
+    request.dropoffLatitude,
+    request.dropoffLongitude,
+    request.pickupTime,
+    request.mode,
+    request.vehicle,
+    request.packageCount,
+  ].join('|')
+}
+
+export async function fetchDropBatchQuote(request, { signal } = {}) {
+  const response = await fetch(`${API_BASE_URL}/drop-batch/public/quote`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+    signal,
+  })
+
+  if (!response.ok) {
+    throw new Error(`DropBatch quote failed (${response.status})`)
+  }
+
+  const payload = await response.json()
+  const data = payload?.data
+  if (!data || typeof data !== 'object') {
+    throw new Error('DropBatch quote returned an unexpected response')
+  }
+  return data
 }
 
 // Everything the DTO requires must be present and committed. A typed address with no
@@ -129,26 +162,9 @@ export function useDropBatchQuote(
 
     ;(async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/drop-batch/public/quote`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(request),
-          signal: abort.signal,
-        })
-
-        if (!response.ok) throw new Error(`DropBatch quote failed (${response.status})`)
-
-        const payload = await response.json()
-        const data = payload?.data
+        const data = await fetchDropBatchQuote(request, { signal: abort.signal })
 
         if (id !== seq.current) return
-
-        // A malformed envelope is treated as "no DropBatch", not as an error the
-        // customer has to read. Standard delivery is unaffected either way.
-        if (!data || typeof data !== 'object') {
-          setState({ status: 'unavailable', quote: null, signature })
-          return
-        }
 
         setState({ status: 'ready', quote: data, signature })
       } catch (error) {
@@ -187,5 +203,6 @@ export function useDropBatchQuote(
     quote,
     show,
     senderPays: show ? senderPays : null,
+    requestKey: dropBatchQuoteSignature(currentRequest),
   }
 }

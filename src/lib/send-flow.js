@@ -37,6 +37,8 @@ const EMPTY_STATE = {
   packageCount: 1,
   weight: 'light',
   vehicle: 'car',
+  pricingMode: 'standard',
+  dropBatchSelectionKey: null,
   // Consignment type. 'other' is the general consumer default and the value the
   // flow sent unconditionally before presets existed; a ?section= param on step
   // 1 can substitute one of the other whitelisted values.
@@ -167,7 +169,7 @@ const PAYMENT_STORAGE_KEY = 'legaldrop.send-payment.v1'
 // Identifies the priced inputs. If any of these change, a PaymentIntent created
 // for the old ones is for the wrong amount and must not be reused.
 export function paymentInputsHash(state) {
-  return [
+  const standardInputs = [
     state?.pickup?.lat,
     state?.pickup?.lng,
     state?.dropoff?.lat,
@@ -175,7 +177,11 @@ export function paymentInputsHash(state) {
     state?.vehicle,
     state?.packageCount,
     state?.weight,
-  ].join('|')
+  ]
+
+  return state?.pricingMode === 'dropbatch'
+    ? [...standardInputs, 'dropbatch', state?.dropBatchSelectionKey].join('|')
+    : standardInputs.join('|')
 }
 
 export function readPaymentSession() {
@@ -269,6 +275,16 @@ function readStored() {
         parsed?.vehicle ?? EMPTY_STATE.vehicle,
         packageCount,
       ),
+      pricingMode:
+        parsed?.pricingMode === 'dropbatch' &&
+        typeof parsed?.dropBatchSelectionKey === 'string'
+          ? 'dropbatch'
+          : 'standard',
+      dropBatchSelectionKey:
+        parsed?.pricingMode === 'dropbatch' &&
+        typeof parsed?.dropBatchSelectionKey === 'string'
+          ? parsed.dropBatchSelectionKey
+          : null,
       // Merged rather than replaced, so a record written before the contact
       // fields existed (or a partial one) still yields every key.
       contact: { ...EMPTY_STATE.contact, ...(parsed?.contact ?? {}) },
@@ -313,11 +329,23 @@ export function SendFlowProvider({ children }) {
   }, [state, hydrated])
 
   const setPickup = useCallback(
-    (place) => setState((prev) => ({ ...prev, pickup: place })),
+    (place) =>
+      setState((prev) => ({
+        ...prev,
+        pickup: place,
+        pricingMode: 'standard',
+        dropBatchSelectionKey: null,
+      })),
     [],
   )
   const setDropoff = useCallback(
-    (place) => setState((prev) => ({ ...prev, dropoff: place })),
+    (place) =>
+      setState((prev) => ({
+        ...prev,
+        dropoff: place,
+        pricingMode: 'standard',
+        dropBatchSelectionKey: null,
+      })),
     [],
   )
   // Package count and vehicle are changed TOGETHER, in one state update.
@@ -343,6 +371,8 @@ export function SendFlowProvider({ children }) {
           ...prev,
           packageCount,
           vehicle: vehicleAfterPackageChange(prev.vehicle, packageCount),
+          pricingMode: 'standard',
+          dropBatchSelectionKey: null,
         }
       }),
     [],
@@ -360,7 +390,12 @@ export function SendFlowProvider({ children }) {
       setState((prev) =>
         packageCapacityRefusal(vehicle, prev.packageCount)
           ? prev
-          : { ...prev, vehicle },
+          : {
+              ...prev,
+              vehicle,
+              pricingMode: 'standard',
+              dropBatchSelectionKey: null,
+            },
       ),
     [],
   )
@@ -376,13 +411,20 @@ export function SendFlowProvider({ children }) {
     (pickupTiming) =>
       setState((prev) =>
         pickupTiming === 'scheduled'
-          ? { ...prev, pickupTiming }
+          ? {
+              ...prev,
+              pickupTiming,
+              pricingMode: 'standard',
+              dropBatchSelectionKey: null,
+            }
           : {
               ...prev,
               pickupTiming: 'instant',
               scheduledPickupAt: null,
               scheduledDate: '',
               scheduledTime: '',
+              pricingMode: 'standard',
+              dropBatchSelectionKey: null,
             },
       ),
     [],
@@ -398,6 +440,8 @@ export function SendFlowProvider({ children }) {
         scheduledDate: date ?? '',
         scheduledTime: time ?? '',
         scheduledPickupAt: iso ?? null,
+        pricingMode: 'standard',
+        dropBatchSelectionKey: null,
       })),
     [],
   )
@@ -408,6 +452,23 @@ export function SendFlowProvider({ children }) {
         ...prev,
         contact: { ...prev.contact, [field]: value },
       })),
+    [],
+  )
+  const setPricingMode = useCallback(
+    (pricingMode, selectionKey = null) =>
+      setState((prev) =>
+        pricingMode === 'dropbatch' && typeof selectionKey === 'string'
+          ? {
+              ...prev,
+              pricingMode: 'dropbatch',
+              dropBatchSelectionKey: selectionKey,
+            }
+          : {
+              ...prev,
+              pricingMode: 'standard',
+              dropBatchSelectionKey: null,
+            },
+      ),
     [],
   )
   // Called once the order exists, so a second booking starts clean rather than
@@ -427,6 +488,7 @@ export function SendFlowProvider({ children }) {
       setPickupTiming,
       setScheduledPickup,
       setContactField,
+      setPricingMode,
       resetFlow,
     }),
     [
@@ -441,6 +503,7 @@ export function SendFlowProvider({ children }) {
       setPickupTiming,
       setScheduledPickup,
       setContactField,
+      setPricingMode,
       resetFlow,
     ],
   )

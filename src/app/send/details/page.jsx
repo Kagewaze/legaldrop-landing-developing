@@ -11,7 +11,7 @@ import {
   hasBothAddresses,
   useSendFlow,
 } from '@/lib/send-flow'
-import { PriceBreakdown } from '@/components/send/PriceBreakdown'
+import { PriceBreakdown, formatMoney } from '@/components/send/PriceBreakdown'
 import { VehiclePicker } from '@/components/send/VehiclePicker'
 import { PickupTiming, pickupTimingIsComplete } from '@/components/send/PickupTiming'
 import { DropBatchQuoteCard } from '@/components/send/DropBatchQuoteCard'
@@ -99,6 +99,38 @@ export default function SendDetailsPage() {
     vehicle: flow.vehicle,
     packageCount: flow.packageCount,
   })
+  const {
+    pricingMode,
+    dropBatchSelectionKey,
+    setPricingMode,
+  } = flow
+
+  const dropBatchSelectionValid = Boolean(
+    pricingMode === 'dropbatch' &&
+      dropBatch.show &&
+      dropBatch.requestKey &&
+      dropBatchSelectionKey === dropBatch.requestKey,
+  )
+
+  useEffect(() => {
+    if (
+      pricingMode === 'dropbatch' &&
+      (!dropBatch.requestKey ||
+        dropBatchSelectionKey !== dropBatch.requestKey ||
+        (dropBatch.status !== 'idle' &&
+          dropBatch.status !== 'loading' &&
+          !dropBatch.show))
+    ) {
+      setPricingMode('standard')
+    }
+  }, [
+    dropBatch.requestKey,
+    dropBatch.show,
+    dropBatch.status,
+    dropBatchSelectionKey,
+    pricingMode,
+    setPricingMode,
+  ])
 
   if (!flow.hydrated || !complete) {
     return (
@@ -190,13 +222,57 @@ export default function SendDetailsPage() {
           />
         </div>
 
-        {/* DropBatch, when the backend prices this eligible scheduled
-            pickup. Rendered AFTER the vehicle choices and outside VehiclePicker
-            because it is a delivery MODE, not another vehicle — and it is
-            informational only, so it must not look selectable next to cards that
-            are. Its absence is the normal case and costs the customer nothing. */}
-        {dropBatch.show && (
-          <DropBatchQuoteCard senderPays={dropBatch.senderPays} />
+        {/* Pricing mode is an explicit choice. Standard stays selected by
+            default; DropBatch appears only for a current eligible backend quote. */}
+        {quote && (
+          <fieldset className="mt-8">
+            <legend className="mb-3 text-[13px] font-extrabold tracking-[0.08em] text-[#8d8695]">
+              DELIVERY OPTION
+            </legend>
+            <div className="grid gap-3">
+              <label
+                className={`block cursor-pointer rounded-2xl border-[1.5px] bg-white p-5 transition-colors ${
+                  pricingMode === 'standard'
+                    ? 'border-brand-600 ring-2 ring-brand-100'
+                    : 'border-[#e3dfe8] hover:border-brand-300'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <input
+                    type="radio"
+                    name="pricing-mode"
+                    value="standard"
+                    checked={pricingMode === 'standard'}
+                    onChange={() => setPricingMode('standard')}
+                    className="mt-1 h-5 w-5 shrink-0 accent-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-baseline justify-between gap-3">
+                      <span className="text-[13px] font-extrabold tracking-[0.08em] text-[#8d8695]">
+                        STANDARD DELIVERY
+                      </span>
+                      <span className="text-[22px] font-extrabold text-[#17131c]">
+                        {formatMoney(quote.total)}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-[15px] text-[#5f5868]">
+                      Regular Druppr delivery using the selected vehicle and schedule.
+                    </p>
+                </div>
+                </div>
+              </label>
+
+              {dropBatch.show && (
+                <DropBatchQuoteCard
+                  senderPays={dropBatch.senderPays}
+                  selected={dropBatchSelectionValid}
+                  onSelect={() =>
+                    setPricingMode('dropbatch', dropBatch.requestKey)
+                  }
+                />
+              )}
+            </div>
+          </fieldset>
         )}
       </div>
 
@@ -242,7 +318,9 @@ export default function SendDetailsPage() {
               the backend rejects scheduled_pickup without a future pickUpTime,
               and discovering that after the card is charged is the failure mode
               this whole step exists to avoid. */}
-          {quote && timingReady ? (
+          {quote &&
+          timingReady &&
+          (pricingMode === 'standard' || dropBatchSelectionValid) ? (
             <Link
               href="/send/pay"
               className="block w-full rounded-xl bg-brand-600 px-5 py-4 text-center text-[16px] font-bold text-white transition-colors hover:bg-brand-700"
