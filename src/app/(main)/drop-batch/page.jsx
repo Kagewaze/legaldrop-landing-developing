@@ -1,199 +1,97 @@
+import Image from 'next/image'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import { TripBoard } from '@/components/dropbatch/TripBoard'
-import { DROPBATCH_ENABLED } from '@/lib/config'
-import { fetchPublicTrips } from '@/lib/drop-batch'
-
-// /drop-batch — the public DropBatch product page.
-//
-// ⚠️ LIVES IN THE (main) ROUTE GROUP ON PURPOSE. The group contributes no URL
-// segment — this is still /drop-batch — but (main)/layout.jsx re-exports
-// components/Layout, which supplies the skip link, the site Header, the
-// <main id="main-content"> landmark and the Footer.
-//
-// It was briefly at src/app/drop-batch/ instead, outside the group, and the
-// page rendered with NO header, NO footer, no skip link and no main landmark:
-// the whole document had three focusable elements and no way to navigate
-// anywhere else on the site. Keep it beside its peers /legal and /medical.
-//
-// ⚠️ NOT LINKED YET. src/lib/navigation.js keeps dropBatch.live = false, so
-// Header and Footer skip it; the route is reachable directly for review. Flip
-// that flag only when the page is approved.
-//
-// ⚠️ THE BOARD IS THE ARGUMENT. Everything on this page is subordinate to the
-// real trips below — a diagram of how batching *could* work would be weaker than
-// the actual list of people already driving somewhere with room to spare. If the
-// board is empty, the page says so rather than substituting a concept graphic.
-//
-// ⚠️ WHAT THIS PAGE MAY NOT CLAIM. Payment is not implemented for DropBatch, the
-// public projection carries no trip id, and nothing here can book anything. No
-// "Book", no "Reserve", no price, no "live" language.
-
-// ⚠️ MUST NOT BE PRERENDERED. Statically generating this route bakes whatever
-// the board held at BUILD time into the HTML — and if the backend is unreachable
-// during the build, that is an empty board, so the first visitors are told "no
-// trips right now" when the marketplace may be busy. That is the same false
-// statement TripBoard's error state exists to avoid.
-//
-// It is also wrong on principle: the backend filters departureDate >= today, so
-// a snapshot taken on build day decays every day it is served.
-export const dynamic = 'force-dynamic'
+import courierImage from '@/images/medical-pharma.jpg'
+import handoffImage from '@/images/legal-document.jpg'
+import { DROPBATCH_EXPLAINER_ENABLED } from '@/lib/config'
 
 export const metadata = {
-  title: 'DropBatch | Trip capacity on Druppr',
+  title: 'DropBatch long-distance delivery | Druppr',
   description:
-    'People already travelling between cities post their trips on Druppr. DropBatch makes the carrying space on those trips discoverable.',
+    'Check scheduled long-distance delivery availability on compatible trips already heading your way.',
 }
 
 const STEPS = [
-  {
-    number: '01',
-    title: 'Someone posts a trip',
-    body: 'A user or an activated driver posts a trip they are already planning — where they are leaving from, where they are going, and when.',
-  },
-  {
-    number: '02',
-    title: 'Spare capacity becomes visible',
-    body: 'The trip appears on the board with the room it has left: package space, seats, trunk, and the largest package it can take.',
-  },
-  {
-    number: '03',
-    title: 'A sender requests space',
-    body: 'In the Druppr app, a sender asks the trip owner for the space they need on a trip going their way.',
-  },
-  {
-    number: '04',
-    title: 'The trip owner decides',
-    body: 'Requests go to whoever posted the trip. They accept or decline, and the two sides can message about the details.',
-  },
+  ['01', 'Enter your route', 'Tell us where the package is travelling.'],
+  ['02', 'Schedule the trip', 'DropBatch is designed for scheduled long-distance deliveries.'],
+  ['03', 'We check matching trips', 'Druppr checks compatible trips already heading that way.'],
+  ['04', 'See your DropBatch price', 'When a compatible trip is available, we show the authoritative DropBatch price.'],
 ]
 
-export default async function DropBatchPage() {
-  // ⚠️ UNLINKING IS NOT CONTAINMENT ON ITS OWN. ROUTES.dropBatch.live already
-  // drops this page out of Header, Footer and the services grid, but the route
-  // still resolves for anyone who knows or guesses the URL — and what it serves
-  // is a live-looking product page listing real trips. While DropBatch cannot
-  // be completed (no payment, no execution, no tracking, no completion), the
-  // page must not exist to the public at all.
-  //
-  // notFound() rather than a redirect or a "coming soon": it is the smallest
-  // reversible guard, it leaves every line below untouched for the day the
-  // lifecycle lands, and it makes the flag flip genuinely sufficient.
-  if (!DROPBATCH_ENABLED) {
-    notFound()
-  }
-
-  // Server-fetched from the default Toronto origin so the board is populated on
-  // first paint — no client request, no geolocation prompt. A failure here must
-  // not take the page down: the board renders its own empty/error handling and
-  // the rest of the page still explains the product.
-  let initialTrips = []
-  try {
-    initialTrips = await fetchPublicTrips()
-  } catch {
-    initialTrips = []
-  }
+export default function DropBatchPage() {
+  if (!DROPBATCH_EXPLAINER_ENABLED) notFound()
 
   return (
-    <div className="bg-surface-page">
-      {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-[1200px] px-8 pb-12 pt-16 sm:pb-16 sm:pt-24">
-        <span className="block text-sm font-semibold uppercase tracking-label text-[#5f5868]">
-          DropBatch
-        </span>
-        <h1 className="mt-3 max-w-[18ch] text-balance font-display text-4xl font-extrabold -tracking-[0.02em] text-[#17131c] sm:text-6xl">
-          Trips going your way.
-        </h1>
-        <p className="mt-5 max-w-[62ch] text-pretty text-lg text-[#5f5868]">
-          People are already driving between cities. Some of those trips have
-          room to spare. DropBatch makes that carrying capacity discoverable — so
-          a delivery can travel with a trip that was happening anyway.
-        </p>
-        <p className="mt-4 max-w-[62ch] text-pretty text-base text-[#5f5868]">
-          Users and activated drivers both post trips. Requesting space, managing
-          requests and messaging happen in the Druppr app.
-        </p>
-      </section>
-
-      {/* ── THE BOARD ────────────────────────────────────────────────────── */}
-      <section
-        aria-labelledby="available-trips"
-        className="border-y border-[#eeebf1] bg-surface-tint/40"
-      >
-        <div className="mx-auto max-w-[1200px] px-8 py-16 sm:py-20">
-          <h2
-            id="available-trips"
-            className="font-display text-3xl font-extrabold -tracking-[0.015em] text-[#17131c]"
-          >
-            Available DropBatch trips
-          </h2>
-          <p className="mt-3 max-w-[62ch] text-base text-[#5f5868]">
-            Real trips posted on Druppr, showing the space each one has left.
-            Trip owners are not identified here.
+    <div className="bg-[#fbf9fc] text-[#17131c]">
+      <section className="mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-10 px-6 py-12 sm:px-8 sm:py-20 lg:grid-cols-2 lg:py-24">
+        <div>
+          <p className="text-sm font-extrabold uppercase tracking-label text-brand-700">DropBatch</p>
+          <h1 className="mt-3 text-balance font-display text-4xl font-extrabold tracking-[-0.025em] sm:text-6xl">
+            Deliver farther for less with DropBatch.
+          </h1>
+          <p className="mt-5 max-w-[60ch] text-lg leading-8 text-[#5f5868]">
+            DropBatch matches scheduled long-distance deliveries with compatible trips already travelling in that direction, making better use of unused vehicle capacity. When a match is available, it can cost less.
           </p>
-
-          <div className="mt-8">
-            <TripBoard initialTrips={initialTrips} />
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Link href="/drop-batch/request" className="min-h-11 rounded-control bg-brand-600 px-6 py-3.5 text-center font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 hover:bg-brand-700">
+              Check DropBatch availability
+            </Link>
+            <Link href="/send" className="min-h-11 rounded-control border border-[#d9d2df] bg-white px-6 py-3.5 text-center font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700">
+              Book a standard delivery
+            </Link>
           </div>
+        </div>
+        <div className="relative min-h-[320px] overflow-hidden rounded-card sm:min-h-[460px]">
+          <Image src={courierImage} alt="A courier loading packages into a delivery van." fill priority sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ─────────────────────────────────────────────────── */}
-      <section
-        aria-labelledby="how-dropbatch-works"
-        className="mx-auto max-w-[1200px] px-8 py-16 sm:py-24"
-      >
-        <h2
-          id="how-dropbatch-works"
-          className="font-display text-3xl font-extrabold -tracking-[0.015em] text-[#17131c]"
-        >
-          How DropBatch works
-        </h2>
-
-        <ol className="mt-10 grid grid-cols-1 gap-x-12 gap-y-10 sm:grid-cols-2">
-          {STEPS.map((step, index) => (
-            <li key={step.number}>
-              <div className="flex items-center gap-3">
-                <span className="font-display text-sm font-extrabold tracking-label text-brand-600">
-                  {step.number}
-                </span>
-                {index < STEPS.length - 1 ? (
-                  <span
-                    aria-hidden="true"
-                    className="h-px w-10 bg-[linear-gradient(to_right,rgba(123,47,190,0.45),rgba(123,47,190,0))]"
-                  />
-                ) : null}
-              </div>
-              <h3 className="mt-2 font-display text-xl font-extrabold text-[#17131c]">
-                {step.title}
-              </h3>
-              <p className="mt-2 max-w-[46ch] text-base text-[#5f5868]">
-                {step.body}
-              </p>
-            </li>
-          ))}
-        </ol>
+      <section aria-labelledby="how-dropbatch-works" className="border-y border-[#ebe6ef] bg-white">
+        <div className="mx-auto max-w-[1200px] px-6 py-16 sm:px-8 sm:py-24">
+          <h2 id="how-dropbatch-works" className="font-display text-3xl font-extrabold sm:text-4xl">How DropBatch works</h2>
+          <ol className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {STEPS.map(([number, title, body]) => (
+              <li key={number} className="rounded-card border border-[#ebe6ef] bg-[#fbf9fc] p-6">
+                <span className="text-sm font-extrabold text-brand-700">{number}</span>
+                <h3 className="mt-3 text-xl font-extrabold">{title}</h3>
+                <p className="mt-2 leading-7 text-[#5f5868]">{body}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
       </section>
 
-      {/* ── APP CONTINUATION ─────────────────────────────────────────────
-          ⚠️ TEXT, NOT A BUTTON, AND THAT IS DELIBERATE. No App Store or Play
-          Store URL exists anywhere in this repo or the mobile repo, and the
-          Expo scheme (legaldrop://) only resolves on a device that already has
-          the app — on desktop it does nothing. A button that silently fails is
-          worse than a sentence that is true. Add a real CTA once a verified
-          store link exists. */}
-      <section className="border-t border-[#eeebf1]">
-        <div className="mx-auto max-w-[1200px] px-8 py-16 sm:py-20">
-          <div className="rounded-card border border-[#eeebf1] bg-surface-raised p-8 sm:p-10">
-            <h2 className="font-display text-2xl font-extrabold text-[#17131c]">
-              Posting and booking happen in the app
-            </h2>
-            <p className="mt-3 max-w-[62ch] text-base text-[#5f5868]">
-              This page is for discovering what is moving. Posting a trip,
-              requesting space on one, and messaging a trip owner are all handled
-              in the Druppr app, where you are signed in to your own account.
-            </p>
+      <section className="mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-10 px-6 py-16 sm:px-8 sm:py-24 lg:grid-cols-2">
+        <div className="relative min-h-[300px] overflow-hidden rounded-card sm:min-h-[400px]">
+          <Image src={handoffImage} alt="Two people handing over a package envelope." fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
+        </div>
+        <div>
+          <p className="text-sm font-extrabold uppercase tracking-label text-brand-700">A practical handoff</p>
+          <h2 className="mt-3 font-display text-3xl font-extrabold sm:text-4xl">Your package joins a trip already being made.</h2>
+          <p className="mt-5 text-lg leading-8 text-[#5f5868]">DropBatch connects real routes, real packages and available vehicle space. It is designed for convenient, scheduled handoffs—not instant pickup.</p>
+        </div>
+      </section>
+
+      <section className="bg-surface-ink text-white">
+        <div className="mx-auto max-w-[1200px] px-6 py-16 sm:px-8 sm:py-20">
+          <h2 className="font-display text-3xl font-extrabold">Built for longer, planned routes</h2>
+          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              ['80 km minimum', 'The route must be at least 80 km.'],
+              ['Scheduled pickup', 'Choose a future date and time.'],
+              ['Compatible vehicle', 'The trip must have a suitable vehicle and capacity.'],
+              ['Conditional availability', 'A price appears only when a compatible active trip matches.'],
+            ].map(([title, body]) => (
+              <div key={title} className="rounded-card border border-white/15 bg-white/5 p-5">
+                <h3 className="font-bold">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-white/75">{body}</p>
+              </div>
+            ))}
           </div>
+          <Link href="/drop-batch/request" className="mt-10 inline-flex min-h-11 items-center rounded-control bg-white px-6 py-3 font-semibold text-[#17131c] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+            Get a DropBatch quote
+          </Link>
         </div>
       </section>
     </div>

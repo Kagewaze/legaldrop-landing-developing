@@ -1,4 +1,4 @@
-import { DROPBATCH_ENABLED } from '@/lib/config'
+import { DROPBATCH_EXPLAINER_ENABLED } from '@/lib/config'
 
 // Navigation + footer content for the Druppr redesign.
 //
@@ -32,16 +32,9 @@ export const ROUTES = {
   legal: { href: '/legal', live: true },
   ride: { href: '/ride', live: false },
   marketplace: { href: '/marketplace', live: false },
-  // /drop-batch is BUILT but not shipped: a public, read-only trip board over
-  // the unauthenticated GET /drop-batch/public/trips projection. It is held back
-  // because the DropBatch product behind it cannot be completed — no payment, no
-  // execution, no tracking, no completion — so the site must not advertise it.
-  //
-  // Derived, never hand-set: DROPBATCH_ENABLED in lib/config is the single
-  // switch for every DropBatch surface on the site, and nav must not be able to
-  // disagree with the page it links to. The page itself 404s on the same flag,
-  // so a live: true here without flipping that constant would link to nothing.
-  dropBatch: { href: '/drop-batch', live: DROPBATCH_ENABLED },
+  // The customer explainer is independently discoverable while DropBatch's
+  // marketplace and transactional booking lifecycle remain contained.
+  dropBatch: { href: '/drop-batch', live: DROPBATCH_EXPLAINER_ENABLED },
   tow: { href: '/tow', live: false },
   designatedDriver: { href: '/designated-driver', live: false },
   petTransport: { href: '/pet-transport', live: false },
