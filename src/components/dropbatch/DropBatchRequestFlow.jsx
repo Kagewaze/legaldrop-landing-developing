@@ -89,9 +89,9 @@ export function DropBatchRequestFlow() {
             <section aria-labelledby="route-step" className="rounded-card border border-[#ebe6ef] bg-white p-5 sm:p-7">
               <p className="text-xs font-extrabold text-brand-700">STEP 1</p>
               <h2 id="route-step" className="mt-1 text-2xl font-extrabold">Route</h2>
-              <div className="mt-5 space-y-3">
-                <AddressAutocomplete label="Pickup address" variant="pickup" selected={pickup} onSelect={(place) => invalidate(() => setPickup(place))} onClear={() => invalidate(() => setPickup(null))} />
-                <AddressAutocomplete label="Drop-off address" variant="dropoff" selected={dropoff} onSelect={(place) => invalidate(() => setDropoff(place))} onClear={() => invalidate(() => setDropoff(null))} />
+              <div className="mt-5 rounded-2xl bg-white shadow-[0_1px_2px_rgba(23,19,28,0.04),0_6px_20px_rgba(23,19,28,0.06)] ring-1 ring-[#efecf2]">
+                <AddressAutocomplete label="Pickup address" variant="pickup" selected={pickup} onSelect={(place) => invalidate(() => setPickup(place))} onClear={() => invalidate(() => setPickup(null))} forceDrupprInput />
+                <AddressAutocomplete label="Drop-off address" variant="dropoff" selected={dropoff} onSelect={(place) => invalidate(() => setDropoff(place))} onClear={() => invalidate(() => setDropoff(null))} forceDrupprInput />
               </div>
               <div className="mt-5 min-h-[260px] overflow-hidden rounded-control bg-[#f4f0f6]">
                 <SendMap pickup={pickup} dropoff={dropoff} />

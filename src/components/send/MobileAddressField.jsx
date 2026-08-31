@@ -32,6 +32,8 @@ export function MobileAddressField({
   onCommit,
   onInvalidate,
   commitStatus,
+  embedded = false,
+  overlaySuggestions = false,
 }) {
   const { predictions, status, search, reset, endSession, minLength } =
     usePlacePredictions()
@@ -147,7 +149,11 @@ export function MobileAddressField({
         onKeyDown={handleKeyDown}
         // ⚠️ text-base is 16px and is LOAD-BEARING, not a style choice. iOS
         // Safari zooms the whole viewport when a focused input is under 16px.
-        className="min-h-12 w-full rounded-control border-[1.5px] border-[#e3dfe8] bg-white px-4 py-3 text-base text-[#17131c] placeholder:text-[#5f5868] focus:border-brand-600 focus:outline-none"
+        className={
+          embedded
+            ? 'min-h-12 w-full border-0 bg-transparent px-0 py-3 text-base text-[#17131c] placeholder:text-[#5f5868] focus:outline-none'
+            : 'min-h-12 w-full rounded-control border-[1.5px] border-[#e3dfe8] bg-white px-4 py-3 text-base text-[#17131c] placeholder:text-[#5f5868] focus:border-brand-600 focus:outline-none'
+        }
       />
 
       {commitStatus === 'pending' ? (
@@ -159,11 +165,15 @@ export function MobileAddressField({
           id={listId}
           role="listbox"
           aria-label={`${label} suggestions`}
-          // In normal flow, not absolutely positioned: the booking card is
-          // `overflow-hidden`, so an absolute list would be clipped by it. Letting
-          // the card grow avoids fighting that with z-index or overflow hacks and
-          // keeps the page scrollable while the list is open.
-          className="mt-2 overflow-hidden rounded-control border border-[#eeebf1] bg-white shadow-card"
+          // The default mobile /send presentation remains in normal flow because
+          // its booking card clips overlays. DropBatch opts into the canonical
+          // floating treatment: its route card does not clip, so suggestions can
+          // sit directly under the field without shifting the map and later steps.
+          className={`${
+            overlaySuggestions
+              ? 'absolute left-0 right-0 top-full z-30 mt-1.5 shadow-lift'
+              : 'mt-2 shadow-card'
+          } overflow-hidden rounded-control border border-[#eeebf1] bg-white`}
         >
           {predictions.map((prediction, index) => {
             const { main, secondary } = splitPrediction(prediction)

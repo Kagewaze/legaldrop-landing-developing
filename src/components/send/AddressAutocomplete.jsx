@@ -242,7 +242,9 @@ function RailGlyph({ variant }) {
 //
 // Under 640px this row renders a Druppr-owned field (send/MobileAddressField)
 // and the Google web component is never constructed. Above it, the existing
-// <gmp-place-autocomplete> is unchanged.
+// <gmp-place-autocomplete> remains the default. A consumer may explicitly force
+// the Druppr-owned presentation when it needs the same visible dropdown and
+// focus treatment at every breakpoint; this does not change place authority.
 //
 // The reason is not styling preference. <gmp-place-autocomplete> promotes
 // itself into a FULL-SCREEN takeover at small viewports — its own back arrow,
@@ -279,6 +281,7 @@ export function AddressAutocomplete({
   selected,
   onSelect,
   onClear,
+  forceDrupprInput = false,
 }) {
   const containerRef = useRef(null)
 
@@ -322,10 +325,10 @@ export function AddressAutocomplete({
   // by the init effect, which compact mode deliberately skips — so without this
   // the mobile field showed a permanent "…" beside every address row.
   useEffect(() => {
-    if (isCompact === true) {
+    if (isCompact === true || forceDrupprInput) {
       setStatus('ready')
     }
-  }, [isCompact])
+  }, [isCompact, forceDrupprInput])
 
   // The mobile field is a controlled input, so its text lives here. Seeded from
   // a committed selection so returning to Step 1 shows the chosen address.
@@ -401,11 +404,12 @@ export function AddressAutocomplete({
   commitPredictionRef.current = commitPrediction
 
   useEffect(() => {
-    // ⚠️ NEVER CONSTRUCT THE GOOGLE ELEMENT ON A PHONE. This is the whole fix:
+    // ⚠️ NEVER CONSTRUCT THE GOOGLE ELEMENT ON A PHONE OR FOR AN EXPLICITLY
+    // Druppr-owned presentation. This is the whole fix:
     // if it is built, it takes the page over the moment the customer types.
     // `null` (unknown, pre-hydration) also does nothing — the widget waits until
     // the media query has actually resolved to desktop.
-    if (isCompact !== false) {
+    if (forceDrupprInput || isCompact !== false) {
       return
     }
 
@@ -500,7 +504,8 @@ export function AddressAutocomplete({
       element?.remove()
       elementRef.current = null
     }
-    // ⚠️ `isCompact` IS THE ONLY PERMITTED DEPENDENCY. Adding `selected` here to
+    // ⚠️ `isCompact` AND the presentation choice are the only permitted
+    // dependencies. Adding `selected` here to
     // drive hydration is exactly the mistake rule 2 forbids — it would tear the
     // element down and rebuild it mid-typing. Hydration is a separate effect,
     // below.
@@ -509,7 +514,7 @@ export function AddressAutocomplete({
     // only changes if the viewport actually crosses 640px, where rebuilding IS
     // the correct response: the two modes cannot share one element.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isCompact])
+  }, [isCompact, forceDrupprInput])
 
   // ── Mount hydration — the one permitted .value write. See rule 2. ─────────
   //
@@ -599,7 +604,7 @@ export function AddressAutocomplete({
             captions are gone; the placeholder carries that meaning visually. */}
           <span className="sr-only">{label}</span>
 
-          {isCompact === true ? (
+          {forceDrupprInput || isCompact === true ? (
             <div className="min-w-0 flex-1">
               <MobileAddressField
                 label={label}
@@ -624,6 +629,8 @@ export function AddressAutocomplete({
                   // MobileAddressField. One contract, two presentations.
                   commitPredictionRef.current(prediction)
                 }}
+                embedded={forceDrupprInput}
+                overlaySuggestions={forceDrupprInput}
               />
             </div>
           ) : (
