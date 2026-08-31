@@ -34,6 +34,13 @@ test('contains no marketplace board or unavailable app-booking promise', () => {
   assert.doesNotMatch(page, /compatible trip|matching trip|active trip|already travelling|heading that way|unused vehicle capacity/i)
 })
 
+test('driver copy allows immediate acceptance without making supply a price prerequisite', () => {
+  assert.match(page, /price does not depend on a driver already being assigned/)
+  assert.match(page, /may accept quickly when the route fits/)
+  assert.match(page, /may take longer while drivers look for deliveries heading in the same direction/)
+  assert.doesNotMatch(page, /driver only becomes available|wait until close to pickup|pre-existing driver|pre-existing trip/i)
+})
+
 test('homepage discovery copy describes the current scheduled long-distance product', () => {
   assert.match(services, /Scheduled long-distance delivery for routes of 80 km or more/)
   assert.doesNotMatch(services, /Many stops on one optimised route/)

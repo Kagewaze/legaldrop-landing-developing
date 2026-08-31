@@ -61,6 +61,13 @@ test('stops at quote and contains no transactional or payment call', () => {
   assert.doesNotMatch(flow, /senderPays\s*[+*\-/]/)
 })
 
+test('quote copy distinguishes price authority from later driver acceptance', () => {
+  assert.match(flow, /price does not depend on a driver already being assigned/)
+  assert.match(flow, /may accept quickly when the route fits/)
+  assert.match(flow, /may take longer while drivers look for deliveries heading in the same direction/)
+  assert.doesNotMatch(flow, /matching trip|driver only becomes available|wait until close to pickup/i)
+})
+
 test('ties outward state to the current request identity and preserves retry sequencing', () => {
   assert.match(hook, /currentRequest && state\.signature === signature \? state : IDLE/)
   assert.match(hook, /status: 'loading', quote: null, signature/)

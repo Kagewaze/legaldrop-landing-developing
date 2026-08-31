@@ -76,7 +76,7 @@ function splitPrediction(prediction) {
   return { main: main || text, secondary }
 }
 
-function AddressField({
+export function DrupprAddressAutocomplete({
   id,
   label,
   placeholder,
@@ -492,7 +492,7 @@ export function HeroAddressEntry() {
     // padding this form sits inside.
     <form onSubmit={handleSubmit} noValidate>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-        <AddressField
+        <DrupprAddressAutocomplete
           id={`${baseId}-pickup`}
           label="Pickup location"
           placeholder="Enter pickup address"
@@ -508,7 +508,7 @@ export function HeroAddressEntry() {
           loaderState={loaderState}
           onDegraded={markDegraded}
         />
-        <AddressField
+        <DrupprAddressAutocomplete
           id={`${baseId}-dropoff`}
           label="Drop-off location"
           placeholder="Enter drop-off address"

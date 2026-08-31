@@ -45,9 +45,10 @@ export function DropBatchQuoteCard({ senderPays }) {
       </div>
 
       <p className="mt-2 max-w-[52ch] text-[15px] text-[#5f5868]">
-        Scheduled long-distance pricing for a delivery that will be posted to
-        eligible Druppr drivers after booking. No driver is required before you
-        receive this price.
+        Your price does not depend on a driver already being assigned. After
+        booking, eligible Druppr drivers can accept the scheduled job quickly
+        when it fits, or it may take longer while drivers look for deliveries
+        heading in the same direction.
       </p>
 
       <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t border-[#f0eef2] pt-3 text-[13px] font-semibold">

@@ -6,12 +6,6 @@ import {
   splitPrediction,
   usePlacePredictions,
 } from '@/lib/use-place-predictions'
-import {
-  HOMEPAGE_ADDRESS_FIELD_BASE,
-  HOMEPAGE_ADDRESS_LABEL,
-  HOMEPAGE_ADDRESS_LIST,
-  homepageAddressBorderClass,
-} from '@/components/address/homepage-address-field'
 
 // The phone-width address field for /send Step 1.
 //
@@ -38,7 +32,6 @@ export function MobileAddressField({
   onCommit,
   onInvalidate,
   commitStatus,
-  homepageStyle = false,
 }) {
   const { predictions, status, search, reset, endSession, minLength } =
     usePlacePredictions()
@@ -116,12 +109,6 @@ export function MobileAddressField({
 
   return (
     <div className="relative">
-      {homepageStyle ? (
-        <label htmlFor={rawId} className={HOMEPAGE_ADDRESS_LABEL}>
-          {label}
-        </label>
-      ) : null}
-
       {/* ⚠️ NO VISIBLE <label> IN THE DEFAULT /send PRESENTATION.
           AddressAutocomplete already renders an
           sr-only label for this row and the placeholder carries the meaning
@@ -161,11 +148,7 @@ export function MobileAddressField({
         onKeyDown={handleKeyDown}
         // ⚠️ text-base is 16px and is LOAD-BEARING, not a style choice. iOS
         // Safari zooms the whole viewport when a focused input is under 16px.
-        className={
-          homepageStyle
-            ? `${HOMEPAGE_ADDRESS_FIELD_BASE} ${homepageAddressBorderClass(selected)}`
-            : 'min-h-12 w-full rounded-control border-[1.5px] border-[#e3dfe8] bg-white px-4 py-3 text-base text-[#17131c] placeholder:text-[#5f5868] focus:border-brand-600 focus:outline-none'
-        }
+        className="min-h-12 w-full rounded-control border-[1.5px] border-[#e3dfe8] bg-white px-4 py-3 text-base text-[#17131c] placeholder:text-[#5f5868] focus:border-brand-600 focus:outline-none"
       />
 
       {commitStatus === 'pending' ? (
@@ -181,37 +164,11 @@ export function MobileAddressField({
           // its booking card clips overlays. DropBatch opts into the canonical
           // floating treatment: its route card does not clip, so suggestions can
           // sit directly under the field without shifting the map and later steps.
-          className={
-            homepageStyle
-              ? HOMEPAGE_ADDRESS_LIST
-              : 'mt-2 overflow-hidden rounded-control border border-[#eeebf1] bg-white shadow-card'
-          }
+          className="mt-2 overflow-hidden rounded-control border border-[#eeebf1] bg-white shadow-card"
         >
           {predictions.map((prediction, index) => {
             const { main, secondary } = splitPrediction(prediction)
-            return homepageStyle ? (
-              <li
-                key={`${main}-${index}`}
-                id={`${rawId}-opt-${index}`}
-                role="option"
-                aria-selected={index === activeIndex}
-                className={`cursor-pointer border-l-2 px-4 py-2.5 ${
-                  index === activeIndex
-                    ? 'border-brand-600 bg-surface-tint'
-                    : 'border-transparent'
-                }`}
-                onMouseEnter={() => setActiveIndex(index)}
-                onPointerDown={(event) => {
-                  event.preventDefault()
-                  choose(prediction)
-                }}
-              >
-                <span className="block text-sm font-semibold text-[#17131c]">{main}</span>
-                {secondary ? (
-                  <span className="mt-0.5 block text-sm text-[#5f5868]">{secondary}</span>
-                ) : null}
-              </li>
-            ) : (
+            return (
               <li key={`${main}-${index}`} className="border-b border-[#f4f1f7] last:border-b-0">
                 <button
                   type="button"

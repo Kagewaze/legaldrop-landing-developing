@@ -1,8 +1,9 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 
 import { importMapsLibrary } from '@/lib/maps-loader'
+import { DrupprAddressAutocomplete } from '@/components/home/HeroAddressEntry'
 import { MobileAddressField } from '@/components/send/MobileAddressField'
 
 // Google Places autocomplete input (Places API New: PlaceAutocompleteElement).
@@ -284,6 +285,28 @@ export function AddressAutocomplete({
   homepageStyle = false,
 }) {
   const containerRef = useRef(null)
+  const nativeId = useId()
+  const nativePlacesPromise = useRef(null)
+  const [nativeLoaderState, setNativeLoaderState] = useState('idle')
+
+  // DropBatch deliberately uses the same programmatic Places controller as
+  // the homepage. The pinned Places library's data API is the authority; the
+  // closed-shadow Google custom element remains reserved for desktop /send.
+  const ensureNativePlaces = useCallback(() => {
+    if (!nativePlacesPromise.current) {
+      setNativeLoaderState('loading')
+      nativePlacesPromise.current = importMapsLibrary('places')
+        .then((library) => {
+          setNativeLoaderState('ready')
+          return library
+        })
+        .catch(() => {
+          setNativeLoaderState('failed')
+          return null
+        })
+    }
+    return nativePlacesPromise.current
+  }, [])
 
   // Latest props without re-running the init effect. See rule 4.
   const onSelectRef = useRef(onSelect)
@@ -581,6 +604,32 @@ export function AddressAutocomplete({
     onClear?.()
   }
 
+  if (homepageStyle) {
+    return (
+      <DrupprAddressAutocomplete
+        id={`${nativeId}-${variant}`}
+        label={label}
+        placeholder={
+          variant === 'pickup'
+            ? 'Enter pickup address'
+            : 'Enter drop-off address'
+        }
+        value={query}
+        onTextChange={setQuery}
+        selected={selected}
+        onInvalidate={() => {
+          pendingPredictionRef.current = null
+          setCommitStatus('idle')
+          onClearRef.current?.()
+        }}
+        onSelect={(place) => onSelectRef.current(place)}
+        ensurePlaces={ensureNativePlaces}
+        loaderState={nativeLoaderState}
+        onDegraded={() => {}}
+      />
+    )
+  }
+
   return (
     <div>
       <div
@@ -637,7 +686,6 @@ export function AddressAutocomplete({
                   // MobileAddressField. One contract, two presentations.
                   commitPredictionRef.current(prediction)
                 }}
-                homepageStyle={homepageStyle}
               />
             </div>
           ) : (

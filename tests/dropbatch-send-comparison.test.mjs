@@ -21,8 +21,9 @@ test('send comparison uses backend eligibility and senderPays without a trip pre
   assert.doesNotMatch(hook, /Math\.min\([^\n]*senderPays|sort\([^\n]*senderPays|reduce\([^\n]*senderPays/)
   assert.match(details, /dropBatch\.show/)
   assert.match(details, /<DropBatchQuoteCard/)
-  assert.match(card, /posted to[\s\S]*eligible Druppr drivers after booking/)
-  assert.match(card, /No driver is required before you/)
+  assert.match(card, /price does not depend on a driver already being assigned/)
+  assert.match(card, /accept the scheduled job quickly[\s\S]*may take longer/)
+  assert.doesNotMatch(card, /matching trip|pre-existing trip|driver only becomes available/i)
 })
 
 test('comparison failure remains isolated from standard price, Continue, payment and order payload', () => {

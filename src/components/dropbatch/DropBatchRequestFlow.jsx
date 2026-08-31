@@ -165,8 +165,8 @@ export function DropBatchRequestFlow() {
                   <p className="text-sm font-bold text-[#5f5868]">Your DropBatch price</p>
                   <p className="mt-1 text-4xl font-extrabold">{formatMoney(result.senderPays)}</p>
                   {Number.isFinite(Number(quote?.routeDistanceKm)) && <p className="mt-3 text-sm text-[#5f5868]">Route distance: {Number(quote.routeDistanceKm).toFixed(1)} km</p>}
-                  <p className="mt-2 text-sm text-[#5f5868]">This is authoritative scheduled long-distance pricing. A driver is not required before you receive the price.</p>
-                  <p className="mt-5 border-t border-[#ebe6ef] pt-4 text-sm leading-6 text-[#5f5868]">DropBatch online booking is being prepared. This quote does not reserve a driver or book a delivery; once booking is available, the job will be posted for eligible Druppr drivers.</p>
+                  <p className="mt-2 text-sm text-[#5f5868]">This is authoritative scheduled long-distance pricing. Your price does not depend on a driver already being assigned.</p>
+                  <p className="mt-5 border-t border-[#ebe6ef] pt-4 text-sm leading-6 text-[#5f5868]">DropBatch online booking is being prepared. After booking, eligible Druppr drivers may accept quickly when the route fits, or acceptance may take longer while drivers look for deliveries heading in the same direction.</p>
                   <StandardDeliveryLink />
                 </div>
               )}

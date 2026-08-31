@@ -31,7 +31,7 @@ export default function DropBatchPage() {
             Deliver farther for less with DropBatch.
           </h1>
           <p className="mt-5 max-w-[60ch] text-lg leading-8 text-[#5f5868]">
-            DropBatch is Druppr&apos;s lower-cost option for eligible scheduled long-distance deliveries. Get an authoritative price now; once booked, the delivery will be posted for eligible Druppr drivers to accept ahead of pickup.
+            DropBatch is Druppr&apos;s lower-cost option for eligible scheduled long-distance deliveries. Your price does not depend on a driver already being assigned; after booking, the job is posted for eligible Druppr drivers.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link href="/drop-batch/request" className="min-h-11 rounded-control bg-brand-600 px-6 py-3.5 text-center font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 hover:bg-brand-700">
@@ -69,7 +69,7 @@ export default function DropBatchPage() {
         <div>
           <p className="text-sm font-extrabold uppercase tracking-label text-brand-700">A practical handoff</p>
           <h2 className="mt-3 font-display text-3xl font-extrabold sm:text-4xl">A scheduled job for Druppr drivers.</h2>
-          <p className="mt-5 text-lg leading-8 text-[#5f5868]">After booking, your long-distance delivery enters Druppr&apos;s normal driver job board. An eligible driver can accept it ahead of the planned pickup, but acceptance is not guaranteed.</p>
+          <p className="mt-5 text-lg leading-8 text-[#5f5868]">After booking, your long-distance delivery enters Druppr&apos;s normal driver job board. A driver may accept quickly when the route fits, or it may take longer while drivers look for deliveries heading in the same direction. Acceptance is not guaranteed.</p>
         </div>
       </section>
 
@@ -81,7 +81,7 @@ export default function DropBatchPage() {
               ['80 km minimum', 'The route must be at least 80 km.'],
               ['Scheduled pickup', 'Choose a future date and time.'],
               ['Supported vehicle', 'Choose a DropBatch-supported vehicle for the package.'],
-              ['Driver job board', 'After booking, eligible Druppr drivers can accept the scheduled job.'],
+              ['Driver job board', 'Eligible drivers can accept immediately when the scheduled route fits.'],
             ].map(([title, body]) => (
               <div key={title} className="rounded-card border border-white/15 bg-white/5 p-5">
                 <h3 className="font-bold">{title}</h3>
