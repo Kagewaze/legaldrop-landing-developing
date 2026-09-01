@@ -204,8 +204,8 @@ export function DropBatchRequestFlow() {
                   {Number.isFinite(Number(quote?.routeDistanceKm)) && <p className="mt-3 text-sm text-[#5f5868]">Route distance: {Number(quote.routeDistanceKm).toFixed(1)} km</p>}
                   <p className="mt-2 text-sm text-[#5f5868]">This is authoritative long-distance pricing. Your price does not depend on a driver already being assigned.</p>
                   <p className="mt-2 text-sm leading-6 text-[#5f5868]">{quoteInput.pickupTiming === 'scheduled' ? 'Eligible drivers can accept ahead of your preferred pickup time when the route fits.' : 'The delivery is posted immediately after booking; a suitable driver may accept quickly or acceptance may take longer.'}</p>
-                  <p className="mt-5 border-t border-[#ebe6ef] pt-4 text-sm leading-6 text-[#5f5868]">DropBatch online booking is being prepared. After booking, eligible Druppr drivers may accept quickly when the route fits, or acceptance may take longer while drivers look for deliveries heading in the same direction.</p>
-                  <StandardDeliveryLink />
+                  <p className="mt-5 border-t border-[#ebe6ef] pt-4 text-sm leading-6 text-[#5f5868]">Ready to book? Use Send a package to choose DropBatch as your delivery option. After booking, eligible Druppr drivers may accept quickly when the route fits, or acceptance may take longer while drivers look for deliveries heading in the same direction.</p>
+                  <StandardDeliveryLink label="Send a package" />
                 </div>
               )}
             </div>
@@ -216,6 +216,6 @@ export function DropBatchRequestFlow() {
   )
 }
 
-function StandardDeliveryLink() {
-  return <Link href="/send" className="mt-5 inline-flex min-h-11 items-center rounded-control bg-[#17131c] px-5 py-3 font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#17131c]">Book a standard delivery</Link>
+function StandardDeliveryLink({ label = 'Book a standard delivery' }) {
+  return <Link href="/send" className="mt-5 inline-flex min-h-11 items-center rounded-control bg-[#17131c] px-5 py-3 font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#17131c]">{label}</Link>
 }

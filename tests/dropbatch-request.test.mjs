@@ -71,7 +71,9 @@ test('renders below-minimum, eligible price and retry states without match conce
 })
 
 test('stops at quote and contains no transactional or payment call', () => {
-  assert.match(flow, /online booking is being prepared/)
+  assert.match(flow, /Ready to book\? Use Send a package to choose DropBatch as your delivery option/)
+  assert.match(flow, /href="\/send"/)
+  assert.doesNotMatch(flow, /online booking is being prepared|booking coming soon/i)
   assert.doesNotMatch(flow, /drop-batch\/book|POST \/order|PaymentIntent|Stripe|confirm order|checkout/i)
   assert.doesNotMatch(flow, /senderPays\s*[+*\-/]/)
 })

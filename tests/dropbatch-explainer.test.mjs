@@ -26,6 +26,8 @@ test('renders the customer explainer with human imagery and request CTA', () => 
   assert.match(page, /Get my DropBatch price/)
   assert.match(page, /href="\/drop-batch\/request"/)
   assert.match(page, /80 km minimum/)
+  assert.match(page, /Book through Send a package/)
+  assert.doesNotMatch(page, /once booking is available|booking is being prepared/i)
 })
 
 test('contains no marketplace board or unavailable app-booking promise', () => {

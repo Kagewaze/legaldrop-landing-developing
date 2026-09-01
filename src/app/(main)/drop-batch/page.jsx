@@ -16,7 +16,7 @@ const STEPS = [
   ['01', 'Enter your route', 'Tell us where the package is travelling.'],
   ['02', 'Choose your timing', 'Request pickup as soon as a suitable driver accepts or choose a preferred future time.'],
   ['03', 'Get your price', 'Druppr checks eligibility and calculates the authoritative DropBatch price.'],
-  ['04', 'Post the delivery', 'Once booking is available, the delivery will join the normal Druppr driver job board.'],
+  ['04', 'Post the delivery', 'Book through Send a package and the delivery will join the normal Druppr driver job board.'],
 ]
 
 export default function DropBatchPage() {
