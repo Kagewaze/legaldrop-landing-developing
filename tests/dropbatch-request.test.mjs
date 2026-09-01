@@ -20,7 +20,7 @@ test('offers only backend-supported DropBatch vehicles while standard delivery k
   assert.match(flow, /DROPBATCH_VEHICLES\.map/)
 })
 
-test('collects route, future schedule, package count and vehicle with package mode fixed', () => {
+test('collects route, ASAP or future schedule, package count and vehicle with package mode fixed', () => {
   assert.match(flow, /AddressAutocomplete[\s\S]*Pickup location/)
   assert.match(flow, /AddressAutocomplete[\s\S]*Drop-off location/)
   assert.match(flow, /type="date"/)
@@ -28,11 +28,13 @@ test('collects route, future schedule, package count and vehicle with package mo
   assert.match(flow, /type="number"[\s\S]*min="1"/)
   assert.match(flow, /name="mode" value="package"/)
   assert.match(flow, /isFutureInstant/)
-  assert.doesNotMatch(flow, /As soon as possible|passenger/)
+  assert.match(flow, /As soon as a suitable driver accepts/)
+  assert.match(flow, /Schedule for later/)
+  assert.doesNotMatch(flow, /passenger/)
 })
 
 test('uses only the authoritative public quote contract', () => {
-  for (const field of ['pickupLatitude', 'pickupLongitude', 'dropoffLatitude', 'dropoffLongitude', 'pickupTime', "mode: 'package'", 'vehicle:', 'packageCount']) {
+  for (const field of ['pickupLatitude', 'pickupLongitude', 'dropoffLatitude', 'dropoffLongitude', "'instant_pickup'", "'scheduled_pickup'", 'pickupTime', "mode: 'package'", 'vehicle:', 'packageCount']) {
     assert.ok(hook.includes(field), `missing ${field}`)
   }
   assert.match(hook, /drop-batch\/public\/quote/)
@@ -48,6 +50,15 @@ test('uses only the authoritative public quote contract', () => {
     requestBuilder.indexOf('if (!isDropBatchSupportedVehicle(vehicle)) return null') <
       requestBuilder.indexOf('return {'),
   )
+})
+
+test('timing changes invalidate old results and preserve both fulfillment modes', () => {
+  assert.match(flow, /const \[pickupTiming, setPickupTiming\] = useState\('instant'\)/)
+  assert.match(flow, /invalidate\(\(\) => setPickupTiming\('instant'\)\)/)
+  assert.match(flow, /invalidate\(\(\) => setPickupTiming\('scheduled'\)\)/)
+  assert.match(flow, /pickupTiming === 'scheduled' \? torontoFieldsToIso/)
+  assert.match(flow, /posted to eligible Druppr drivers immediately after booking/)
+  assert.match(flow, /Eligible drivers can accept ahead of your preferred pickup time/)
 })
 
 test('renders below-minimum, eligible price and retry states without match concepts', () => {

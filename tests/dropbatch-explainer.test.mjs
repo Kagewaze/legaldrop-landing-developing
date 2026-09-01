@@ -41,7 +41,7 @@ test('driver copy allows immediate acceptance without making supply a price prer
   assert.doesNotMatch(page, /driver only becomes available|wait until close to pickup|pre-existing driver|pre-existing trip/i)
 })
 
-test('homepage discovery copy describes the current scheduled long-distance product', () => {
-  assert.match(services, /Scheduled long-distance delivery for routes of 80 km or more/)
+test('homepage discovery copy describes the flexible long-distance product', () => {
+  assert.match(services, /Flexible long-distance delivery for routes of 80 km or more/)
   assert.doesNotMatch(services, /Many stops on one optimised route/)
 })

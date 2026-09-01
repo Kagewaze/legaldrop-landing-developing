@@ -13,18 +13,29 @@ const vehicles = read('../src/components/send/vehicles.js')
 const sendFlow = read('../src/lib/send-flow.js')
 
 test('send comparison uses backend eligibility and senderPays without a trip prerequisite', () => {
-  assert.match(hook, /pickupTiming !== 'scheduled'/)
+  assert.match(hook, /pickupTiming !== 'instant' && pickupTiming !== 'scheduled'/)
+  assert.match(hook, /type:[\s\S]*'scheduled_pickup' : 'instant_pickup'/)
   assert.match(hook, /quote\?\.eligible === true/)
   assert.match(hook, /typeof senderPays === 'number'/)
   assert.match(hook, /Number\.isFinite\(senderPays\)/)
   assert.match(hook, /const senderPays = quote\?\.senderPays/)
   assert.doesNotMatch(hook, /matches|departureWindow|overCapacity|remaining/)
   assert.doesNotMatch(hook, /Math\.min\([^\n]*senderPays|sort\([^\n]*senderPays|reduce\([^\n]*senderPays/)
-  assert.match(details, /dropBatch\.show/)
   assert.match(details, /<DropBatchQuoteCard/)
   assert.match(card, /price does not depend on a driver already being assigned/)
-  assert.match(card, /accept the scheduled job quickly[\s\S]*may take longer/)
+  assert.match(card, /posted to eligible Druppr drivers immediately after booking[\s\S]*may take longer/)
   assert.doesNotMatch(card, /matching trip|pre-existing trip|driver only becomes available/i)
+})
+
+test('delivery options remain visible for ASAP and unavailable DropBatch states', () => {
+  assert.match(details, /<fieldset className="mt-8">[\s\S]*DELIVERY OPTION/)
+  assert.match(details, /pickupTiming=\{flow\.pickupTiming\}/)
+  assert.match(card, /Available for routes of 80 km or more/)
+  assert.match(card, /selected vehicle is not eligible for DropBatch/)
+  assert.match(card, /pricing is unavailable right now[\s\S]*Standard delivery remains available/)
+  assert.match(card, /disabled=\{!eligible\}/)
+  assert.match(card, /pickupTiming === 'scheduled'/)
+  assert.match(card, /posted to eligible Druppr drivers immediately after booking/)
 })
 
 test('standard remains available while selected DropBatch requires a current signed quote', () => {
@@ -70,6 +81,7 @@ test('pricing mode defaults to standard, persists, and invalidates atomically wi
 
 test('checkout sends mode to both money authorities and never sends the displayed amount', () => {
   assert.match(payment, /pricingMode: 'dropbatch'/)
+  assert.match(payment, /'scheduled_pickup'[\s\S]*'instant_pickup'/)
   assert.match(payment, /pickUpTime: flow\.scheduledPickupAt/)
   assert.match(payload, /pricingMode:[\s\S]*flow\.pricingMode === 'dropbatch'/)
   assert.doesNotMatch(payload, /senderPays|dropBatch\.senderPays/)

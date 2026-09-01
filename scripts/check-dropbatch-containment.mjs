@@ -72,8 +72,8 @@ check(
   ),
 )
 check(
-  'homepage DropBatch copy describes scheduled long-distance trips',
-  services.includes('Scheduled long-distance delivery for routes of 80 km or more') &&
+  'homepage DropBatch copy describes flexible long-distance delivery',
+  services.includes('Flexible long-distance delivery for routes of 80 km or more') &&
     !services.includes('Many stops on one optimised route'),
 )
 check(
