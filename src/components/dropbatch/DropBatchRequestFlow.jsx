@@ -22,6 +22,7 @@ const FIELD =
 export function DropBatchRequestFlow() {
   const [pickup, setPickup] = useState(null)
   const [dropoff, setDropoff] = useState(null)
+  const [pickupTiming, setPickupTiming] = useState('instant')
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
   const [vehicle, setVehicle] = useState('car')
@@ -42,13 +43,17 @@ export function DropBatchRequestFlow() {
 
   function submit(event) {
     event.preventDefault()
-    const scheduledPickupAt = torontoFieldsToIso(date, time)
+    const scheduledPickupAt =
+      pickupTiming === 'scheduled' ? torontoFieldsToIso(date, time) : null
 
     if (!pickup || !dropoff) {
       setError('Choose both a pickup and drop-off address.')
       return
     }
-    if (!scheduledPickupAt || !isFutureInstant(scheduledPickupAt)) {
+    if (
+      pickupTiming === 'scheduled' &&
+      (!scheduledPickupAt || !isFutureInstant(scheduledPickupAt))
+    ) {
       setError('Choose a scheduled pickup time in the future.')
       return
     }
@@ -62,7 +67,7 @@ export function DropBatchRequestFlow() {
     setQuoteInput({
       pickup,
       dropoff,
-      pickupTiming: 'scheduled',
+      pickupTiming,
       scheduledPickupAt,
       vehicle,
       packageCount,
@@ -81,7 +86,7 @@ export function DropBatchRequestFlow() {
           Get your DropBatch price
         </h1>
         <p className="mt-4 max-w-[65ch] text-base leading-7 text-[#5f5868] sm:text-lg">
-          Enter a future scheduled route. Druppr will check eligibility and return the authoritative DropBatch price for qualifying long-distance delivery.
+          Enter your route and choose ASAP or a preferred pickup time. Druppr will return the authoritative DropBatch price for qualifying long-distance delivery.
         </p>
 
         <form onSubmit={submit} noValidate className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.8fr)]">
@@ -100,8 +105,35 @@ export function DropBatchRequestFlow() {
 
             <section aria-labelledby="schedule-step" className="rounded-card border border-[#ebe6ef] bg-white p-5 sm:p-7">
               <p className="text-xs font-extrabold text-brand-700">STEP 2</p>
-              <h2 id="schedule-step" className="mt-1 text-2xl font-extrabold">Schedule</h2>
-              <p className="mt-2 text-sm text-[#5f5868]">DropBatch requires a future scheduled pickup. ASAP is not available.</p>
+              <h2 id="schedule-step" className="mt-1 text-2xl font-extrabold">Pickup timing</h2>
+              <fieldset className="mt-5">
+                <legend className="sr-only">Pickup timing</legend>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <label className={`cursor-pointer rounded-control border p-4 ${pickupTiming === 'instant' ? 'border-brand-600 ring-2 ring-brand-100' : 'border-[#d9d2df]'}`}>
+                    <input
+                      type="radio"
+                      name="pickup-timing"
+                      value="instant"
+                      checked={pickupTiming === 'instant'}
+                      onChange={() => invalidate(() => setPickupTiming('instant'))}
+                      className="mr-3 accent-brand-600"
+                    />
+                    <span className="font-bold">As soon as a suitable driver accepts</span>
+                  </label>
+                  <label className={`cursor-pointer rounded-control border p-4 ${pickupTiming === 'scheduled' ? 'border-brand-600 ring-2 ring-brand-100' : 'border-[#d9d2df]'}`}>
+                    <input
+                      type="radio"
+                      name="pickup-timing"
+                      value="scheduled"
+                      checked={pickupTiming === 'scheduled'}
+                      onChange={() => invalidate(() => setPickupTiming('scheduled'))}
+                      className="mr-3 accent-brand-600"
+                    />
+                    <span className="font-bold">Schedule for later</span>
+                  </label>
+                </div>
+              </fieldset>
+              {pickupTiming === 'scheduled' && (
               <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <label>
                   <span className="mb-1.5 block text-sm font-bold">Pickup date</span>
@@ -112,7 +144,12 @@ export function DropBatchRequestFlow() {
                   <input className={FIELD} type="time" value={time} onChange={(event) => invalidate(() => setTime(event.target.value))} required />
                 </label>
               </div>
-              <p className="mt-2 text-xs text-[#5f5868]">Times are interpreted in {DELIVERY_TIME_ZONE.split('/')[1].replace('_', ' ')} time.</p>
+              )}
+              {pickupTiming === 'scheduled' ? (
+                <p className="mt-2 text-xs text-[#5f5868]">Times are interpreted in {DELIVERY_TIME_ZONE.split('/')[1].replace('_', ' ')} time.</p>
+              ) : (
+                <p className="mt-3 text-sm leading-6 text-[#5f5868]">Your delivery will be posted to eligible Druppr drivers immediately after booking. Acceptance may be quick when the route fits, or may take longer while drivers look for deliveries heading in the same direction.</p>
+              )}
             </section>
 
             <section aria-labelledby="package-step" className="rounded-card border border-[#ebe6ef] bg-white p-5 sm:p-7">
@@ -144,7 +181,7 @@ export function DropBatchRequestFlow() {
             <div className="rounded-card border border-[#ebe6ef] bg-white p-5 shadow-sm sm:p-7">
               <p className="text-xs font-extrabold text-brand-700">STEP 4</p>
               <h2 id="quote-result-heading" className="mt-1 text-2xl font-extrabold">DropBatch price</h2>
-              {!quoteInput && <p className="mt-4 leading-7 text-[#5f5868]">Complete the route, schedule and package details to get your price.</p>}
+              {!quoteInput && <p className="mt-4 leading-7 text-[#5f5868]">Complete the route, pickup timing and package details to get your price.</p>}
               {result.status === 'loading' && <p className="mt-4 leading-7 text-[#5f5868]">Checking eligibility and authoritative pricing…</p>}
               {result.status === 'unavailable' && (
                 <div className="mt-5" role="alert">
@@ -165,7 +202,8 @@ export function DropBatchRequestFlow() {
                   <p className="text-sm font-bold text-[#5f5868]">Your DropBatch price</p>
                   <p className="mt-1 text-4xl font-extrabold">{formatMoney(result.senderPays)}</p>
                   {Number.isFinite(Number(quote?.routeDistanceKm)) && <p className="mt-3 text-sm text-[#5f5868]">Route distance: {Number(quote.routeDistanceKm).toFixed(1)} km</p>}
-                  <p className="mt-2 text-sm text-[#5f5868]">This is authoritative scheduled long-distance pricing. Your price does not depend on a driver already being assigned.</p>
+                  <p className="mt-2 text-sm text-[#5f5868]">This is authoritative long-distance pricing. Your price does not depend on a driver already being assigned.</p>
+                  <p className="mt-2 text-sm leading-6 text-[#5f5868]">{quoteInput.pickupTiming === 'scheduled' ? 'Eligible drivers can accept ahead of your preferred pickup time when the route fits.' : 'The delivery is posted immediately after booking; a suitable driver may accept quickly or acceptance may take longer.'}</p>
                   <p className="mt-5 border-t border-[#ebe6ef] pt-4 text-sm leading-6 text-[#5f5868]">DropBatch online booking is being prepared. After booking, eligible Druppr drivers may accept quickly when the route fits, or acceptance may take longer while drivers look for deliveries heading in the same direction.</p>
                   <StandardDeliveryLink />
                 </div>

@@ -90,7 +90,7 @@ export default function SendDetailsPage() {
   })
 
   // Supplementary and fully isolated: this never blocks or delays standard
-  // pricing, and it stays idle unless the customer scheduled a pickup.
+  // pricing. Both instant and scheduled timing use the same authoritative price.
   const dropBatch = useDropBatchQuote({
     pickup: flow.pickup,
     dropoff: flow.dropoff,
@@ -223,7 +223,7 @@ export default function SendDetailsPage() {
         </div>
 
         {/* Pricing mode is an explicit choice. Standard stays selected by
-            default; DropBatch appears only for a current eligible backend quote. */}
+            default; DropBatch stays visible and explains ineligible states. */}
         {quote && (
           <fieldset className="mt-8">
             <legend className="mb-3 text-[13px] font-extrabold tracking-[0.08em] text-[#8d8695]">
@@ -262,15 +262,16 @@ export default function SendDetailsPage() {
                 </div>
               </label>
 
-              {dropBatch.show && (
-                <DropBatchQuoteCard
-                  senderPays={dropBatch.senderPays}
-                  selected={dropBatchSelectionValid}
-                  onSelect={() =>
-                    setPricingMode('dropbatch', dropBatch.requestKey)
-                  }
-                />
-              )}
+              <DropBatchQuoteCard
+                senderPays={dropBatch.senderPays}
+                selected={dropBatchSelectionValid}
+                onSelect={() =>
+                  setPricingMode('dropbatch', dropBatch.requestKey)
+                }
+                status={dropBatch.status}
+                reason={dropBatch.reason}
+                pickupTiming={flow.pickupTiming}
+              />
             </div>
           </fieldset>
         )}

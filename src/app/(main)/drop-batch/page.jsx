@@ -9,14 +9,14 @@ import { DROPBATCH_EXPLAINER_ENABLED } from '@/lib/config'
 export const metadata = {
   title: 'DropBatch long-distance delivery | Druppr',
   description:
-    'Get scheduled long-distance delivery pricing for eligible routes of at least 80 km.',
+    'Get flexible long-distance delivery pricing for eligible routes of at least 80 km.',
 }
 
 const STEPS = [
   ['01', 'Enter your route', 'Tell us where the package is travelling.'],
-  ['02', 'Schedule the delivery', 'DropBatch is designed for scheduled long-distance deliveries.'],
+  ['02', 'Choose your timing', 'Request pickup as soon as a suitable driver accepts or choose a preferred future time.'],
   ['03', 'Get your price', 'Druppr checks eligibility and calculates the authoritative DropBatch price.'],
-  ['04', 'Post the scheduled job', 'Once booking is available, the delivery will join the normal Druppr driver job board.'],
+  ['04', 'Post the delivery', 'Once booking is available, the delivery will join the normal Druppr driver job board.'],
 ]
 
 export default function DropBatchPage() {
@@ -31,7 +31,7 @@ export default function DropBatchPage() {
             Deliver farther for less with DropBatch.
           </h1>
           <p className="mt-5 max-w-[60ch] text-lg leading-8 text-[#5f5868]">
-            DropBatch is Druppr&apos;s lower-cost option for eligible scheduled long-distance deliveries. Your price does not depend on a driver already being assigned; after booking, the job is posted for eligible Druppr drivers.
+            DropBatch is Druppr&apos;s lower-cost option for eligible long-distance deliveries. Choose ASAP or a preferred pickup time. Your price does not depend on a driver already being assigned; after booking, the job is posted for eligible Druppr drivers.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link href="/drop-batch/request" className="min-h-11 rounded-control bg-brand-600 px-6 py-3.5 text-center font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 hover:bg-brand-700">
@@ -68,7 +68,7 @@ export default function DropBatchPage() {
         </div>
         <div>
           <p className="text-sm font-extrabold uppercase tracking-label text-brand-700">A practical handoff</p>
-          <h2 className="mt-3 font-display text-3xl font-extrabold sm:text-4xl">A scheduled job for Druppr drivers.</h2>
+          <h2 className="mt-3 font-display text-3xl font-extrabold sm:text-4xl">A long-distance job for Druppr drivers.</h2>
           <p className="mt-5 text-lg leading-8 text-[#5f5868]">After booking, your long-distance delivery enters Druppr&apos;s normal driver job board. A driver may accept quickly when the route fits, or it may take longer while drivers look for deliveries heading in the same direction. Acceptance is not guaranteed.</p>
         </div>
       </section>
@@ -79,9 +79,9 @@ export default function DropBatchPage() {
           <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
               ['80 km minimum', 'The route must be at least 80 km.'],
-              ['Scheduled pickup', 'Choose a future date and time.'],
+              ['Flexible pickup', 'Choose ASAP or a preferred future date and time.'],
               ['Supported vehicle', 'Choose a DropBatch-supported vehicle for the package.'],
-              ['Driver job board', 'Eligible drivers can accept immediately when the scheduled route fits.'],
+              ['Driver job board', 'Eligible drivers can accept immediately when the route fits.'],
             ].map(([title, body]) => (
               <div key={title} className="rounded-card border border-white/15 bg-white/5 p-5">
                 <h3 className="font-bold">{title}</h3>

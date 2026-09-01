@@ -96,7 +96,7 @@ const DELIVER = [
   {
     route: ROUTES.dropBatch,
     title: 'Drop Batch',
-    description: 'Scheduled long-distance delivery for routes of 80 km or more',
+    description: 'Flexible long-distance delivery for routes of 80 km or more',
     icon: DropBatch,
   },
   {

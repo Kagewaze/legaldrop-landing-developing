@@ -18,9 +18,8 @@ import { isFutureInstant } from '@/lib/toronto-time'
 // have been overtaken. If you find yourself writing `>= 80` or a fare formula in
 // this file, stop.
 //
-// ⚠️ SCHEDULED PICKUPS ONLY. DropBatch is a planned long-distance product, so a
-// quote needs the moment the customer actually chose. An ASAP order has no such
-// moment. So ASAP never quotes, and the card never appears for it.
+// ⚠️ TIMING IS FULFILMENT METADATA, NOT PRICE ELIGIBILITY. Scheduled requests carry
+// the chosen future instant; instant requests carry no fabricated timestamp.
 //
 // The public response is display authority only. Selecting DropBatch persists the
 // mode and request signature; /order/get-fee and POST /order independently re-route
@@ -53,7 +52,8 @@ export function dropBatchQuoteSignature(request) {
     request.pickupLongitude,
     request.dropoffLatitude,
     request.dropoffLongitude,
-    request.pickupTime,
+    request.type,
+    request.pickupTime ?? '',
     request.mode,
     request.vehicle,
     request.packageCount,
@@ -93,8 +93,11 @@ export function buildDropBatchQuoteRequest(input, enabled = true) {
 
   const { pickup, dropoff, pickupTiming, scheduledPickupAt, vehicle, packageCount } = input ?? {}
 
-  if (pickupTiming !== 'scheduled') return null
-  if (!scheduledPickupAt || !isFutureInstant(scheduledPickupAt)) return null
+  if (pickupTiming !== 'instant' && pickupTiming !== 'scheduled') return null
+  if (
+    pickupTiming === 'scheduled' &&
+    (!scheduledPickupAt || !isFutureInstant(scheduledPickupAt))
+  ) return null
 
   const coordsValid = (place) =>
     place && Number.isFinite(place.lat) && Number.isFinite(place.lng)
@@ -111,7 +114,11 @@ export function buildDropBatchQuoteRequest(input, enabled = true) {
     // ⚠️ pickupTime, LOWERCASE u — the DropBatch quote DTO. POST /order uses
     // pickUpTime with a capital U. Different endpoints, different contracts; see
     // buildOrderPayload.
-    pickupTime: scheduledPickupAt,
+    type:
+      pickupTiming === 'scheduled' ? 'scheduled_pickup' : 'instant_pickup',
+    ...(pickupTiming === 'scheduled'
+      ? { pickupTime: scheduledPickupAt }
+      : {}),
     mode: 'package',
     // Normalised on the wire exactly as the order payload does. The backend maps
     // car -> sedan, cargovan -> cargo_van and so on. Unsupported vehicles such as
@@ -135,6 +142,14 @@ export function useDropBatchQuote(
 
   const signature = inputSignature(input)
   const currentRequest = buildDropBatchQuoteRequest(input, enabled)
+  const unsupportedVehicle = Boolean(
+    enabled && input?.vehicle && !isDropBatchSupportedVehicle(input.vehicle),
+  )
+  const incompleteSchedule = Boolean(
+    enabled &&
+      input?.pickupTiming === 'scheduled' &&
+      (!input?.scheduledPickupAt || !isFutureInstant(input.scheduledPickupAt)),
+  )
 
   useEffect(() => {
     // Abort whatever was in flight for the previous inputs. Combined with the seq
@@ -144,8 +159,8 @@ export function useDropBatchQuote(
 
     const request = currentRequest
 
-    // Not enough committed information — or an ASAP order. Either way there is no
-    // question to ask, and any previous answer is stale. Clear it immediately.
+    // Not enough committed information. There is no question to ask, and any previous
+    // answer is stale. Clear it immediately.
     if (!request) {
       seq.current += 1
       setState(IDLE)
@@ -199,10 +214,21 @@ export function useDropBatchQuote(
     senderPays >= 0
 
   return {
-    status: visibleState.status,
+    status: unsupportedVehicle || incompleteSchedule
+      ? 'ineligible'
+      : visibleState.status,
     quote,
     show,
     senderPays: show ? senderPays : null,
     requestKey: dropBatchQuoteSignature(currentRequest),
+    reason: unsupportedVehicle
+      ? 'unsupported_vehicle'
+      : incompleteSchedule
+        ? 'schedule_incomplete'
+        : quote?.eligible === false
+          ? quote.reason
+          : visibleState.status === 'unavailable'
+            ? 'network_failure'
+            : null,
   }
 }

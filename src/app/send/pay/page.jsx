@@ -410,8 +410,13 @@ export default function SendPayPage() {
           ...(flow.pricingMode === 'dropbatch'
             ? {
                 pricingMode: 'dropbatch',
-                type: 'scheduled_pickup',
-                pickUpTime: flow.scheduledPickupAt,
+                type:
+                  flow.pickupTiming === 'scheduled'
+                    ? 'scheduled_pickup'
+                    : 'instant_pickup',
+                ...(flow.pickupTiming === 'scheduled'
+                  ? { pickUpTime: flow.scheduledPickupAt }
+                  : {}),
               }
             : {}),
           senderName: contact.senderName.trim(),
@@ -823,7 +828,7 @@ export default function SendPayPage() {
               {formatMoney(quote.total)}
             </div>
             <p className="mt-2 text-[14px] leading-[1.6] text-[#5f5868]">
-              Backend-confirmed scheduled long-distance price for{' '}
+              Backend-confirmed long-distance price for{' '}
               {quote.distanceKm.toFixed(1)} km.
             </p>
           </div>

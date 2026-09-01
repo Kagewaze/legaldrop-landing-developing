@@ -11,7 +11,26 @@ import { formatMoney } from '@/components/send/PriceBreakdown'
 // platformFee or any breakdown component. It is never called cheapest, discounted or
 // best value, and no saving is computed, even when it happens to be lower than the
 // standard fare. The price is stated; the customer compares.
-export function DropBatchQuoteCard({ senderPays, selected, onSelect }) {
+const UNAVAILABLE_COPY = {
+  below_minimum_distance: 'Available for routes of 80 km or more.',
+  unsupported_vehicle: 'The selected vehicle is not eligible for DropBatch.',
+  schedule_incomplete:
+    'Choose a future pickup date and time to price scheduled DropBatch.',
+  network_failure:
+    'DropBatch pricing is unavailable right now. Standard delivery remains available.',
+}
+
+export function DropBatchQuoteCard({
+  senderPays,
+  selected,
+  onSelect,
+  status,
+  reason,
+  pickupTiming,
+}) {
+  const eligible = Number.isFinite(senderPays)
+  const loading = status === 'loading'
+
   return (
     <div
       className={`rounded-2xl border-[1.5px] bg-white transition-colors ${
@@ -20,7 +39,9 @@ export function DropBatchQuoteCard({ senderPays, selected, onSelect }) {
           : 'border-[#e3dfe8] hover:border-brand-300'
       }`}
     >
-      <label className="block cursor-pointer p-5">
+      <label
+        className={`block p-5 ${eligible ? 'cursor-pointer' : 'cursor-default'}`}
+      >
         <div className="flex items-start gap-3">
           <input
             type="radio"
@@ -28,6 +49,7 @@ export function DropBatchQuoteCard({ senderPays, selected, onSelect }) {
             value="dropbatch"
             checked={selected}
             onChange={onSelect}
+            disabled={!eligible}
             className="mt-1 h-5 w-5 shrink-0 accent-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
           />
           <div className="min-w-0 flex-1">
@@ -38,17 +60,31 @@ export function DropBatchQuoteCard({ senderPays, selected, onSelect }) {
               >
                 DROPBATCH · LONG-DISTANCE OPTION
               </h2>
-              <div className="text-[22px] font-extrabold tracking-[-0.01em] text-[#17131c]">
-                {formatMoney(senderPays)}
+              <div className="text-right text-[18px] font-extrabold tracking-[-0.01em] text-[#17131c] sm:text-[22px]">
+                {eligible
+                  ? formatMoney(senderPays)
+                  : loading
+                    ? 'Calculating…'
+                    : 'Not available'}
               </div>
             </div>
 
             <p className="mt-2 max-w-[52ch] text-[15px] text-[#5f5868]">
-              Your price does not depend on a driver already being assigned. After
-              booking, eligible Druppr drivers can accept the scheduled job quickly
-              when it fits, or it may take longer while drivers look for deliveries
-              heading in the same direction.
+              {eligible
+                ? pickupTiming === 'scheduled'
+                  ? 'Choose your preferred pickup time. Eligible drivers can accept the delivery ahead of pickup when the route fits.'
+                  : 'Your delivery is posted to eligible Druppr drivers immediately after booking. A driver may accept quickly when the route fits, but pickup and delivery may take longer while drivers look for deliveries heading in the same direction.'
+                : loading
+                  ? 'Checking the authoritative DropBatch price for this route.'
+                  : UNAVAILABLE_COPY[reason] ??
+                    'DropBatch is unavailable for these delivery details. Standard delivery remains available.'}
             </p>
+            {eligible && (
+              <p className="mt-2 text-[13px] text-[#756d7e]">
+                Your price does not depend on a driver already being assigned.
+                Driver acceptance is not guaranteed.
+              </p>
+            )}
           </div>
         </div>
       </label>
