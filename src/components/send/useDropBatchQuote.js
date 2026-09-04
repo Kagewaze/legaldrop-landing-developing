@@ -8,11 +8,12 @@ import {
   isDropBatchSupportedVehicle,
 } from '@/components/send/vehicles'
 import { isFutureInstant } from '@/lib/toronto-time'
+import { weightKgFor } from '@/lib/send-flow'
 
 // The one and only place the web asks for a DropBatch price.
 //
 // ⚠️ THE BACKEND IS THE ONLY AUTHORITY. POST /drop-batch/public/quote decides
-// eligibility, the 80 km floor, OSRM route distance, vehicle compatibility and the
+// eligibility, OSRM route distance, vehicle compatibility and the
 // price. Nothing here re-derives any of that — this
 // hook builds the DTO, guards when it is safe to ask, and throws away answers that
 // have been overtaken. If you find yourself writing `>= 80` or a fare formula in
@@ -41,6 +42,7 @@ function inputSignature(input) {
     input.scheduledPickupAt,
     input.vehicle,
     input.packageCount,
+    input.weight,
     input.requestKey,
   ].join('|')
 }
@@ -57,6 +59,7 @@ export function dropBatchQuoteSignature(request) {
     request.mode,
     request.vehicle,
     request.packageCount,
+    request.packageWeightKg,
   ].join('|')
 }
 
@@ -91,7 +94,7 @@ export function buildDropBatchQuoteRequest(input, enabled = true) {
   // the independent exposure flags in lib/config.
   if (!enabled) return null
 
-  const { pickup, dropoff, pickupTiming, scheduledPickupAt, vehicle, packageCount } = input ?? {}
+  const { pickup, dropoff, pickupTiming, scheduledPickupAt, vehicle, packageCount, weight } = input ?? {}
 
   if (pickupTiming !== 'instant' && pickupTiming !== 'scheduled') return null
   if (
@@ -125,6 +128,7 @@ export function buildDropBatchQuoteRequest(input, enabled = true) {
     // bike are rejected before this request is built.
     vehicle: apiKeyFor(vehicle),
     packageCount,
+    packageWeightKg: weightKgFor(weight),
   }
 }
 

@@ -76,7 +76,7 @@ export function DropBatchRequestFlow() {
   }
 
   const quote = result.quote
-  const belowMinimum = result.status === 'ready' && quote?.eligible === false
+  const unavailable = result.status === 'ready' && quote?.eligible === false
 
   return (
     <div className="bg-[#fbf9fc] text-[#17131c]">
@@ -86,7 +86,7 @@ export function DropBatchRequestFlow() {
           Get your DropBatch price
         </h1>
         <p className="mt-4 max-w-[65ch] text-base leading-7 text-[#5f5868] sm:text-lg">
-          Enter your route and choose ASAP or a preferred pickup time. Druppr will return the authoritative DropBatch price for qualifying long-distance delivery.
+          Enter your route and choose ASAP or a preferred pickup time. Druppr will return the authoritative flexible-delivery price.
         </p>
 
         <form onSubmit={submit} noValidate className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.8fr)]">
@@ -190,10 +190,10 @@ export function DropBatchRequestFlow() {
                   <button type="button" onClick={submit} className="mt-4 min-h-11 rounded-control border border-[#d9d2df] px-5 py-3 font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700">Retry</button>
                 </div>
               )}
-              {belowMinimum && (
+              {unavailable && (
                 <div className="mt-5">
-                  <p className="text-xl font-extrabold">DropBatch is designed for longer deliveries.</p>
-                  <p className="mt-2 leading-7 text-[#5f5868]">Your route is below the {quote.minimumKm ?? 80} km DropBatch minimum.</p>
+                  <p className="text-xl font-extrabold">DropBatch is unavailable for these delivery details.</p>
+                  <p className="mt-2 leading-7 text-[#5f5868]">Try another supported vehicle or use Standard Delivery.</p>
                   <StandardDeliveryLink />
                 </div>
               )}

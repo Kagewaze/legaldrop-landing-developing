@@ -22,6 +22,7 @@ export function formatMoney(value) {
 
 export function PriceBreakdown({ quote, vehicleName, packageCount, weightLabel }) {
   const { lineItems, total, distanceKm } = quote
+  const handling = (Number(lineItems.labour) || 0) + (Number(lineItems.heavyFee) || 0)
 
   const rows = [
     { key: 'base', label: 'Base fare', value: lineItems.base },
@@ -42,8 +43,7 @@ export function PriceBreakdown({ quote, vehicleName, packageCount, weightLabel }
       value: lineItems.extraPackage,
     },
     // The design omits these two entirely, which is why its numbers do not sum.
-    { key: 'labour', label: 'Labour', value: lineItems.labour },
-    { key: 'heavyFee', label: 'Heavy item', value: lineItems.heavyFee },
+    { key: 'handling', label: 'Handling / labour', value: handling },
     // platformFee is deliberately NOT a row here, and this is SETTLED — do not
     // "fix" it by adding one.
     //

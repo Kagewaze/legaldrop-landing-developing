@@ -22,20 +22,19 @@ test('send comparison uses backend eligibility and senderPays without a trip pre
   assert.doesNotMatch(hook, /matches|departureWindow|overCapacity|remaining/)
   assert.doesNotMatch(hook, /Math\.min\([^\n]*senderPays|sort\([^\n]*senderPays|reduce\([^\n]*senderPays/)
   assert.match(details, /<DropBatchQuoteCard/)
-  assert.match(card, /price does not depend on a driver already being assigned/)
-  assert.match(card, /posted to eligible Druppr drivers immediately after booking[\s\S]*may take longer/)
+  assert.match(card, /matching and pickup can take longer than Standard Delivery/)
+  assert.match(card, /Driver availability is not guaranteed/)
   assert.doesNotMatch(card, /matching trip|pre-existing trip|driver only becomes available/i)
 })
 
 test('delivery options remain visible for ASAP and unavailable DropBatch states', () => {
   assert.match(details, /<fieldset className="mt-8">[\s\S]*DELIVERY OPTION/)
   assert.match(details, /pickupTiming=\{flow\.pickupTiming\}/)
-  assert.match(card, /Available for routes of 80 km or more/)
+  assert.doesNotMatch(card, /80 km|below_minimum_distance/)
   assert.match(card, /selected vehicle is not eligible for DropBatch/)
   assert.match(card, /pricing is unavailable right now[\s\S]*Standard delivery remains available/)
   assert.match(card, /disabled=\{!eligible\}/)
-  assert.match(card, /pickupTiming === 'scheduled'/)
-  assert.match(card, /posted to eligible Druppr drivers immediately after booking/)
+  assert.match(card, /FLEXIBLE DELIVERY/)
 })
 
 test('standard remains available while selected DropBatch requires a current signed quote', () => {

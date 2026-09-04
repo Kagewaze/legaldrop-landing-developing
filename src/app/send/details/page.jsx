@@ -87,6 +87,7 @@ export default function SendDetailsPage() {
     dropoff: flow.dropoff,
     packageCount: flow.packageCount,
     weight: flow.weight,
+    weight: flow.weight,
   })
 
   // Supplementary and fully isolated: this never blocks or delays standard

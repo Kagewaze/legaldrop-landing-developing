@@ -25,7 +25,7 @@ test('renders the customer explainer with human imagery and request CTA', () => 
   assert.doesNotMatch(page, /medical-pharma|legal-document/)
   assert.match(page, /Get my DropBatch price/)
   assert.match(page, /href="\/drop-batch\/request"/)
-  assert.match(page, /80 km minimum/)
+  assert.doesNotMatch(page, /80 km|long-distance/i)
   assert.match(page, /Book through Send a package/)
   assert.doesNotMatch(page, /once booking is available|booking is being prepared/i)
 })
@@ -36,14 +36,14 @@ test('contains no marketplace board or unavailable app-booking promise', () => {
   assert.doesNotMatch(page, /compatible trip|matching trip|active trip|already travelling|heading that way|unused vehicle capacity/i)
 })
 
-test('driver copy allows immediate acceptance without making supply a price prerequisite', () => {
-  assert.match(page, /price does not depend on a driver already being assigned/)
-  assert.match(page, /may accept quickly when the route fits/)
-  assert.match(page, /may take longer while drivers look for deliveries heading in the same direction/)
+test('driver copy explains flexible matching without making supply a price prerequisite', () => {
+  assert.match(page, /driver still needs to accept/i)
+  assert.match(page, /matching and pickup can take longer than Standard Delivery/)
+  assert.match(page, /availability is not guaranteed/i)
   assert.doesNotMatch(page, /driver only becomes available|wait until close to pickup|pre-existing driver|pre-existing trip/i)
 })
 
-test('homepage discovery copy describes the flexible long-distance product', () => {
-  assert.match(services, /Flexible long-distance delivery for routes of 80 km or more/)
+test('homepage discovery copy describes flexible delivery', () => {
+  assert.match(services, /Flexible delivery when matching and pickup timing can vary/)
   assert.doesNotMatch(services, /Many stops on one optimised route/)
 })

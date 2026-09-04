@@ -24,14 +24,14 @@ export const VEHICLES = [
     id: 'car',
     apiKey: 'car',
     name: 'Car',
-    description: 'Up to 3 boxes, most jobs',
+    description: 'Up to 5 packages',
     glyph: 'h-[9px] w-[16px] rounded-[3px]',
   },
   {
     id: 'suv',
     apiKey: 'suv',
     name: 'SUV',
-    description: 'Bulkier items, extra room',
+    description: 'Up to 10 packages',
     glyph: 'h-[12px] w-[16px] rounded-[3px]',
   },
   {
@@ -102,8 +102,8 @@ export function apiKeyFor(id) {
 // the backend would reject; this exists so the customer is told BEFORE they pick
 // a vehicle and start typing card details, instead of after.
 //
-// ⚠️ ONE ROW, AND IT IS FOUNDER-APPROVED: a car carries at most 5 packages.
-// Do NOT add speculative capacities for bike/suv/minivan/cargo van/box truck.
+// Approved class limits: car carries at most 5 packages and SUV at most 10.
+// Do NOT add speculative capacities for bike/minivan/cargo van/box truck.
 // There is no such rule in the backend, and inventing one here would hide a
 // vehicle the customer is entitled to book — which is precisely the bug that
 // made >10 packages look unserviceable. A vehicle absent from this table has no
@@ -113,6 +113,7 @@ export function apiKeyFor(id) {
 // literally. Callers pass the local design id and this resolves it.
 export const VEHICLE_PACKAGE_CAPACITY = {
   car: 5,
+  suv: 10,
 }
 
 export function vehicleCapacityFor(id) {

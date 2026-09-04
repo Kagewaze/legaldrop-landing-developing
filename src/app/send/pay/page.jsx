@@ -828,7 +828,7 @@ export default function SendPayPage() {
               {formatMoney(quote.total)}
             </div>
             <p className="mt-2 text-[14px] leading-[1.6] text-[#5f5868]">
-              Backend-confirmed long-distance price for{' '}
+              Backend-confirmed flexible-delivery price for{' '}
               {quote.distanceKm.toFixed(1)} km.
             </p>
           </div>

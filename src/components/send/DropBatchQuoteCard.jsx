@@ -12,7 +12,6 @@ import { formatMoney } from '@/components/send/PriceBreakdown'
 // best value, and no saving is computed, even when it happens to be lower than the
 // standard fare. The price is stated; the customer compares.
 const UNAVAILABLE_COPY = {
-  below_minimum_distance: 'Available for routes of 80 km or more.',
   unsupported_vehicle: 'The selected vehicle is not eligible for DropBatch.',
   schedule_incomplete:
     'Choose a future pickup date and time to price scheduled DropBatch.',
@@ -58,7 +57,7 @@ export function DropBatchQuoteCard({
                 id="dropbatch-quote-heading"
                 className="text-[13px] font-extrabold tracking-[0.08em] text-[#8d8695]"
               >
-                DROPBATCH · LONG-DISTANCE OPTION
+                DROPBATCH · FLEXIBLE DELIVERY
               </h2>
               <div className="text-right text-[18px] font-extrabold tracking-[-0.01em] text-[#17131c] sm:text-[22px]">
                 {eligible
@@ -71,9 +70,7 @@ export function DropBatchQuoteCard({
 
             <p className="mt-2 max-w-[52ch] text-[15px] text-[#5f5868]">
               {eligible
-                ? pickupTiming === 'scheduled'
-                  ? 'Choose your preferred pickup time. Eligible drivers can accept the delivery ahead of pickup when the route fits.'
-                  : 'Your delivery is posted to eligible Druppr drivers immediately after booking. A driver may accept quickly when the route fits, but pickup and delivery may take longer while drivers look for deliveries heading in the same direction.'
+                ? 'Save with flexible delivery. A driver still needs to accept your delivery, so matching and pickup can take longer than Standard Delivery.'
                 : loading
                   ? 'Checking the authoritative DropBatch price for this route.'
                   : UNAVAILABLE_COPY[reason] ??
@@ -81,8 +78,7 @@ export function DropBatchQuoteCard({
             </p>
             {eligible && (
               <p className="mt-2 text-[13px] text-[#756d7e]">
-                Your price does not depend on a driver already being assigned.
-                Driver acceptance is not guaranteed.
+                Driver availability is not guaranteed.
               </p>
             )}
           </div>

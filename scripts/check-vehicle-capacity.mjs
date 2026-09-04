@@ -50,13 +50,13 @@ const {
   vehicleAfterPackageChange,
 } = vehicles
 
-// THE GUARD AGAINST INVENTED CAPACITIES. Only the car limit is founder-approved. Speculative
-// maximums for the other classes (bike 2, suv 10, minivan 15, cargo van 30, box truck 999)
+// THE GUARD AGAINST INVENTED CAPACITIES. Only car and SUV limits are approved. Speculative
+// maximums for the other classes (bike 2, minivan 15, cargo van 30, box truck 999)
 // exist in no source of truth, and adding one here would silently remove a vehicle the
 // customer is entitled to book — the exact bug that made >10 packages look unserviceable.
 check(
-  'VEHICLE_PACKAGE_CAPACITY declares a limit for the car and nothing else',
-  JSON.stringify(VEHICLE_PACKAGE_CAPACITY) === JSON.stringify({ car: 5 }),
+  'VEHICLE_PACKAGE_CAPACITY declares approved car and SUV limits only',
+  JSON.stringify(VEHICLE_PACKAGE_CAPACITY) === JSON.stringify({ car: 5, suv: 10 }),
   `found ${JSON.stringify(VEHICLE_PACKAGE_CAPACITY)}`
 )
 
@@ -69,11 +69,14 @@ for (const n of [6, 7, 11, 12, 13, 20, 50, 100]) {
 }
 
 check('the boundary is exactly 5 → 6', packageCapacityRefusal('car', 5) === null && packageCapacityRefusal('car', 6) !== null)
+check('SUV is available at 10', packageCapacityRefusal('suv', 10) === null)
+check('SUV is unavailable at 11', packageCapacityRefusal('suv', 11) === 'Up to 10 packages')
+check('SUV is unavailable at 80', packageCapacityRefusal('suv', 80) === 'Up to 10 packages')
 
 // The ceiling must not collapse the offering: every class without a capacity row stays
 // offered at every count the stepper can reach, all the way to the maximum.
 for (const vehicle of VEHICLES) {
-  if (vehicle.id === 'car') continue
+  if (vehicle.id === 'car' || vehicle.id === 'suv') continue
   for (const n of [1, 6, 11, 12, 13, 20, 50, 100]) {
     check(
       `${vehicle.name} stays available at ${n} packages`,
@@ -91,6 +94,7 @@ for (const id of ['minivan', 'cargo', 'boxtruck']) {
 
 // ── RUNTIME: the selection transitions ──────────────────────────────────────
 check('5 → 6 clears a selected car', vehicleAfterPackageChange('car', 6) === null)
+check('10 → 11 clears a selected SUV', vehicleAfterPackageChange('suv', 11) === null)
 check('5 → 6 keeps a selected minivan', vehicleAfterPackageChange('minivan', 6) === 'minivan')
 check('10 → 11 keeps a selected cargo van', vehicleAfterPackageChange('cargo', 11) === 'cargo')
 check('a car at 5 survives untouched', vehicleAfterPackageChange('car', 5) === 'car')
@@ -124,12 +128,12 @@ check(
 )
 
 // The general ceiling must not be mistaken for a capacity claim: at the maximum count, the
-// car is the ONLY class that becomes unavailable.
+// car and SUV are the only classes that become unavailable.
 const unavailableAtMax = VEHICLES.filter(v => packageCapacityRefusal(v.id, 100) !== null)
 check(
-  'at the maximum count the car is the only unavailable class',
-  unavailableAtMax.length === 1 && unavailableAtMax[0].id === 'car',
-  `also unavailable: ${unavailableAtMax.map(v => v.id).filter(id => id !== 'car').join(', ')}`
+  'at the maximum count only car and SUV are unavailable',
+  unavailableAtMax.map(v => v.id).join(',') === 'car,suv',
+  `unavailable: ${unavailableAtMax.map(v => v.id).join(', ')}`
 )
 
 check(
@@ -223,4 +227,4 @@ if (failures.length > 0) {
   process.exit(1)
 }
 
-console.log('Vehicle capacity check passed: car capped at 5 packages, every other class uncapped.')
+console.log('Vehicle capacity check passed: car capped at 5, SUV at 10, larger classes uncapped.')
