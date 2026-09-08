@@ -592,9 +592,14 @@ export default function SendPayPage() {
         </h1>
         {flow.pricingMode === 'dropbatch' ? (
           <div className="mt-3 text-[15px] text-[#5f5868]">
+            {/* A just-paid DropBatch order is always in `waiting`, so this states that meaning and
+                nothing further. It used to close by pointing the customer at Standard Delivery,
+                which reads as an offer to convert this paid order — no such conversion exists:
+                pricingMode is never mutated after creation and there is no top-up charge primitive.
+                Live state from here on comes from the backend's own message via tracking. */}
             <p className="font-bold text-[#17131c]">Finding a DropBatch driver</p>
             <p className="mt-1">We&rsquo;re looking for a driver already travelling in your direction. Matching can take longer than Standard Delivery.</p>
-            <p className="mt-2">Need it sooner? Use Standard Delivery.</p>
+            <p className="mt-2">No driver is assigned yet. Track your delivery to follow the match.</p>
           </div>
         ) : (
           <p className="mt-3 text-[15px] text-[#5f5868]">
