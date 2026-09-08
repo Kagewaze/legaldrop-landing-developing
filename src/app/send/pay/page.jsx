@@ -586,9 +586,17 @@ export default function SendPayPage() {
         <h1 className="mt-6 text-[26px] font-extrabold tracking-[-0.02em] text-[#17131c]">
           Your delivery is booked
         </h1>
-        <p className="mt-3 text-[15px] text-[#5f5868]">
-          We&rsquo;ve got it. Track it any time with the code below.
-        </p>
+        {flow.pricingMode === 'dropbatch' ? (
+          <div className="mt-3 text-[15px] text-[#5f5868]">
+            <p className="font-bold text-[#17131c]">Finding a DropBatch driver</p>
+            <p className="mt-1">We&rsquo;re looking for a driver already travelling in your direction. Matching can take longer than Standard Delivery.</p>
+            <p className="mt-2">Need it sooner? Use Standard Delivery.</p>
+          </div>
+        ) : (
+          <p className="mt-3 text-[15px] text-[#5f5868]">
+            We&rsquo;ve got it. Track it any time with the code below.
+          </p>
+        )}
 
         <div className="mx-auto mt-6 max-w-[320px] rounded-2xl bg-[#faf7fd] p-5">
           <div className="text-[12px] font-extrabold tracking-[0.1em] text-[#8d8695]">
