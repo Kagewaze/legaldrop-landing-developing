@@ -15,6 +15,7 @@ import { PriceBreakdown, formatMoney } from '@/components/send/PriceBreakdown'
 import { VehiclePicker } from '@/components/send/VehiclePicker'
 import { PickupTiming, pickupTimingIsComplete } from '@/components/send/PickupTiming'
 import { DropBatchQuoteCard } from '@/components/send/DropBatchQuoteCard'
+import { STANDARD_EXPLANATION } from '@/lib/dropbatch-copy'
 import { useDropBatchQuote } from '@/components/send/useDropBatchQuote'
 import { useVehicleQuotes } from '@/components/send/useVehicleQuotes'
 import { vehicleById } from '@/components/send/vehicles'
@@ -224,7 +225,12 @@ export default function SendDetailsPage() {
         </div>
 
         {/* Pricing mode is an explicit choice. Standard stays selected by
-            default; DropBatch stays visible and explains ineligible states. */}
+            default; DropBatch stays visible and explains ineligible states.
+
+            Both options carry their fulfilment model, not just a price. The
+            choice a customer is actually making here is "a driver sent out for
+            me" versus "a driver already going that way", and a card that states
+            only the fare hides the very thing that distinguishes them. */}
         {quote && (
           <fieldset className="mt-8">
             <legend className="mb-3 text-[13px] font-extrabold tracking-[0.08em] text-[#8d8695]">
@@ -257,7 +263,7 @@ export default function SendDetailsPage() {
                       </span>
                     </div>
                     <p className="mt-2 text-[15px] text-[#5f5868]">
-                      Regular Druppr delivery using the selected vehicle and schedule.
+                      {STANDARD_EXPLANATION}
                     </p>
                 </div>
                 </div>

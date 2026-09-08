@@ -9,6 +9,7 @@ const details = read('../src/app/send/details/page.jsx')
 const card = read('../src/components/send/DropBatchQuoteCard.jsx')
 const payment = read('../src/app/send/pay/page.jsx')
 const payload = read('../src/components/send/buildOrderPayload.js')
+const copy = read('../src/lib/dropbatch-copy.js')
 const vehicles = read('../src/components/send/vehicles.js')
 const sendFlow = read('../src/lib/send-flow.js')
 
@@ -22,9 +23,17 @@ test('send comparison uses backend eligibility and senderPays without a trip pre
   assert.doesNotMatch(hook, /matches|departureWindow|overCapacity|remaining/)
   assert.doesNotMatch(hook, /Math\.min\([^\n]*senderPays|sort\([^\n]*senderPays|reduce\([^\n]*senderPays/)
   assert.match(details, /<DropBatchQuoteCard/)
-  assert.match(card, /matching and pickup can take longer than Standard Delivery/)
-  assert.match(card, /Driver availability is not guaranteed/)
-  assert.doesNotMatch(card, /matching trip|pre-existing trip|driver only becomes available/i)
+  // The decision point must carry the product definition itself. A customer who
+  // reads only this card still has to learn that the driver is already going their
+  // way, that the wait is the trade, and that nothing is matched yet.
+  assert.match(card, /from '@\/lib\/dropbatch-copy'/)
+  assert.match(card, /DROPBATCH_HEADLINE/)
+  assert.match(card, /DROPBATCH_EXPLANATION/)
+  assert.match(card, /DROPBATCH_NO_PROMISE/)
+  assert.doesNotMatch(card, /job board|driver only becomes available/i)
+  assert.match(copy, /already heading along your route/)
+  assert.match(copy, /pickup may take longer/)
+  assert.match(copy, /does not mean a driver has been found/)
 })
 
 test('delivery options remain visible for ASAP and unavailable DropBatch states', () => {
@@ -34,7 +43,7 @@ test('delivery options remain visible for ASAP and unavailable DropBatch states'
   assert.match(card, /selected vehicle is not eligible for DropBatch/)
   assert.match(card, /pricing is unavailable right now[\s\S]*Standard delivery remains available/)
   assert.match(card, /disabled=\{!eligible\}/)
-  assert.match(card, /FLEXIBLE DELIVERY/)
+  assert.match(card, /SHARED ROUTE/)
 })
 
 test('standard remains available while selected DropBatch requires a current signed quote', () => {

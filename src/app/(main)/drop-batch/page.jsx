@@ -5,18 +5,30 @@ import { notFound } from 'next/navigation'
 import courierImage from '@/images/dropbatch-hero.png'
 import handoffImage from '@/images/dropbatch-handoff.png'
 import { DROPBATCH_EXPLAINER_ENABLED } from '@/lib/config'
+import {
+  DROPBATCH_EXPLANATION,
+  DROPBATCH_NO_PROMISE,
+  STANDARD_EXPLANATION,
+} from '@/lib/dropbatch-copy'
 
 export const metadata = {
   title: 'DropBatch flexible delivery | Druppr',
   description:
-    'Save with flexible delivery when matching and pickup timing can vary.',
+    'Lower-cost delivery that matches your package with a verified Druppr driver already heading along your route.',
 }
 
+// ⚠️ STEP 04 IS THE ONE THAT KEEPS GETTING THIS WRONG.
+//
+// A DropBatch delivery does NOT join the driver job board. The backend excludes
+// `pricingMode = 'dropbatch'` from that query outright and refuses it generic
+// dispatch; it is matched against trips drivers have already posted and offered to
+// one of them at a time. Describing a job board here promised a fulfilment model
+// Druppr does not run. See @/lib/dropbatch-copy.
 const STEPS = [
   ['01', 'Enter your route', 'Tell us where the package is travelling.'],
-  ['02', 'Choose your timing', 'Request pickup as soon as a suitable driver accepts or choose a preferred future time.'],
+  ['02', 'Choose your timing', 'Request pickup as soon as a compatible driver accepts, or choose a preferred future time.'],
   ['03', 'Get your price', 'Druppr checks eligibility and calculates the authoritative DropBatch price.'],
-  ['04', 'Post the delivery', 'Book through Send a package and the delivery will join the normal Druppr driver job board.'],
+  ['04', 'We find a driver already going your way', 'Book through Send a package, and Druppr matches your delivery against trips verified drivers have already posted.'],
 ]
 
 export default function DropBatchPage() {
@@ -31,7 +43,10 @@ export default function DropBatchPage() {
             Deliver farther for less with DropBatch.
           </h1>
           <p className="mt-5 max-w-[60ch] text-lg leading-8 text-[#5f5868]">
-            DropBatch is Druppr&apos;s flexible delivery option. Choose ASAP or a preferred pickup time. After booking, the job is posted for eligible Druppr drivers; matching and pickup can take longer than Standard Delivery, and driver availability is not guaranteed.
+            {DROPBATCH_EXPLANATION}
+          </p>
+          <p className="mt-4 max-w-[60ch] text-base leading-7 text-[#756d7e]">
+            {DROPBATCH_NO_PROMISE}
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link href="/drop-batch/request" className="min-h-11 rounded-control bg-brand-600 px-6 py-3.5 text-center font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 hover:bg-brand-700">
@@ -68,20 +83,21 @@ export default function DropBatchPage() {
         </div>
         <div>
           <p className="text-sm font-extrabold uppercase tracking-label text-brand-700">A practical handoff</p>
-          <h2 className="mt-3 font-display text-3xl font-extrabold sm:text-4xl">Flexible delivery through Druppr drivers.</h2>
-          <p className="mt-5 text-lg leading-8 text-[#5f5868]">After booking, your delivery enters Druppr&apos;s normal driver job board. A driver still needs to accept, so matching and pickup can take longer than Standard Delivery. Driver availability is not guaranteed.</p>
+          <h2 className="mt-3 font-display text-3xl font-extrabold sm:text-4xl">Your package joins a trip already being made.</h2>
+          <p className="mt-5 text-lg leading-8 text-[#5f5868]">After booking, Druppr compares your pickup and destination against trips verified drivers have already posted, and offers your package to the driver whose route fits with the least detour. That driver still has to accept, so matching and pickup can take longer than Standard Delivery, and a compatible trip is not guaranteed.</p>
+          <p className="mt-4 text-lg leading-8 text-[#5f5868]"><strong className="font-semibold text-[#3d3646]">Standard Delivery instead:</strong> {STANDARD_EXPLANATION}</p>
         </div>
       </section>
 
       <section className="bg-surface-ink text-white">
         <div className="mx-auto max-w-[1200px] px-6 py-16 sm:px-8 sm:py-20">
-          <h2 className="font-display text-3xl font-extrabold">Built for flexible delivery</h2>
+          <h2 className="font-display text-3xl font-extrabold">Built on trips drivers are already making</h2>
           <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
               ['Flexible distance', 'Short and longer routes can use DropBatch.'],
               ['Flexible pickup', 'Choose ASAP or a preferred future date and time.'],
               ['Supported vehicle', 'Choose a DropBatch-supported vehicle for the package.'],
-              ['Driver job board', 'Eligible drivers can accept immediately when the route fits.'],
+              ['Matched, not dispatched', 'We offer your package to a verified driver whose posted trip already fits your route.'],
             ].map(([title, body]) => (
               <div key={title} className="rounded-card border border-white/15 bg-white/5 p-5">
                 <h3 className="font-bold">{title}</h3>

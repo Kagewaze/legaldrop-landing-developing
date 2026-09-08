@@ -24,6 +24,10 @@ import { PaymentForm } from '@/components/send/PaymentForm'
 import { PriceBreakdown, formatMoney } from '@/components/send/PriceBreakdown'
 import { buildOrderPayload } from '@/components/send/buildOrderPayload'
 import {
+  DROPBATCH_EXPLANATION,
+  DROPBATCH_NO_PROMISE,
+} from '@/lib/dropbatch-copy'
+import {
   buildDropBatchQuoteRequest,
   dropBatchQuoteSignature,
   fetchDropBatchQuote,
@@ -836,8 +840,17 @@ export default function SendPayPage() {
               {formatMoney(quote.total)}
             </div>
             <p className="mt-2 text-[14px] leading-[1.6] text-[#5f5868]">
-              Backend-confirmed flexible-delivery price for{' '}
+              Backend-confirmed DropBatch price for{' '}
               {quote.distanceKm.toFixed(1)} km.
+            </p>
+            {/* The last screen before the customer pays. It has to restate what the
+                money buys — a driver already going this way — because the choice was
+                made a screen ago and the confirmation screen comes too late. */}
+            <p className="mt-2 text-[14px] leading-[1.6] text-[#5f5868]">
+              {DROPBATCH_EXPLANATION}
+            </p>
+            <p className="mt-2 text-[13px] leading-[1.6] text-[#756d7e]">
+              {DROPBATCH_NO_PROMISE}
             </p>
           </div>
         ) : (

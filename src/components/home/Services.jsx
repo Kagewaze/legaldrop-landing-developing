@@ -96,7 +96,7 @@ const DELIVER = [
   {
     route: ROUTES.dropBatch,
     title: 'Drop Batch',
-    description: 'Flexible delivery when matching and pickup timing can vary',
+    description: 'Lower cost — matched with a driver already heading your way',
     icon: DropBatch,
   },
   {

@@ -1,6 +1,11 @@
 import Link from 'next/link'
 
 import { formatMoney } from '@/components/send/PriceBreakdown'
+import {
+  DROPBATCH_EXPLANATION,
+  DROPBATCH_HEADLINE,
+  DROPBATCH_NO_PROMISE,
+} from '@/lib/dropbatch-copy'
 
 // A backend-authoritative DropBatch quote rendered as an explicit pricing-mode
 // choice. It remains outside VehiclePicker because it is a service mode, not a
@@ -11,6 +16,15 @@ import { formatMoney } from '@/components/send/PriceBreakdown'
 // platformFee or any breakdown component. It is never called cheapest, discounted or
 // best value, and no saving is computed, even when it happens to be lower than the
 // standard fare. The price is stated; the customer compares.
+//
+// ⚠️ THE ROUTE-SHARING EXPLANATION IS NOT OPTIONAL AND DOES NOT BELONG BEHIND THE
+// "Learn about DropBatch" LINK. This card IS the decision point: it is the only
+// moment the customer chooses between a trip that already exists and a driver sent
+// out for them, and it is the last moment before price and checkout. A customer who
+// reads only this card must still come away knowing the driver is already going
+// their way, that waiting is the trade, and that nobody is matched yet. Copy comes
+// from @/lib/dropbatch-copy so this can never drift from the explainer, the partner
+// portal or the mobile app.
 const UNAVAILABLE_COPY = {
   unsupported_vehicle: 'The selected vehicle is not eligible for DropBatch.',
   schedule_incomplete:
@@ -57,7 +71,7 @@ export function DropBatchQuoteCard({
                 id="dropbatch-quote-heading"
                 className="text-[13px] font-extrabold tracking-[0.08em] text-[#8d8695]"
               >
-                DROPBATCH · FLEXIBLE DELIVERY
+                DROPBATCH · SHARED ROUTE
               </h2>
               <div className="text-right text-[18px] font-extrabold tracking-[-0.01em] text-[#17131c] sm:text-[22px]">
                 {eligible
@@ -68,17 +82,24 @@ export function DropBatchQuoteCard({
               </div>
             </div>
 
-            <p className="mt-2 max-w-[52ch] text-[15px] text-[#5f5868]">
-              {eligible
-                ? 'Save with flexible delivery. A driver still needs to accept your delivery, so matching and pickup can take longer than Standard Delivery.'
-                : loading
+            {eligible ? (
+              <>
+                <p className="mt-2 max-w-[52ch] text-[15px] font-semibold text-[#3d3646]">
+                  {DROPBATCH_HEADLINE}
+                </p>
+                <p className="mt-2 max-w-[52ch] text-[15px] text-[#5f5868]">
+                  {DROPBATCH_EXPLANATION}
+                </p>
+                <p className="mt-2 max-w-[52ch] text-[13px] text-[#756d7e]">
+                  {DROPBATCH_NO_PROMISE}
+                </p>
+              </>
+            ) : (
+              <p className="mt-2 max-w-[52ch] text-[15px] text-[#5f5868]">
+                {loading
                   ? 'Checking the authoritative DropBatch price for this route.'
                   : UNAVAILABLE_COPY[reason] ??
                     'DropBatch is unavailable for these delivery details. Standard delivery remains available.'}
-            </p>
-            {eligible && (
-              <p className="mt-2 text-[13px] text-[#756d7e]">
-                Driver availability is not guaranteed.
               </p>
             )}
           </div>
