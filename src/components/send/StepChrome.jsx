@@ -70,15 +70,19 @@ export function StepChrome() {
   return (
     <h2
       ref={headingRef}
+      data-booking-surface={pathname === '/send/pay' ? '' : undefined}
       // tabIndex -1 makes this programmatically focusable without adding it to
       // the tab order — the standard target for a post-navigation focus move.
       tabIndex={-1}
-      className="mb-3.5 flex flex-wrap items-baseline gap-3.5 focus:outline-none focus-visible:rounded-lg focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f6f4f8]"
+      className="relative mb-3.5 flex flex-wrap items-baseline gap-3.5 focus:outline-none focus-visible:rounded-lg focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f6f4f8]"
     >
       <span className="text-[13px] font-extrabold tracking-[0.12em] text-brand-600">
         STEP {step.index} OF {TOTAL_STEPS}
       </span>
       <span className="text-[15px] text-[#5f5868]">{step.label}</span>
+      <span aria-hidden="true" className="pointer-events-none absolute -bottom-1.5 left-0 h-[3px] w-24 overflow-hidden rounded-full bg-[#e8e0f0]">
+        <span data-booking-progress className="block h-full origin-left bg-brand-600" style={{ transform: `scaleX(${step.index / TOTAL_STEPS})` }} />
+      </span>
     </h2>
   )
 }

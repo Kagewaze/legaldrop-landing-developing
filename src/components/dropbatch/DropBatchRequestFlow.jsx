@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { MarketingLink as Link } from '@/components/MarketingNavigation'
 import { useState } from 'react'
 
 import { AddressAutocomplete } from '@/components/send/AddressAutocomplete'
@@ -79,7 +79,7 @@ export function DropBatchRequestFlow() {
   const unavailable = result.status === 'ready' && quote?.eligible === false
 
   return (
-    <div className="bg-[#fbf9fc] text-[#17131c]">
+    <div data-booking-route="/drop-batch/request" className="bg-[#fbf9fc] text-[#17131c]">
       <div className="mx-auto max-w-[1100px] px-5 py-10 sm:px-8 sm:py-16">
         <p className="text-sm font-extrabold uppercase tracking-label text-brand-700">DropBatch</p>
         <h1 className="mt-2 font-display text-3xl font-extrabold tracking-[-0.02em] sm:text-5xl">
@@ -177,7 +177,7 @@ export function DropBatchRequestFlow() {
             </button>
           </div>
 
-          <aside aria-labelledby="quote-result-heading" aria-live="polite" className="lg:sticky lg:top-24 lg:self-start">
+          <aside data-booking-surface aria-labelledby="quote-result-heading" aria-live="polite" className="lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-card border border-[#ebe6ef] bg-white p-5 shadow-sm sm:p-7">
               <p className="text-xs font-extrabold text-brand-700">STEP 4</p>
               <h2 id="quote-result-heading" className="mt-1 text-2xl font-extrabold">DropBatch price</h2>
@@ -200,7 +200,7 @@ export function DropBatchRequestFlow() {
               {result.show && (
                 <div className="mt-5">
                   <p className="text-sm font-bold text-[#5f5868]">Your DropBatch price</p>
-                  <p className="mt-1 text-4xl font-extrabold">{formatMoney(result.senderPays)}</p>
+                  <p data-booking-price key={result.senderPays} className="mt-1 text-4xl font-extrabold">{formatMoney(result.senderPays)}</p>
                   {Number.isFinite(Number(quote?.routeDistanceKm)) && <p className="mt-3 text-sm text-[#5f5868]">Route distance: {Number(quote.routeDistanceKm).toFixed(1)} km</p>}
                   <p className="mt-2 text-sm text-[#5f5868]">This is authoritative long-distance pricing. Your price does not depend on a driver already being assigned.</p>
                   <p className="mt-2 text-sm leading-6 text-[#5f5868]">{quoteInput.pickupTiming === 'scheduled' ? 'Eligible drivers can accept ahead of your preferred pickup time when the route fits.' : 'The delivery is posted immediately after booking; a suitable driver may accept quickly or acceptance may take longer.'}</p>

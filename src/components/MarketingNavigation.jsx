@@ -3,7 +3,9 @@
 import { createContext, forwardRef, useContext, useLayoutEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { createMarketingNavigation, eligibleMarketingHref } from './marketing-navigation.mjs'
+import { createMarketingNavigation, eligibleMarketingHref, MARKETING_ROUTES } from './marketing-navigation.mjs'
+
+import { eligibleBookingHref } from './booking-navigation.mjs'
 
 const Navigation = createContext(null)
 
@@ -42,5 +44,9 @@ export const MarketingLink = forwardRef(function MarketingLink({ onClick, replac
     if (replace || scroll === false || !coordinator?.current) return
     const href = eligibleMarketingHref(event, event.currentTarget, pathname, window.location)
     if (href && coordinator.current.navigate(href)) event.preventDefault()
+    if (!href) {
+      const bookingHref = eligibleBookingHref(event, event.currentTarget, pathname, window.location, MARKETING_ROUTES)
+      if (bookingHref && coordinator.current.navigate(bookingHref, true)) event.preventDefault()
+    }
   }} />
 })

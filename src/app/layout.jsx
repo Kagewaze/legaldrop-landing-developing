@@ -5,6 +5,7 @@ import { BRAND } from '@/lib/config'
 import '@/styles/tailwind.css'
 import '@/styles/route-motion.css'
 import '@/styles/native-route-motion.css'
+import '@/styles/booking-motion.css'
 import { MarketingNavigation } from '@/components/MarketingNavigation'
 
 const inter = Inter({

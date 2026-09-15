@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
+import { MarketingLink as Link } from '@/components/MarketingNavigation'
 import { useRouter } from 'next/navigation'
 import { Elements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
@@ -692,7 +692,7 @@ export default function SendPayPage() {
             delivery and try again.
           </p>
           <Link
-            href="/send/details"
+            data-booking-return href="/send/details"
             className="mt-6 inline-block rounded-xl bg-brand-600 px-6 py-3.5 text-[15px] font-bold text-white transition-colors hover:bg-brand-700"
           >
             Back to delivery details
@@ -726,7 +726,7 @@ export default function SendPayPage() {
             been charged.
           </p>
           <Link
-            href="/send/details"
+            data-booking-return href="/send/details"
             className="mt-6 inline-block rounded-xl bg-brand-600 px-6 py-3.5 text-[15px] font-bold text-white transition-colors hover:bg-brand-700"
           >
             Back to delivery details

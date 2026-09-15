@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
+import { MarketingLink as Link } from '@/components/MarketingNavigation'
 
 import { guestFetch } from '@/lib/guest-session'
 import { hasBothAddresses, useSendFlow, weightKgFor } from '@/lib/send-flow'
@@ -196,8 +196,8 @@ export default function SendAddressesPage() {
   }, [flow.hydrated, setSection])
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr]">
-      <div className="border-b border-[#f0eef2] px-6 py-8 sm:px-8 lg:border-b-0 lg:border-r">
+    <div data-booking-route="/send" className="grid grid-cols-1 lg:grid-cols-[420px_1fr]">
+      <div data-booking-surface className="border-b border-[#f0eef2] px-6 py-8 sm:px-8 lg:border-b-0 lg:border-r">
         <h1 className="text-[26px] font-extrabold tracking-[-0.02em] text-[#17131c]">
           Send a package
         </h1>

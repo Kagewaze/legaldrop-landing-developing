@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import Link from 'next/link'
+import { MarketingLink as Link } from '@/components/MarketingNavigation'
 import { notFound } from 'next/navigation'
 
 import courierImage from '@/images/dropbatch-hero.webp'

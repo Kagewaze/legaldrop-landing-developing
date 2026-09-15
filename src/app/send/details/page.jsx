@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import Link from 'next/link'
+import { MarketingLink as Link } from '@/components/MarketingNavigation'
 import { useRouter } from 'next/navigation'
 
 import {
@@ -153,7 +153,7 @@ export default function SendDetailsPage() {
   )?.label
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px]">
+    <div data-booking-route="/send/details" data-booking-surface className="grid grid-cols-1 lg:grid-cols-[1fr_360px]">
       <div className="px-6 py-8 sm:px-8">
         <h1 className="text-[26px] font-extrabold tracking-[-0.02em] text-[#17131c]">
           Details and vehicle

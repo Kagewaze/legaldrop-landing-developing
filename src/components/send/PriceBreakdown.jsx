@@ -82,7 +82,7 @@ export function PriceBreakdown({ quote, vehicleName, packageCount, weightLabel }
       </div>
 
       <div className="mt-2.5 flex items-baseline gap-2">
-        <div className="text-[40px] font-extrabold tracking-[-0.03em] text-brand-600">
+        <div data-booking-price key={total} className="text-[40px] font-extrabold tracking-[-0.03em] text-brand-600">
           {formatMoney(total)}
         </div>
         <div className="text-[14px] font-bold text-[#8d8695]">CAD</div>

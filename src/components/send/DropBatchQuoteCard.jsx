@@ -73,7 +73,7 @@ export function DropBatchQuoteCard({
               >
                 DROPBATCH · SHARED ROUTE
               </h2>
-              <div className="text-right text-[18px] font-extrabold tracking-[-0.01em] text-[#17131c] sm:text-[22px]">
+              <div data-booking-price={eligible ? '' : undefined} key={senderPays} className="text-right text-[18px] font-extrabold tracking-[-0.01em] text-[#17131c] sm:text-[22px]">
                 {eligible
                   ? formatMoney(senderPays)
                   : loading
