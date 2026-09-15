@@ -83,11 +83,11 @@ export function ServicePanels({
 
   const section = (
     <section className={containerClassName}>
-      <Heading className={headingClassName}>{heading}</Heading>
+      <Heading data-motion="reveal" className={headingClassName}>{heading}</Heading>
 
-      {lede && <p className={ledeClassName}>{lede}</p>}
+      {lede && <p data-motion="reveal" className={ledeClassName}>{lede}</p>}
 
-      <div className={`mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 ${columns}`}>
+      <div data-motion-group className={`mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 ${columns}`}>
         {panels.map((panel) => (
           <Panel
             key={panel.title}
@@ -107,7 +107,7 @@ export function ServicePanels({
           next/link, same tab, as everywhere else on these two pages. */}
       {cta && (
         <div className="mt-8">
-          <a href={PARTNER_SIGNUP_URL} className={ctaClassName}>
+          <a data-motion-control href={PARTNER_SIGNUP_URL} className={ctaClassName}>
             {cta}
           </a>
         </div>

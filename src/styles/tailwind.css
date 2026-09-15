@@ -235,41 +235,150 @@
 }
 
 
-/* ── PRODUCT STORY — SCROLL-PROGRESSIVE ENTRANCE ─────────────────────────────
- *
- * The page read as too static, so each stage's screenshot settles as it enters
- * the viewport. ONE effect, on ONE element per stage.
- *
- * ⚠️ PROGRESSIVE ENHANCEMENT, AND THE FALLBACK IS THE DEFAULT. No rule here
- * sets a starting opacity or transform outside the @supports block, so a
- * browser without scroll-timeline renders the section exactly as it does today
- * — fully visible, correctly positioned. Nothing depends on this to be legible.
- *
- * ⚠️ NO CLIENT ISLAND. This is why it is CSS and not an IntersectionObserver:
- * ProductStory is a server component and the homepage is at its approved
- * 5-island ceiling. Do not convert it.
- *
- * `animation-range` ends at 40% of entry so the settle finishes while the stage
- * is still arriving — an effect that completes after you are already reading it
- * is just latency.
+/* PUBLIC MARKETING MOTION — CSS-only progressive enhancement.
+ * Explicit page opt-in keeps shared components static in operational routes.
+ * No hidden baseline, observer, scroll handler, persistent layer promotion or
+ * layout animation. Even the first enhanced frame is fully readable.
+ * ProductStory's existing data-stage-media hook uses this ONE media primitive.
+ * Never mark a form, a rail, its items or an ancestor of either for movement.
  */
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
-    @keyframes product-stage-settle {
+    @keyframes marketing-arrive {
       from {
-        opacity: 0.94;
-        transform: translateY(8px);
+        opacity: 0.98;
+        transform: translateY(24px);
       }
       to {
         opacity: 1;
-        transform: translateY(0);
+        transform: none;
       }
     }
 
-    [data-stage-media] {
-      animation: product-stage-settle linear both;
-      animation-timeline: view();
-      animation-range: entry 5% entry 40%;
+    @keyframes marketing-media-settle {
+      from {
+        opacity: 0.98;
+        transform: translateY(24px) scale(0.985);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
     }
+
+    @keyframes marketing-hero-arrive {
+      from {
+        transform: translateY(12px);
+      }
+      to {
+        transform: none;
+      }
+    }
+
+    [data-marketing-motion]
+      :is([data-motion], [data-stage-media], [data-motion-group] > *) {
+      animation: marketing-arrive auto linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover calc(22% + var(--motion-index, 0) * 2%);
+    }
+
+    [data-marketing-motion] [data-motion-group] > * {
+      --motion-index: 0;
+    }
+
+    /* Each peer owns its viewport timeline: stacked mobile cards do not wait
+     * for a tall group to enter. The horizontal cascade is capped at 6%.
+     */
+    [data-marketing-motion] [data-motion-group] > :nth-child(2) {
+      --motion-index: 1;
+    }
+    [data-marketing-motion] [data-motion-group] > :nth-child(3) {
+      --motion-index: 2;
+    }
+    [data-marketing-motion] [data-motion-group] > :nth-child(n + 4) {
+      --motion-index: 3;
+    }
+
+    /* Copy shares a local timeline, so eyebrow, heading and supporting copy
+     * resolve in order even when desktop columns align at the same height.
+     * Direct children only: this cannot reach a form or a nested product UI.
+     * Links/CTAs are deliberately excluded and remain at their final position.
+     */
+    [data-marketing-motion] [data-motion-copy] {
+      view-timeline-name: --marketing-copy;
+      view-timeline-axis: block;
+    }
+
+    [data-marketing-motion]
+      [data-motion-copy]
+      > :is(span, h1, h2, h3, p, [data-motion-label]) {
+      animation: marketing-arrive auto linear both;
+      animation-timeline: --marketing-copy;
+      animation-range: cover calc(var(--motion-index, 0) * 3%) cover
+        calc(18% + var(--motion-index, 0) * 3%);
+    }
+
+    [data-marketing-motion] [data-motion-copy] > :nth-child(2) {
+      --motion-index: 1;
+    }
+    [data-marketing-motion] [data-motion-copy] > :nth-child(3) {
+      --motion-index: 2;
+    }
+    [data-marketing-motion] [data-motion-copy] > :nth-child(n + 4) {
+      --motion-index: 3;
+    }
+
+    [data-marketing-motion] :is([data-motion="media"], [data-stage-media]) {
+      animation-name: marketing-media-settle;
+      animation-range: entry 0% entry 45%;
+      transform-origin: center center;
+    }
+
+    /* Fully opaque hero text: no opacity animation on the LCP candidate.
+     * No delay or fill mode; no animation ever touches the booking surface.
+     */
+    [data-marketing-motion] [data-motion-hero] {
+      animation: marketing-hero-arrive 380ms cubic-bezier(0.2, 0.65, 0.3, 1);
+    }
+    [data-marketing-motion] [data-motion-hero="copy"] {
+      animation-duration: 480ms;
+    }
+
+    /* Defensive keyboard safety if copy gains a link in a future edit. */
+    [data-marketing-motion]
+      :is(
+        [data-motion],
+        [data-stage-media],
+        [data-motion-group] > *,
+        [data-motion-copy] > *,
+        [data-motion-hero]
+      ):focus-within {
+      animation: none;
+    }
+
+    @media (max-width: 639px) {
+      [data-marketing-motion] [data-motion-group] > :nth-child(n) {
+        --motion-index: 0;
+      }
+    }
+  }
+}
+
+/* Existing marketing links only; no moving hit targets or changed focus rings.
+ * Hover/press feedback remains independent of scroll-animation support.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  [data-marketing-motion] [data-motion-control] {
+    transition-property: color, background-color, border-color, opacity;
+    transition-duration: 140ms;
+    transition-timing-function: ease-out;
+  }
+  @media (hover: hover) {
+    [data-marketing-motion] [data-motion-control]:hover:not(:focus-visible) {
+      opacity: 0.9;
+    }
+  }
+  [data-marketing-motion] [data-motion-control]:active:not(:focus-visible) {
+    opacity: 0.82;
   }
 }

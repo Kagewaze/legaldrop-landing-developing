@@ -27,6 +27,7 @@ const STAGES = [
 function ProductCanvas({ label, children }) {
   return (
     <div
+      data-stage-media
       role="img"
       aria-label={label}
       className="relative flex min-h-[360px] w-full items-center justify-center overflow-hidden rounded-[28px] border border-[#ddcbea] bg-[linear-gradient(145deg,#f4eafb_0%,#fbf8fd_54%,#eee0f8_100%)] p-5 shadow-[0_2px_4px_rgba(82,28,130,0.06),0_22px_54px_-24px_rgba(82,28,130,0.34)] sm:min-h-[420px] sm:p-8 lg:min-h-[460px] lg:p-10"
@@ -388,8 +389,8 @@ function Stage({ stage, index }) {
     <article
       className={`mx-auto grid w-full max-w-[1400px] items-center gap-8 px-5 sm:px-8 lg:gap-14 xl:gap-20 ${reversed ? 'lg:grid-cols-[minmax(0,0.64fr)_minmax(0,0.36fr)] lg:[&>*:first-child]:order-2' : 'lg:grid-cols-[minmax(0,0.36fr)_minmax(0,0.64fr)]'}`}
     >
-      <div className="max-w-[390px]">
-        <div className="flex items-center gap-3">
+      <div data-motion-copy className="max-w-[390px]">
+        <div data-motion-label className="flex items-center gap-3">
           <span className="font-display text-sm font-extrabold tracking-label text-brand-600">
             {stage.number}
           </span>
@@ -411,10 +412,10 @@ export function ProductStory() {
   return (
     <section
       aria-labelledby="product-story"
-      className="overflow-hidden bg-[linear-gradient(180deg,#fbf9f8_0%,#f8f2fc_48%,#fbf9f8_100%)]"
+      className="overflow-clip bg-[linear-gradient(180deg,#fbf9f8_0%,#f8f2fc_48%,#fbf9f8_100%)]"
     >
       <div className="mx-auto max-w-[1400px] px-5 pt-16 sm:px-8 sm:pt-20 lg:pt-24">
-        <div className="max-w-[680px]">
+        <div data-motion-copy className="max-w-[680px]">
           <span className="text-xs font-bold uppercase tracking-label text-brand-700">
             Product demonstration
           </span>

@@ -102,6 +102,7 @@ const PILLARS = [
 export function TrustAndAccountability() {
   return (
     <section
+      data-motion-copy
       aria-labelledby="trust-accountability"
       className="mx-auto max-w-[1200px] px-8 py-12 sm:py-24"
     >
@@ -125,7 +126,7 @@ export function TrustAndAccountability() {
         it moves, and retrievable once it is done.
       </p>
 
-      <div className="mt-9 grid grid-cols-1 gap-x-10 gap-y-6 lg:grid-cols-3">
+      <div data-motion-group className="mt-9 grid grid-cols-1 gap-x-10 gap-y-6 lg:grid-cols-3">
         {PILLARS.map((pillar) => (
           <div key={pillar.title} className={PILLAR}>
             <h3 className="text-base font-bold text-[#17131c]">
@@ -157,12 +158,14 @@ export function TrustAndAccountability() {
 
         <div className="flex flex-wrap gap-3">
           <Link
+            data-motion-control
             href={ROUTES.send.href}
             className="inline-block rounded-control bg-brand-600 px-[30px] py-4 text-base font-semibold text-white transition-colors motion-reduce:transition-none hover:bg-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
           >
             Book a delivery
           </Link>
           <Link
+            data-motion-control
             href={ROUTES.contact.href}
             className="inline-block rounded-control border-[1.5px] border-[#e3dfe8] px-[30px] py-4 text-base font-semibold text-[#17131c] transition-colors motion-reduce:transition-none hover:border-[#17131c] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
           >

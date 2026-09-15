@@ -281,7 +281,7 @@ export default function ContactUs() {
 
   return (
     <Layout>
-      <div className="bg-white" id="contact-us">
+      <div data-marketing-motion className="bg-white" id="contact-us">
         <div className="mx-auto max-w-[1200px] px-8 py-16 sm:py-20">
           {/* 5/7 rather than 50/50, and items-start rather than the grid's
               default stretch. Both columns used to be cells of one row whose
@@ -289,10 +289,10 @@ export default function ContactUs() {
               content sat top-aligned above ~435px of nothing. */}
           <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-12">
             <div className="lg:col-span-5">
-              <h1 className="text-pretty text-4xl font-extrabold text-[#17131c] sm:text-5xl">
+              <h1 data-motion-hero="heading" className="text-pretty text-4xl font-extrabold text-[#17131c] sm:text-5xl">
                 Get in touch
               </h1>
-              <p className="mt-4 text-lg text-[#5f5868]">
+              <p data-motion-hero="copy" className="mt-4 text-lg text-[#5f5868]">
                 We are one click away from serving you better today!
               </p>
 

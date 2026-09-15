@@ -505,6 +505,23 @@ Every animation must demonstrate at least one of: **movement**, **technology**, 
 - **Anything that causes layout shift** (E4)
 - **Anything that violates `prefers-reduced-motion`** — a hard accessibility floor, not a preference (E6)
 
+### Public marketing motion extension — September 2026
+
+The `codex/web-motion-system` brief explicitly extends the original motion
+budget below: quiet copy sequencing, short peer-group entrances and media settling
+are approved for `/`, `/medical`, `/legal` and `/drop-batch`, with restrained
+introductory text on `/contact-us`. This supersedes the original blanket ban on
+per-card staggering for these selected groups only. The purpose is to clarify
+the reading order from proposition to evidence to product and next action.
+
+The implementation remains CSS-first, scoped by `data-marketing-motion`, using
+the existing ProductStory scroll-timeline architecture. All content is visible
+without enhancement; reduced motion removes the new animations and transitions.
+No new client island, dependency, scroll listener or observer is authorized.
+OperationalProof values remain final server-rendered numbers. Booking, tracking,
+contact form controls, and both autoplay rails remain stationary. Only the rail
+headings receive a reveal; their containers, items and mechanics are unchanged.
+
 ### Technical rules
 
 - Reveal animations render content **visible by default** and animate as enhancement, so a JS failure never hides the page.

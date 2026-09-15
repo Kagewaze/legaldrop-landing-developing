@@ -35,9 +35,9 @@ export default function DropBatchPage() {
   if (!DROPBATCH_EXPLAINER_ENABLED) notFound()
 
   return (
-    <div className="bg-[#fbf9fc] text-[#17131c]">
+    <div data-marketing-motion className="bg-[#fbf9fc] text-[#17131c]">
       <section className="mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-10 px-6 py-12 sm:px-8 sm:py-20 lg:grid-cols-2 lg:py-24">
-        <div>
+        <div data-motion-copy>
           <p className="text-sm font-extrabold uppercase tracking-label text-brand-700">DropBatch</p>
           <h1 className="mt-3 text-balance font-display text-4xl font-extrabold tracking-[-0.025em] sm:text-6xl">
             Deliver farther for less with DropBatch.
@@ -49,23 +49,23 @@ export default function DropBatchPage() {
             {DROPBATCH_NO_PROMISE}
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link href="/drop-batch/request" className="min-h-11 rounded-control bg-brand-600 px-6 py-3.5 text-center font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 hover:bg-brand-700">
+            <Link data-motion-control href="/drop-batch/request" className="min-h-11 rounded-control bg-brand-600 px-6 py-3.5 text-center font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 hover:bg-brand-700">
               Get my DropBatch price
             </Link>
-            <Link href="/send" className="min-h-11 rounded-control border border-[#d9d2df] bg-white px-6 py-3.5 text-center font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700">
+            <Link data-motion-control href="/send" className="min-h-11 rounded-control border border-[#d9d2df] bg-white px-6 py-3.5 text-center font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700">
               Book a standard delivery
             </Link>
           </div>
         </div>
-        <div className="relative min-h-[320px] overflow-hidden rounded-card sm:min-h-[460px]">
+        <div data-motion="media" className="relative min-h-[320px] overflow-hidden rounded-card sm:min-h-[460px]">
           <Image src={courierImage} alt="A customer receiving a Druppr package at a doorway." fill priority sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
         </div>
       </section>
 
       <section aria-labelledby="how-dropbatch-works" className="border-y border-[#ebe6ef] bg-white">
         <div className="mx-auto max-w-[1200px] px-6 py-16 sm:px-8 sm:py-24">
-          <h2 id="how-dropbatch-works" className="font-display text-3xl font-extrabold sm:text-4xl">How DropBatch works</h2>
-          <ol className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <h2 data-motion="reveal" id="how-dropbatch-works" className="font-display text-3xl font-extrabold sm:text-4xl">How DropBatch works</h2>
+          <ol data-motion-group className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {STEPS.map(([number, title, body]) => (
               <li key={number} className="rounded-card border border-[#ebe6ef] bg-[#fbf9fc] p-6">
                 <span className="text-sm font-extrabold text-brand-700">{number}</span>
@@ -78,10 +78,10 @@ export default function DropBatchPage() {
       </section>
 
       <section className="mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-10 px-6 py-16 sm:px-8 sm:py-24 lg:grid-cols-2">
-        <div className="relative min-h-[300px] overflow-hidden rounded-card sm:min-h-[400px]">
+        <div data-motion="media" className="relative min-h-[300px] overflow-hidden rounded-card sm:min-h-[400px]">
           <Image src={handoffImage} alt="A driver handing a Druppr package to a customer beside a vehicle." fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
         </div>
-        <div>
+        <div data-motion-copy>
           <p className="text-sm font-extrabold uppercase tracking-label text-brand-700">A practical handoff</p>
           <h2 className="mt-3 font-display text-3xl font-extrabold sm:text-4xl">Your package joins a trip already being made.</h2>
           <p className="mt-5 text-lg leading-8 text-[#5f5868]">After booking, Druppr compares your pickup and destination against trips verified drivers have already posted, and offers your package to the driver whose route fits with the least detour. That driver still has to accept, so matching and pickup can take longer than Standard Delivery, and a compatible trip is not guaranteed.</p>
@@ -91,8 +91,8 @@ export default function DropBatchPage() {
 
       <section className="bg-surface-ink text-white">
         <div className="mx-auto max-w-[1200px] px-6 py-16 sm:px-8 sm:py-20">
-          <h2 className="font-display text-3xl font-extrabold">Built on trips drivers are already making</h2>
-          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <h2 data-motion="reveal" className="font-display text-3xl font-extrabold">Built on trips drivers are already making</h2>
+          <div data-motion-group className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
               ['Flexible distance', 'Short and longer routes can use DropBatch.'],
               ['Flexible pickup', 'Choose ASAP or a preferred future date and time.'],
@@ -105,7 +105,7 @@ export default function DropBatchPage() {
               </div>
             ))}
           </div>
-          <Link href="/drop-batch/request" className="mt-10 inline-flex min-h-11 items-center rounded-control bg-white px-6 py-3 font-semibold text-[#17131c] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+          <Link data-motion-control href="/drop-batch/request" className="mt-10 inline-flex min-h-11 items-center rounded-control bg-white px-6 py-3 font-semibold text-[#17131c] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
             Get a DropBatch quote
           </Link>
         </div>

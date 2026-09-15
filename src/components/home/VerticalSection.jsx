@@ -398,7 +398,7 @@ export function VerticalSection({
               screen reader or keyboard user gets never depends on which side
               the frame happens to sit on at lg. `order` only reorders the two
               columns from lg up. */}
-          <div className={frameSide === 'left' ? 'lg:order-2' : undefined}>
+          <div data-motion-copy className={frameSide === 'left' ? 'lg:order-2' : undefined}>
             <span className={EYEBROW}>{eyebrow}</span>
             <h2 className="mt-3 text-balance font-display text-3xl font-extrabold -tracking-[0.015em] text-[#17131c]">
               {heading}
@@ -413,12 +413,12 @@ export function VerticalSection({
                 which is where the partner-platform call to action lives. It
                 deliberately does NOT jump straight to that platform: the page
                 in between is the one that does the selling. */}
-            <Link href={href} className={CTA}>
+            <Link data-motion-control href={href} className={CTA}>
               {cta}
             </Link>
           </div>
 
-          <div className={frameSide === 'left' ? 'lg:order-1' : undefined}>
+          <div data-motion="media" className={frameSide === 'left' ? 'lg:order-1' : undefined}>
             {photo ? (
               // Editorial rectangle, no card around it. Taller on a phone so the
               // subject survives the crop; wider from sm where there is room.

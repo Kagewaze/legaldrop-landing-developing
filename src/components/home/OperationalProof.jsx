@@ -180,6 +180,7 @@ export async function OperationalProof() {
     <section aria-labelledby="operational-proof" className="text-[#17131c]">
       <div className="mx-auto max-w-[1200px] border-t border-[#eeebf1] px-8 py-16 sm:py-20">
         <h2
+          data-motion="reveal"
           id="operational-proof"
           className="text-sm font-semibold uppercase tracking-label text-[#5f5868]"
         >
@@ -192,7 +193,7 @@ export async function OperationalProof() {
             covering the whole band. When the live figures are absent there is
             nothing that updates automatically, so the second sentence would be
             false and is dropped. */}
-        <p className="mt-1 text-sm text-[#5f5868]">
+        <p data-motion="reveal" className="mt-1 text-sm text-[#5f5868]">
           {metrics
             ? `Partner count accurate as of ${PARTNERS_AS_OF}. Delivery and driver counts update automatically.`
             : `Partner count accurate as of ${PARTNERS_AS_OF}.`}
@@ -203,6 +204,7 @@ export async function OperationalProof() {
             three characters and never wrap, and the labels wrap to two lines at
             390 without crowding, which is cheaper vertically than stacking. */}
         <dl
+          data-motion-group
           className={`mt-7 grid ${GRID_COLS[rendered.length]} gap-x-4 gap-y-6 sm:mt-8 sm:gap-x-8`}
         >
           {rendered.map((metric) => (

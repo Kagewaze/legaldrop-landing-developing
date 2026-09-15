@@ -229,7 +229,7 @@ const CLINIC_REASONS = [
 
 export default function MedicalPage() {
   return (
-    <div className="bg-surface-page">
+    <div data-marketing-motion className="bg-surface-page">
       <Hero />
       <Credentials />
       <ServicePanels
@@ -256,7 +256,7 @@ function Hero() {
     <section className="border-b border-[#f0eaf6] bg-surface-tint">
       <div className="mx-auto max-w-[1200px] px-8 py-16 sm:py-24">
         <div className="max-w-[720px]">
-          <h1 className="font-display text-4xl font-extrabold text-[#17131c] sm:text-5xl">
+          <h1 data-motion-hero="heading" className="font-display text-4xl font-extrabold text-[#17131c] sm:text-5xl">
             Medical logistics for GTA clinics and labs
           </h1>
           {/* PHASE 4.2: "handled by certified drivers" removed — driver
@@ -272,7 +272,7 @@ function Hero() {
               can take this." Replaced with the neutral category the product
               actually carries (`medical_supply` is a real section preset in
               send/page.jsx:143). */}
-          <p className="mt-4 max-w-[560px] text-lg text-[#5f5868]">
+          <p data-motion-hero="copy" className="mt-4 max-w-[560px] text-lg text-[#5f5868]">
             Same-day transport for specimens, pharmaceuticals and clinic
             supplies, tracked from pickup through completion.
           </p>
@@ -287,7 +287,7 @@ function Hero() {
 function Credentials() {
   return (
     <section className="bg-surface-ink text-white">
-      <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-x-8 gap-y-3 px-8 py-6">
+      <div data-motion-group className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-x-8 gap-y-3 px-8 py-6">
         {CREDENTIALS.map((credential) => (
           <div key={credential} className="flex items-center gap-2.5">
             <span className="h-[7px] w-[7px] flex-none rounded-full bg-brand-600" />
@@ -305,7 +305,7 @@ function FinalCta() {
   return (
     <section className="mx-auto max-w-[1200px] px-8 py-16 sm:py-24">
       <div className="flex flex-wrap items-center justify-between gap-8 rounded-card bg-brand-600 p-8 text-white sm:p-11">
-        <div className="max-w-[560px]">
+        <div data-motion="reveal" className="max-w-[560px]">
           <div className="font-display text-3xl font-bold">Set up your clinic account</div>
           {/* PHASE 4.2 removed "certified drivers" here and left the other two
               standing on the reasoning that they describe how an account is
@@ -328,6 +328,7 @@ function FinalCta() {
         </div>
 
         <a
+          data-motion-control
           href={PARTNER_SIGNUP_URL}
           className="rounded-control bg-white px-[30px] py-4 text-base font-semibold text-brand-600 transition-colors hover:bg-[#f2e9fa] hover:text-[#5d1f96] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         >
@@ -347,6 +348,7 @@ function FinalCta() {
 function PartnerCta({ children, className = '' }) {
   return (
     <a
+      data-motion-control
       href={PARTNER_SIGNUP_URL}
       className={`inline-block rounded-control bg-brand-600 px-[30px] py-4 text-base font-semibold text-white transition-colors hover:bg-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 ${className}`}
     >

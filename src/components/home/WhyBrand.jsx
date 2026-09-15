@@ -109,11 +109,11 @@ export function WhyBrand({ heading, reasons }) {
 
   return (
     <section className="mx-auto max-w-[1200px] px-8 py-16 sm:py-24">
-      <h2 className="font-display text-3xl font-extrabold text-[#17131c]">
+      <h2 data-motion="reveal" className="font-display text-3xl font-extrabold text-[#17131c]">
         {heading}
       </h2>
 
-      <div className={`mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 ${columns}`}>
+      <div data-motion-group className={`mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 ${columns}`}>
         {reasons.map((reason) => (
           <div key={reason.title} className="rounded-card bg-surface-raised p-6 shadow-card">
             {/* Tinted tile with an ink icon, not an ink tile with a white

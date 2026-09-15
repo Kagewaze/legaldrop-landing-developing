@@ -84,7 +84,7 @@ export function HeroNetwork() {
             left, vertical centring drops the visual into dead space. */}
         <div className="grid grid-cols-1 items-start gap-6 sm:gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16">
           <div>
-            <h1 className="text-balance font-display text-3xl font-extrabold text-[#281632] sm:text-5xl lg:text-6xl 2xl:text-7xl">
+            <h1 data-motion-hero="heading" className="text-balance font-display text-3xl font-extrabold text-[#281632] sm:text-5xl lg:text-6xl 2xl:text-7xl">
               Same-day logistics infrastructure for the GTA
             </h1>
 
@@ -103,7 +103,7 @@ export function HeroNetwork() {
                 above body minimum. The measure is unchanged. */}
             {/* #5f5868 is 6.81:1 on surface.page. NOT #8d8695 — 3.51:1, fails
                 AA for normal text. */}
-            <p className="mt-4 max-w-[560px] text-base text-[#62566a] sm:mt-5 sm:text-lg">
+            <p data-motion-hero="copy" className="mt-4 max-w-[560px] text-base text-[#62566a] sm:mt-5 sm:text-lg">
               Specimens, filings, business deliveries and parcels — dispatched,
               tracked and recorded on one platform.
             </p>

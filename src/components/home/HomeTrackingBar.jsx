@@ -33,7 +33,7 @@ export function HomeTrackingBar() {
           onSubmit={handleSubmit}
           noValidate
         >
-          <div className="lg:w-[280px] lg:flex-none lg:self-center">
+          <div data-motion-copy className="lg:w-[280px] lg:flex-none lg:self-center">
             <h2
               id={`${inputId}-title`}
               className="font-display text-xl font-extrabold text-[#281632] sm:text-2xl"

@@ -157,7 +157,7 @@ export function Reviews({ data }) {
 
   const header = (
     <div className="flex flex-wrap items-baseline justify-between gap-6">
-      <h2 className="font-display text-3xl font-extrabold text-[#17131c]">
+      <h2 data-motion="reveal" className="font-display text-3xl font-extrabold text-[#17131c]">
         Rated {rating.toFixed(1)} on Google
       </h2>
       {/* RENDERED ONLY WHEN THE RESPONSE YIELDED A VERIFIED DESTINATION.

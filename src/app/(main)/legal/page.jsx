@@ -208,7 +208,7 @@ const RECORD_REASONS = [
 // hundred pixels lower, pointing at the same place.
 export default function LegalPage() {
   return (
-    <div className="bg-surface-page">
+    <div data-marketing-motion className="bg-surface-page">
       <ServicePanels
         heading="Legal document delivery for GTA firms"
         // "served documents" was here. Unqualified it reads as asserting that
@@ -279,7 +279,7 @@ export default function LegalPage() {
 function Credentials() {
   return (
     <section className="bg-surface-ink text-white">
-      <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-x-8 gap-y-3 px-8 py-6">
+      <div data-motion-group className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-x-8 gap-y-3 px-8 py-6">
         {CREDENTIALS.map((credential) => (
           <div key={credential} className="flex items-center gap-2.5">
             <span className="h-[7px] w-[7px] flex-none rounded-full bg-brand-600" />
@@ -297,7 +297,7 @@ function FinalCta() {
   return (
     <section className="mx-auto max-w-[1200px] px-8 py-16 sm:py-24">
       <div className="flex flex-wrap items-center justify-between gap-8 rounded-card bg-brand-600 p-8 text-white sm:p-11">
-        <div className="max-w-[560px]">
+        <div data-motion="reveal" className="max-w-[560px]">
           <div className="font-display text-3xl font-bold">Register your firm</div>
           <div className="mt-2 text-base opacity-85">
             Filings, confidential files and process serving, managed from the{' '}
@@ -306,6 +306,7 @@ function FinalCta() {
         </div>
 
         <a
+          data-motion-control
           href={PARTNER_SIGNUP_URL}
           className="rounded-control bg-white px-[30px] py-4 text-base font-semibold text-brand-600 transition-colors hover:bg-[#f2e9fa] hover:text-[#5d1f96] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         >

@@ -189,7 +189,7 @@ export function PartnerStrip({ partners }) {
   return (
     <section className="py-12 sm:py-16">
       <div className="mx-auto max-w-[1200px] px-8">
-        <h2 className="font-display text-3xl font-extrabold text-[#17131c]">
+        <h2 data-motion="reveal" className="font-display text-3xl font-extrabold text-[#17131c]">
           {HEADING}
         </h2>
       </div>

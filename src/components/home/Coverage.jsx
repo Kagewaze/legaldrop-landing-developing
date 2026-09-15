@@ -39,7 +39,7 @@ export function Coverage({ image }) {
     // gap used to push it, which is the same left edge every other section on
     // the page aligns to. That alignment is the reason not to reinstate the
     // offset with padding.
-    <div className="mx-auto max-w-[1200px] px-8">
+    <div data-motion="reveal" className="mx-auto max-w-[1200px] px-8">
       <div className="text-xl font-bold text-[#17131c]">{SERVICE_AREA}</div>
       <div className="mt-0.5 text-sm text-[#5f5868]">{CITIES}</div>
     </div>
