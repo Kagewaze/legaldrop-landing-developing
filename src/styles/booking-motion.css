@@ -13,11 +13,11 @@
     width: var(--booking-old-width);
     max-width: none;
     height: auto;
-    animation: booking-step-out 220ms ease-out both;
+    animation: booking-step-out 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
     mix-blend-mode: normal;
   }
   html[data-druppr-booking]::view-transition-new(druppr-booking) {
-    animation: booking-step-in 320ms cubic-bezier(0.2, 0.65, 0.3, 1) both;
+    animation: booking-step-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
     mix-blend-mode: normal;
   }
   html[data-druppr-booking="back"]::view-transition-old(druppr-booking),
@@ -27,23 +27,27 @@
   html[data-druppr-booking="neutral"]::view-transition-old(druppr-booking),
   html[data-druppr-booking="neutral"]::view-transition-new(druppr-booking) {
     --booking-direction: 0;
-    --booking-enter-y: 12px;
-    animation-duration: 260ms;
+    --booking-enter-y: 8px;
+    --booking-enter-mid-y: 3px;
+    --booking-enter-opacity: 0.35;
+    animation-duration: 340ms;
   }
   @keyframes booking-step-out {
-    from { opacity: 1; transform: translate(var(--booking-old-x, 0px), var(--booking-old-y, 0px)); }
-    to { opacity: 0.72; transform: translate(calc(var(--booking-old-x, 0px) - 28px * var(--booking-direction, 1)), var(--booking-old-y, 0px)); }
+    0% { opacity: 1; transform: translate(var(--booking-old-x, 0px), var(--booking-old-y, 0px)); }
+    65% { opacity: 0.94; transform: translate(calc(var(--booking-old-x, 0px) - 10px * var(--booking-direction, 1)), var(--booking-old-y, 0px)); }
+    100% { opacity: 0.88; transform: translate(calc(var(--booking-old-x, 0px) - 18px * var(--booking-direction, 1)), var(--booking-old-y, 0px)); }
   }
   @keyframes booking-step-in {
-    from { opacity: 0; transform: translate(calc(36px * var(--booking-direction, 1)), var(--booking-enter-y, 0px)); }
-    to { opacity: 1; transform: none; }
+    0% { opacity: var(--booking-enter-opacity, 0.18); transform: translate(calc(24px * var(--booking-direction, 1)), var(--booking-enter-y, 0px)); }
+    35% { opacity: 0.72; transform: translate(calc(10px * var(--booking-direction, 1)), var(--booking-enter-mid-y, 0px)); }
+    100% { opacity: 1; transform: none; }
   }
-  [data-booking-progress] { transition: transform 300ms ease-out; }
+  [data-booking-progress] { transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1); }
   @keyframes booking-price-state {
-    from { opacity: 0.7; transform: translateY(6px); }
+    from { opacity: 0.8; transform: translateY(4px); }
     to { opacity: 1; transform: none; }
   }
   [data-booking-route] [data-booking-price] {
-    animation: booking-price-state 180ms ease-out;
+    animation: booking-price-state 220ms ease-out;
   }
 }
