@@ -115,7 +115,7 @@ export function WhyBrand({ heading, reasons }) {
 
       <div data-motion-group className={`mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 ${columns}`}>
         {reasons.map((reason) => (
-          <div key={reason.title} className="rounded-card bg-surface-raised p-6 shadow-card">
+          <div data-motion-hover="card" key={reason.title} className="rounded-card bg-surface-raised p-6 shadow-card">
             {/* Tinted tile with an ink icon, not an ink tile with a white
                 one. A 36px solid-ink square repeated four across made the
                 lightest section on the page carry its heaviest elements. The

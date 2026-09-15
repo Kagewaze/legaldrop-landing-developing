@@ -235,43 +235,47 @@
 }
 
 
-/* PUBLIC MARKETING MOTION — CSS-only progressive enhancement.
- * Explicit page opt-in keeps shared components static in operational routes.
- * No hidden baseline, observer, scroll handler, persistent layer promotion or
- * layout animation. Even the first enhanced frame is fully readable.
- * ProductStory's existing data-stage-media hook uses this ONE media primitive.
- * Never mark a form, a rail, its items or an ancestor of either for movement.
+/* PUBLIC MARKETING MOTION — Pass 2.
+ * Spatially stronger, fully opaque and CSS-only. The static fallback has no
+ * displacement. Forms, maps, rail containers/items and their ancestors never
+ * receive an entrance. Hover is explicit on controls and approved presentational cards/scenes.
  */
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
     @keyframes marketing-arrive {
       from {
-        opacity: 0.98;
+        transform: translateY(var(--motion-rise, 44px));
+      }
+      to {
+        transform: none;
+      }
+    }
+    @keyframes marketing-media-settle {
+      from {
+        transform: translate(
+            var(--motion-media-x, 0px),
+            var(--motion-media-y, 36px)
+          )
+          scale(0.96);
+      }
+      to {
+        transform: none;
+      }
+    }
+    @keyframes marketing-hero-arrive {
+      from {
         transform: translateY(24px);
       }
       to {
-        opacity: 1;
         transform: none;
       }
     }
-
-    @keyframes marketing-media-settle {
+    @keyframes marketing-chapter-rule {
       from {
-        opacity: 0.98;
-        transform: translateY(24px) scale(0.985);
+        transform: scaleX(0.12);
       }
       to {
-        opacity: 1;
-        transform: none;
-      }
-    }
-
-    @keyframes marketing-hero-arrive {
-      from {
-        transform: translateY(12px);
-      }
-      to {
-        transform: none;
+        transform: scaleX(1);
       }
     }
 
@@ -279,16 +283,13 @@
       :is([data-motion], [data-stage-media], [data-motion-group] > *) {
       animation: marketing-arrive auto linear both;
       animation-timeline: view();
-      animation-range: cover 0% cover calc(22% + var(--motion-index, 0) * 2%);
+      animation-range: cover calc(var(--motion-index, 0) * 2%) cover
+        calc(16% + var(--motion-index, 0) * 2%);
     }
-
     [data-marketing-motion] [data-motion-group] > * {
       --motion-index: 0;
+      --motion-rise: 36px;
     }
-
-    /* Each peer owns its viewport timeline: stacked mobile cards do not wait
-     * for a tall group to enter. The horizontal cascade is capped at 6%.
-     */
     [data-marketing-motion] [data-motion-group] > :nth-child(2) {
       --motion-index: 1;
     }
@@ -299,25 +300,17 @@
       --motion-index: 3;
     }
 
-    /* Copy shares a local timeline, so eyebrow, heading and supporting copy
-     * resolve in order even when desktop columns align at the same height.
-     * Direct children only: this cannot reach a form or a nested product UI.
-     * Links/CTAs are deliberately excluded and remain at their final position.
-     */
     [data-marketing-motion] [data-motion-copy] {
-      view-timeline-name: --marketing-copy;
-      view-timeline-axis: block;
+      view-timeline: --marketing-copy block;
     }
-
     [data-marketing-motion]
       [data-motion-copy]
       > :is(span, h1, h2, h3, p, [data-motion-label]) {
       animation: marketing-arrive auto linear both;
       animation-timeline: --marketing-copy;
-      animation-range: cover calc(var(--motion-index, 0) * 3%) cover
-        calc(18% + var(--motion-index, 0) * 3%);
+      animation-range: cover calc(var(--motion-index, 0) * 2%) cover
+        calc(14% + var(--motion-index, 0) * 2%);
     }
-
     [data-marketing-motion] [data-motion-copy] > :nth-child(2) {
       --motion-index: 1;
     }
@@ -327,24 +320,76 @@
     [data-marketing-motion] [data-motion-copy] > :nth-child(n + 4) {
       --motion-index: 3;
     }
+    [data-marketing-motion] [data-motion-copy] > :is(h1, h2, h3) {
+      --motion-rise: 36px;
+    }
 
     [data-marketing-motion] :is([data-motion="media"], [data-stage-media]) {
       animation-name: marketing-media-settle;
-      animation-range: entry 0% entry 45%;
-      transform-origin: center center;
+      animation-range: entry 0% entry 60%;
+      transform-origin: center;
+    }
+    /* Clip only the scene's horizontal paint overflow, never a scroll container.
+     * No whole-scene transform: copy, media and controls stay independent.
+     */
+    [data-marketing-motion] [data-motion-scene] {
+      overflow-x: clip;
+    }
+    @media (min-width: 1024px) {
+      [data-marketing-motion] [data-motion-side="left"] {
+        --motion-media-x: -48px;
+        --motion-media-y: 16px;
+      }
+      [data-marketing-motion] [data-motion-side="right"] {
+        --motion-media-x: 48px;
+        --motion-media-y: 16px;
+      }
+      /* Shared stage timing: label/copy resolves first, then the media settles.
+       * On mobile, each stacked block instead owns its viewport entrance.
+       */
+      [data-marketing-motion] [data-motion-stage] {
+        view-timeline: --marketing-stage block;
+      }
+      [data-marketing-motion]
+        [data-motion-stage]
+        [data-motion-copy]
+        > :is(h3, p, [data-motion-label]) {
+        animation-timeline: --marketing-stage;
+        animation-range: entry 0% entry calc(34% + var(--motion-index, 0) * 6%);
+      }
+      [data-marketing-motion] [data-motion-stage] [data-stage-media] {
+        animation-timeline: --marketing-stage;
+        animation-range: entry 12% entry 70%;
+      }
     }
 
-    /* Fully opaque hero text: no opacity animation on the LCP candidate.
-     * No delay or fill mode; no animation ever touches the booking surface.
+    /* Chapter punctuation on four major homepage sections; no layout space or
+     * content is added. Geometry stays static; only scaleX is animated.
      */
+    [data-marketing-motion] [data-motion-chapter] {
+      position: relative;
+      view-timeline: --marketing-chapter block;
+    }
+    [data-marketing-motion] [data-motion-chapter]::before {
+      content: "";
+      position: absolute;
+      inset-block-start: 0;
+      inset-inline-start: max(32px, calc((100% - 1136px) / 2));
+      inline-size: 112px;
+      block-size: 2px;
+      background: #7b2fbe;
+      transform-origin: left center;
+      animation: marketing-chapter-rule auto linear both;
+      animation-timeline: --marketing-chapter;
+      animation-range: entry 0% entry 25%;
+    }
+
     [data-marketing-motion] [data-motion-hero] {
-      animation: marketing-hero-arrive 380ms cubic-bezier(0.2, 0.65, 0.3, 1);
+      animation: marketing-hero-arrive 420ms cubic-bezier(0.2, 0.65, 0.3, 1);
     }
     [data-marketing-motion] [data-motion-hero="copy"] {
-      animation-duration: 480ms;
+      animation-duration: 520ms;
     }
-
-    /* Defensive keyboard safety if copy gains a link in a future edit. */
     [data-marketing-motion]
       :is(
         [data-motion],
@@ -355,30 +400,76 @@
       ):focus-within {
       animation: none;
     }
-
     @media (max-width: 639px) {
       [data-marketing-motion] [data-motion-group] > :nth-child(n) {
         --motion-index: 0;
+        --motion-rise: 28px;
+      }
+      [data-marketing-motion] [data-motion-copy] {
+        --motion-rise: 36px;
       }
     }
   }
 }
 
-/* Existing marketing links only; no moving hit targets or changed focus rings.
- * Hover/press feedback remains independent of scroll-animation support.
+/* Explicit interactive targets, fine pointers only. No opacity reduction and
+ * no change to focus rings; active and keyboard focus return to resting position.
  */
-@media (prefers-reduced-motion: no-preference) {
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
   [data-marketing-motion] [data-motion-control] {
-    transition-property: color, background-color, border-color, opacity;
-    transition-duration: 140ms;
+    transition-property: transform, box-shadow, color, background-color,
+      border-color;
+    transition-duration: 180ms;
     transition-timing-function: ease-out;
   }
-  @media (hover: hover) {
-    [data-marketing-motion] [data-motion-control]:hover:not(:focus-visible) {
-      opacity: 0.9;
-    }
+  [data-marketing-motion]
+    [data-motion-control]:hover:not(:disabled):not(:focus-visible) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px -10px rgb(82 28 130 / 0.5);
   }
-  [data-marketing-motion] [data-motion-control]:active:not(:focus-visible) {
-    opacity: 0.82;
+  [data-marketing-motion]
+    [data-motion-control]:active:not(:disabled):not(:focus-visible) {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* Presentational hover: independent translate composes with scroll transform.
+ * No cursor, role or focus changes. Scenes have a stationary hover parent.
+ * Keyboard focus inside any group suppresses its decorative response.
+ */
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
+  [data-marketing-motion] [data-motion-hover]:not([data-motion-hover="scene"]) {
+    transition-property: translate, rotate, box-shadow;
+    transition-duration: 220ms;
+    transition-timing-function: ease-out;
+  }
+  [data-marketing-motion] [data-motion-hover="card"]:hover:not(:focus-within),
+  [data-marketing-motion] [data-motion-hover="stage"]:hover:not(:focus-within) {
+    translate: 0 -6px;
+  }
+  [data-marketing-motion] [data-motion-hover="card"]:hover:not(:focus-within) {
+    box-shadow: 0 16px 28px -18px rgb(57 24 78 / 0.35);
+  }
+  [data-marketing-motion] [data-motion-hover="stage"]:hover:not(:focus-within) [data-motion-hover="stage-media"] {
+    translate: 6px -4px;
+    rotate: 0.3deg;
+    box-shadow: 0 24px 40px -22px rgb(57 24 78 / 0.3);
+  }
+  [data-marketing-motion] [data-motion-hover="stage"][data-motion-side="left"]:hover:not(:focus-within) [data-motion-hover="stage-media"] {
+    translate: -6px -4px;
+    rotate: -0.3deg;
+  }
+  [data-marketing-motion] [data-motion-hover="stage"]:hover:not(:focus-within) [data-motion-hover="stage-copy"] {
+    translate: 0 -2px;
+    box-shadow: 0 18px 24px -24px rgb(57 24 78 / 0.4);
+  }
+  [data-marketing-motion] [data-motion-hover="scene"]:hover:not(:focus-within) > [data-motion-hover="media-left"] {
+    translate: -12px -3px;
+    rotate: -0.35deg;
+  }
+  [data-marketing-motion] [data-motion-hover="scene"]:hover:not(:focus-within) > [data-motion-hover="card-right"] {
+    translate: 12px -2px;
+    rotate: 0.35deg;
   }
 }

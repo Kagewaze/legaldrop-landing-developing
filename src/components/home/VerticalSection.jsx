@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import Link from 'next/link'
+import { MarketingLink as Link } from '@/components/MarketingNavigation'
 
 import lawOffices from '@/images/legal-lawoffices.jpg'
 import specimenRack from '@/images/medical-specimen.jpg'
@@ -375,7 +375,7 @@ export function VerticalSection({
   const layered = Boolean(photo && frame)
 
   return (
-    <section className={tinted ? 'bg-surface-tint' : undefined}>
+    <section data-motion-chapter data-motion-scene data-motion-side={frameSide} className={tinted ? 'bg-surface-tint' : undefined}>
       {/* py-12 while stacked rather than the site's py-16, the same allowance
           home/PlatformShowcase.jsx takes: a product frame plus its copy is
           already a tall block on a phone, and that height is content rather
@@ -422,12 +422,13 @@ export function VerticalSection({
             {photo ? (
               // Editorial rectangle, no card around it. Taller on a phone so the
               // subject survives the crop; wider from sm where there is room.
-              <div>
-                <div className="overflow-hidden rounded-card ring-1 ring-[oklch(0_0_0/0.1)]">
+              <div data-motion-hover="scene">
+                <div data-motion-hover="media-left" className="overflow-hidden rounded-card ring-1 ring-[oklch(0_0_0/0.1)]">
                   <Image
                     src={photo.src}
                     alt={photo.alt}
-                    sizes="(min-width: 1024px) 640px, 100vw"
+                    sizes="(min-width: 1200px) 560px, (min-width: 1024px) calc(50vw - 60px), calc(100vw - 64px)"
+                    placeholder="blur"
                     className={`w-full object-cover ${
                       layered
                         ? // The vials sit high in the frame; anchoring low would
@@ -450,7 +451,7 @@ export function VerticalSection({
                     Two distinct objects — the physical world, and the record of
                     it. Not a card inside an image. */}
                 {layered && frame ? (
-                  <div className="relative -mt-14 px-4 sm:-mt-16 sm:px-8 lg:ml-12 lg:mr-0 lg:px-0">
+                  <div data-motion-hover="card-right" className="relative -mt-14 px-4 sm:-mt-16 sm:px-8 lg:ml-12 lg:mr-0 lg:px-0">
                     {frame}
                   </div>
                 ) : null}

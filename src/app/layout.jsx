@@ -3,6 +3,9 @@ import clsx from 'clsx'
 
 import { BRAND } from '@/lib/config'
 import '@/styles/tailwind.css'
+import '@/styles/route-motion.css'
+import '@/styles/native-route-motion.css'
+import { MarketingNavigation } from '@/components/MarketingNavigation'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -120,7 +123,7 @@ export default function RootLayout({ children }) {
         manrope.variable,
       )}
     >
-      <body>{children}</body>
+      <body><MarketingNavigation>{children}</MarketingNavigation></body>
     </html>
   )
 }

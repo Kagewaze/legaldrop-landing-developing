@@ -1,4 +1,7 @@
-# Public marketing motion system
+# Public marketing motion system — Pass 1
+
+Human visual review of this commit FAILED for insufficient motion.
+See WEB_MOTION_PASS2_REPORT.md for the uncommitted second pass.
 
 ## Repository and scope
 

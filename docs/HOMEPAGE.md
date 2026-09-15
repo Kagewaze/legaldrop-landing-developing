@@ -522,6 +522,14 @@ OperationalProof values remain final server-rendered numbers. Booking, tracking,
 contact form controls, and both autoplay rails remain stationary. Only the rail
 headings receive a reveal; their containers, items and mechanics are unchanged.
 
+Pass 2 (human review of 5ec5761 failed for insufficient motion): stronger
+36–48px opaque entrances, directional media, short group cascades, thin chapter
+rules and fine-pointer CTA elevation are explicitly approved. Controls remain
+stationary during scrolling; hover feedback is opt-in and removed for reduced
+motion. The existing hero demonstration now renders immediately instead of
+starting with an empty delay. Rail mechanics and operational behavior remain
+outside this extension.
+
 ### Technical rules
 
 - Reveal animations render content **visible by default** and animate as enhancement, so a JS failure never hides the page.
@@ -638,3 +646,11 @@ Three deliberate narrowings. Each is a case where applying the vision *literally
 ### Precedence
 
 On principle — mission, positioning, trust, ethics — **`VISION.md` governs.** On homepage execution — order, gates, budgets, permissions, measurement — **this document governs.** If a genuine conflict emerges that is not one of the three narrowings above, it is a defect in one of the two documents: resolve it in the document, then build. Do not resolve it silently in code.
+
+### Human-approved presentational hover follow-up
+
+Public marketing stages, benefit/service cards and paired medical/legal scenes may respond to pointer hover without becoming links or gaining pointer cursors. Gate every response to fine hover pointers and no motion preference; suppress it while focus is inside. Independent translate/rotate properties compose with existing scroll transforms. Forms, operational maps, metrics and autoplay rails remain excluded.
+
+### Pass 5 native navigation exception
+
+The human explicitly authorizes one small persistent MarketingNavigation client coordinator and its explicit MarketingLink adapter for native old/new marketing snapshots. Server content remains server-rendered. Only normal link activation between /, /medical, /legal, /drop-batch and /contact-us participates. The coordinator does not own content, forms, image loading, scroll, hover or operational behavior. Reduced motion bypasses coordination; unsupported browsers retain Pass 4. This is the sole navigation exception to the preceding no-new-island motion budget. See WEB_NATIVE_ROUTE_MOTION_REPORT.md for synchronization and bundle measurements.

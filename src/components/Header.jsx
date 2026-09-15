@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { MarketingLink as Link } from '@/components/MarketingNavigation'
 import clsx from 'clsx'
 
 import { BRAND } from '@/lib/config'

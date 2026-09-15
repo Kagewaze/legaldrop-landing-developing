@@ -24,8 +24,8 @@ test('uses independent safe exposure flags', () => {
 
 test('renders the customer explainer with human imagery and request CTA', () => {
   assert.match(page, /Deliver farther for less with DropBatch/)
-  assert.match(page, /dropbatch-hero\.png/)
-  assert.match(page, /dropbatch-handoff\.png/)
+  assert.match(page, /dropbatch-hero\.webp/)
+  assert.match(page, /dropbatch-handoff\.webp/)
   assert.doesNotMatch(page, /medical-pharma|legal-document/)
   assert.match(page, /Get my DropBatch price/)
   assert.match(page, /href="\/drop-batch\/request"/)

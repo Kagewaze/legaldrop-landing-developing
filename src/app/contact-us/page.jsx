@@ -1,6 +1,6 @@
 "use client"
 import { EnvelopeIcon, PhoneIcon } from '@heroicons/react/24/outline'
-import Link from 'next/link'
+import { MarketingLink as Link } from '@/components/MarketingNavigation'
 import { useForm } from 'react-hook-form';
 import { useId, useRef, useState } from 'react';
 import axios from "axios"
@@ -281,14 +281,14 @@ export default function ContactUs() {
 
   return (
     <Layout>
-      <div data-marketing-motion className="bg-white" id="contact-us">
+      <div data-marketing-motion data-marketing-route="/contact-us" className="bg-white" id="contact-us">
         <div className="mx-auto max-w-[1200px] px-8 py-16 sm:py-20">
           {/* 5/7 rather than 50/50, and items-start rather than the grid's
               default stretch. Both columns used to be cells of one row whose
               height was set by the taller one, so the left column's short
               content sat top-aligned above ~435px of nothing. */}
           <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-12">
-            <div className="lg:col-span-5">
+            <div data-route-motion="intro" className="lg:col-span-5">
               <h1 data-motion-hero="heading" className="text-pretty text-4xl font-extrabold text-[#17131c] sm:text-5xl">
                 Get in touch
               </h1>

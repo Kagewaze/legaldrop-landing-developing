@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { MarketingLink as Link } from '@/components/MarketingNavigation'
 
 import { importMapsLibrary } from '@/lib/maps-loader'
 import { ROUTES } from '@/lib/navigation'
@@ -532,6 +532,7 @@ export function HeroAddressEntry() {
             with no action; the real attribute is used, and the reason is in the
             help text below rather than in a tooltip. */}
         <button
+          data-motion-control
           type="submit"
           disabled={!ready}
           className="inline-flex min-h-11 w-full items-center justify-center rounded-control bg-brand-600 px-[30px] py-3 text-base font-semibold text-white transition-colors hover:bg-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:bg-[#ece7f1] disabled:text-[#6b6474] motion-reduce:transition-none sm:w-auto sm:py-4"
@@ -540,6 +541,7 @@ export function HeroAddressEntry() {
         </button>
 
         <Link
+          data-motion-control
           href={ROUTES.contact.href}
           className="inline-flex min-h-11 w-full items-center justify-center rounded-control border border-[#d9c7e6] bg-white px-5 text-base font-semibold text-[#281632] shadow-card transition-colors hover:bg-[#f4eafb] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 sm:w-auto"
         >

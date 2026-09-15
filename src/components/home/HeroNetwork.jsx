@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { MarketingLink as Link } from '@/components/MarketingNavigation'
 
 import { ROUTES } from '@/lib/navigation'
 import { HeroAddressEntry } from '@/components/home/HeroAddressEntry'
@@ -153,12 +153,14 @@ export function HeroNetwork() {
               className="mt-6 hidden flex-col items-start gap-1 sm:mt-8 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3.5"
             >
               <Link
+                data-motion-control
                 href={ROUTES.send.href}
                 className={`${CTA_PRIMARY} w-full sm:w-auto`}
               >
                 Book a delivery
               </Link>
               <Link
+                data-motion-control
                 href={ROUTES.contact.href}
                 className={`${CTA_SECONDARY} w-full sm:w-auto`}
               >

@@ -88,10 +88,14 @@ export function ServicePanels({
       {lede && <p data-motion="reveal" className={ledeClassName}>{lede}</p>}
 
       <div data-motion-group className={`mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 ${columns}`}>
-        {panels.map((panel) => (
+        {panels.map((panel, index) => (
           <Panel
             key={panel.title}
             panel={panel}
+            priority={Heading === 'h1' && index === 0}
+            sizes={panels.length >= 3
+              ? '(min-width: 1200px) 368px, (min-width: 1024px) calc((100vw - 96px) / 3), (min-width: 640px) calc((100vw - 80px) / 2), calc(100vw - 64px)'
+              : '(min-width: 1200px) 560px, (min-width: 640px) calc((100vw - 80px) / 2), calc(100vw - 64px)'}
             headingLevel={panelHeadingLevel}
           />
         ))}
@@ -122,16 +126,17 @@ export function ServicePanels({
   )
 }
 
-function Panel({ panel, headingLevel: PanelHeading = 'h3' }) {
+function Panel({ panel, sizes, priority, headingLevel: PanelHeading = 'h3' }) {
   return (
-    <div className="relative isolate flex min-h-[320px] flex-col overflow-hidden rounded-card lg:min-h-[400px]">
+    <div data-motion-hover="card" className="relative isolate flex min-h-[320px] flex-col overflow-hidden rounded-card lg:min-h-[400px]">
       <Image
         src={panel.image}
         alt={panel.alt}
         fill
-        // Cards are a third of a 1200px column at lg, half at sm, and full
-        // width minus the container padding below that.
-        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, calc(100vw - 4rem)"
+        // Only /legal's first hero panel is prioritized. All later panels stay lazy.
+        priority={priority}
+        placeholder="blur"
+        sizes={sizes}
         className="object-cover"
       />
 

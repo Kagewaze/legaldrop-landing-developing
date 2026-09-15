@@ -208,7 +208,7 @@ const RECORD_REASONS = [
 // hundred pixels lower, pointing at the same place.
 export default function LegalPage() {
   return (
-    <div data-marketing-motion className="bg-surface-page">
+    <div data-marketing-motion data-route-motion="page" data-marketing-route="/legal" className="bg-surface-page">
       <ServicePanels
         heading="Legal document delivery for GTA firms"
         // "served documents" was here. Unqualified it reads as asserting that

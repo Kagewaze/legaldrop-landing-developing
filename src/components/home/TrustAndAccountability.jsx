@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { MarketingLink as Link } from '@/components/MarketingNavigation'
 
 import { ROUTES, SERVICE_AREA } from '@/lib/navigation'
 
@@ -102,6 +102,7 @@ const PILLARS = [
 export function TrustAndAccountability() {
   return (
     <section
+      data-motion-chapter
       data-motion-copy
       aria-labelledby="trust-accountability"
       className="mx-auto max-w-[1200px] px-8 py-12 sm:py-24"
@@ -128,7 +129,7 @@ export function TrustAndAccountability() {
 
       <div data-motion-group className="mt-9 grid grid-cols-1 gap-x-10 gap-y-6 lg:grid-cols-3">
         {PILLARS.map((pillar) => (
-          <div key={pillar.title} className={PILLAR}>
+          <div data-motion-hover="card" key={pillar.title} className={PILLAR}>
             <h3 className="text-base font-bold text-[#17131c]">
               {pillar.title}
             </h3>

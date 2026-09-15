@@ -1,9 +1,9 @@
 'use client'
 
-import Link from 'next/link'
+import { MarketingLink as Link } from '@/components/MarketingNavigation'
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react'
 
-// The ONLY client component in the site chrome. Header.jsx and Footer.jsx stay
+// The disclosure client component in the site chrome. Header.jsx and Footer.jsx stay
 // server components; this exists purely so the 'use client' boundary wraps the
 // disclosure state and nothing else.
 //

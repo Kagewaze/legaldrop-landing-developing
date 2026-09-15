@@ -229,7 +229,7 @@ const CLINIC_REASONS = [
 
 export default function MedicalPage() {
   return (
-    <div data-marketing-motion className="bg-surface-page">
+    <div data-marketing-motion data-route-motion="page" data-marketing-route="/medical" className="bg-surface-page">
       <Hero />
       <Credentials />
       <ServicePanels

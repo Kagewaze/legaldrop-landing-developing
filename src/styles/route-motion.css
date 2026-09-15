@@ -1,0 +1,51 @@
+/* Page-mount enhancement, independent of scroll-timeline support.
+ * All content stays opaque. No exit hold, image wait or loading indicator.
+ * Only explicit marketing content participates; the shared shell stays still.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes marketing-route-enter {
+    from { transform: translateY(18px); }
+    to { transform: none; }
+  }
+  @keyframes marketing-route-accent {
+    0% { transform: scaleX(0.12); opacity: 0; }
+    20% { opacity: 0.7; }
+    75% { transform: scaleX(1); opacity: 0.7; }
+    100% { transform: scaleX(1); opacity: 0; }
+  }
+  @keyframes marketing-route-hero {
+    from { transform: translateY(8px); }
+    to { transform: none; }
+  }
+  [data-marketing-motion][data-route-motion="page"],
+  [data-marketing-motion] [data-route-motion="intro"] {
+    position: relative;
+    animation: marketing-route-enter 360ms cubic-bezier(0.2, 0.65, 0.3, 1);
+  }
+  [data-marketing-motion][data-route-motion="page"]::after,
+  [data-marketing-motion] [data-route-motion="intro"]::after {
+    content: "";
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    inline-size: min(240px, 40%);
+    block-size: 2px;
+    background: #7b2fbe;
+    pointer-events: none;
+    transform-origin: left center;
+    opacity: 0;
+    animation: marketing-route-accent 420ms ease-out;
+  }
+  /* The shallow page settle and hero sequence start together, not in series. */
+  [data-marketing-motion][data-route-motion="page"] [data-motion-hero],
+  [data-marketing-motion] [data-route-motion="intro"] [data-motion-hero] {
+    animation: marketing-route-hero 360ms cubic-bezier(0.2, 0.65, 0.3, 1);
+  }
+  /* A newly focused control immediately rests; no focus or scroll scripting. */
+  [data-marketing-motion][data-route-motion="page"]:focus-within,
+  [data-marketing-motion] [data-route-motion="intro"]:focus-within,
+  [data-marketing-motion][data-route-motion="page"] [data-motion-hero]:focus-within,
+  [data-marketing-motion] [data-route-motion="intro"] [data-motion-hero]:focus-within {
+    animation: none;
+  }
+}

@@ -28,6 +28,7 @@ function ProductCanvas({ label, children }) {
   return (
     <div
       data-stage-media
+      data-motion-hover="stage-media"
       role="img"
       aria-label={label}
       className="relative flex min-h-[360px] w-full items-center justify-center overflow-hidden rounded-[28px] border border-[#ddcbea] bg-[linear-gradient(145deg,#f4eafb_0%,#fbf8fd_54%,#eee0f8_100%)] p-5 shadow-[0_2px_4px_rgba(82,28,130,0.06),0_22px_54px_-24px_rgba(82,28,130,0.34)] sm:min-h-[420px] sm:p-8 lg:min-h-[460px] lg:p-10"
@@ -387,9 +388,12 @@ function Stage({ stage, index }) {
   const reversed = index % 2 === 1
   return (
     <article
+      data-motion-stage
+      data-motion-hover="stage"
+      data-motion-side={reversed ? 'left' : 'right'}
       className={`mx-auto grid w-full max-w-[1400px] items-center gap-8 px-5 sm:px-8 lg:gap-14 xl:gap-20 ${reversed ? 'lg:grid-cols-[minmax(0,0.64fr)_minmax(0,0.36fr)] lg:[&>*:first-child]:order-2' : 'lg:grid-cols-[minmax(0,0.36fr)_minmax(0,0.64fr)]'}`}
     >
-      <div data-motion-copy className="max-w-[390px]">
+      <div data-motion-copy data-motion-hover="stage-copy" className="max-w-[390px]">
         <div data-motion-label className="flex items-center gap-3">
           <span className="font-display text-sm font-extrabold tracking-label text-brand-600">
             {stage.number}
@@ -411,6 +415,7 @@ function Stage({ stage, index }) {
 export function ProductStory() {
   return (
     <section
+      data-motion-chapter
       aria-labelledby="product-story"
       className="overflow-clip bg-[linear-gradient(180deg,#fbf9f8_0%,#f8f2fc_48%,#fbf9f8_100%)]"
     >

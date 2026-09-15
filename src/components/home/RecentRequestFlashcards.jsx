@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 // The hero's recent-request flashcards.
 //
@@ -70,7 +70,6 @@ const POSITIONS = {
 //
 // Do not close the gap further. With no quiet beat the field becomes a ticker
 // and the cards stop feeling like discrete requests arriving.
-const INITIAL_DELAY_MS = 1600
 const ENTER_MS = 380
 const VISIBLE_MS = 5200
 const EXIT_MS = 300
@@ -111,13 +110,11 @@ function RouteMotif() {
 
 export function RecentRequestFlashcards() {
   const [index, setIndex] = useState(0)
-  // idle = nothing on screen. The server renders this state, so the field starts
-  // empty and the first card arrives deliberately rather than being present at
-  // first paint.
-  const [phase, setPhase] = useState('idle')
+  // Pass 2: show the first demonstration in server HTML, without a blank
+  // hydration/startup beat. Subsequent cards retain the existing cycle.
+  const [phase, setPhase] = useState('in')
   const [paused, setPaused] = useState(false)
   const [reduced, setReduced] = useState(false)
-  const firstIdleRef = useRef(true)
 
   useEffect(() => {
     const query = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -146,16 +143,13 @@ export function RecentRequestFlashcards() {
 
     const duration =
       phase === 'idle'
-        ? firstIdleRef.current
-          ? INITIAL_DELAY_MS
-          : GAP_MS
+        ? GAP_MS
         : phase === 'in'
           ? ENTER_MS + VISIBLE_MS
           : EXIT_MS
 
     const timer = setTimeout(() => {
       if (phase === 'idle') {
-        firstIdleRef.current = false
         setPhase('in')
       } else if (phase === 'in') {
         setPhase('out')

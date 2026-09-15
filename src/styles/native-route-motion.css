@@ -1,0 +1,38 @@
+/* Native snapshots are named only during eligible in-app navigation.
+ * Root/shell are not snapshot surfaces. Pass 4 is retained for every fallback.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-druppr-vt] { view-transition-name: none; }
+  html[data-druppr-vt] [data-marketing-route] {
+    view-transition-name: druppr-page;
+  }
+  html[data-druppr-vt] [data-route-motion="page"],
+  html[data-druppr-vt] [data-route-motion="intro"],
+  [data-marketing-route][data-native-arrived][data-route-motion="page"],
+  [data-marketing-route][data-native-arrived] [data-route-motion="intro"] {
+    animation: none;
+  }
+  @keyframes druppr-page-out {
+    0% { opacity: 1; transform: none; }
+    60% { opacity: 0.94; }
+    100% { opacity: 0; transform: translateY(-8px); }
+  }
+  @keyframes druppr-page-in {
+    /* Fade the browser snapshot over the still-visible old snapshot. Starting
+     * it nearly opaque would obscure the old page immediately and look like a cut.
+     * Live DOM never receives this opacity animation. */
+    from { opacity: 0; transform: translateY(18px); }
+    60% { opacity: 0.96; }
+    to { opacity: 1; transform: none; }
+  }
+  html[data-druppr-vt]::view-transition { pointer-events: none; }
+  html[data-druppr-vt]::view-transition-group(druppr-page) { animation: none; }
+  html[data-druppr-vt]::view-transition-old(druppr-page) {
+    animation: druppr-page-out 180ms ease-out both;
+    mix-blend-mode: normal;
+  }
+  html[data-druppr-vt]::view-transition-new(druppr-page) {
+    animation: druppr-page-in 300ms cubic-bezier(0.2, 0.65, 0.3, 1) both;
+    mix-blend-mode: normal;
+  }
+}

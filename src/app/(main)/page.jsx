@@ -129,7 +129,7 @@ export default async function Home() {
   return (
     // surface.page — a warm off-white, not #fff. Cards on this page are pure
     // white, so they sit ON the ground rather than dissolving into it.
-    <div data-marketing-motion className="bg-surface-page">
+    <div data-marketing-motion data-route-motion="page" data-marketing-route="/" className="bg-surface-page">
       {/* Keeps the hero and the metrics band on ONE continuous surface. Both
           sections carry no background of their own; giving either one back a
           background reintroduces the seam this removes.
