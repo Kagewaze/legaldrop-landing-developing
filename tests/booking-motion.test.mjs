@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import postcss from 'postcss'
 import { parse } from 'espree'
-import { BOOKING_ROUTES, bookingTransitionPlan, eligibleBookingHref, bookingSurfaceAvailable, positionBookingSnapshot } from '../src/components/booking-navigation.mjs'
+import { BOOKING_ROUTES, bookingTransitionPlan, eligibleBookingHref, bookingSurfaceAvailable } from '../src/components/booking-navigation.mjs'
 import { createMarketingNavigation, MARKETING_ROUTES } from '../src/components/marketing-navigation.mjs'
 
 const read = p => readFileSync(new URL(`../${p}`,import.meta.url),'utf8').replaceAll('\r\n','\n')
@@ -51,7 +51,7 @@ test('open autocomplete lists and live Stripe prevent booking snapshot initializ
 function harness({reduce=false,absent=false,throwApi=false}={}) {
  const attributes=new Map(),pushes=[],markers=new Set()
  let callback,resolveFinished,check
- const doc={documentElement:{style:{setProperty:(k,v)=>attributes.set(k,v),removeProperty:k=>attributes.delete(k)},setAttribute:(k,v)=>attributes.set(k,v),removeAttribute:k=>attributes.delete(k)},querySelectorAll:()=>[],querySelector:selector=>selector==='[data-booking-surface], [data-marketing-route]'?{getBoundingClientRect:()=>({left:32,top:100,width:420})}:markers.has(selector)?{setAttribute(){}}:null}
+ const doc={documentElement:{style:{setProperty:(k,v)=>attributes.set(k,v),removeProperty:k=>attributes.delete(k)},setAttribute:(k,v)=>attributes.set(k,v),removeAttribute:k=>attributes.delete(k)},querySelectorAll:()=>[],querySelector:selector=>selector==='[data-booking-surface], [data-marketing-route]'?{}:markers.has(selector)?{setAttribute(){}}:null}
  if(!absent)doc.startViewTransition=fn=>{
   if(throwApi)throw Error('unsupported snapshot')
   callback=Promise.resolve().then(fn)
@@ -64,11 +64,11 @@ function harness({reduce=false,absent=false,throwApi=false}={}) {
 
 test('booking uses the existing commit coordinator with a distinct flag and DOM marker',async()=>{
  const h=harness();assert.equal(h.controller.navigate('/send/details',true),true);await tick()
- assert.deepEqual(h.pushes,['/send/details']);assert.equal(h.attributes.get('data-druppr-booking'),'forward');assert.equal(h.attributes.has('data-druppr-vt'),false)
+ assert.deepEqual(h.pushes,['/send/details']);assert.equal(h.attributes.get('data-druppr-booking'),'forward');assert.equal(h.attributes.has('data-druppr-vt'),false);assert.equal(h.attributes.get('data-booking-in'),'/send/details')
  let done=false;h.done().then(()=>{done=true})
  h.controller.commit('/send/details');await tick();assert.equal(done,false)
  h.markers.add('[data-booking-route="/send/details"]');h.check();await tick();assert.equal(done,true)
- h.finish();await tick();assert.equal(h.attributes.has('data-druppr-booking'),false)
+ h.finish();await tick();assert.equal(h.attributes.has('data-druppr-booking'),false);assert.equal(h.attributes.has('data-booking-in'),false)
 })
 
 test('booking reduced motion and native setup failure return control to ordinary Next links',()=>{
@@ -127,27 +127,37 @@ test('dependencies, marketing styling, forms, payment handlers, maps and calcula
  }
 })
 
-test('different snapshot panels preserve outgoing pixel size and viewport origin',()=>{
- const properties=new Map()
- const doc={documentElement:{style:{setProperty:(k,v)=>properties.set(k,v)}},querySelector:()=>({getBoundingClientRect:()=>({left:600,top:80,width:360})})}
- assert.equal(positionBookingSnapshot(doc,{left:32,top:120,width:420}),true)
- assert.equal(properties.get('--booking-old-x'),'-568px')
- assert.equal(properties.get('--booking-old-y'),'40px')
- assert.equal(properties.get('--booking-old-width'),'420px')
- const css=postcss.parse(read('src/styles/booking-motion.css'))
- css.walkDecls(/^(width|max-width|height)$/,decl=>assert.match(decl.parent.selector,/::view-transition-old\(druppr-booking\)/))
+test('workflow snapshots are distinct, clipped and independently based without repositioning',()=>{
+ const text=read('src/styles/booking-motion.css'),css=postcss.parse(text),names=[]
+ css.walkDecls('view-transition-name',d=>{if(d.value!=='none')names.push(d.value)})
+ assert.deepEqual(names,['addresses','details','payment','dropbatch','marketing'].map(n=>`druppr-booking-${n}`))
+ assert.doesNotMatch(text,/view-transition-name: druppr-booking;|\(druppr-booking\)/)
+ for(const [route,name] of [['/send','addresses'],['/send/details','details'],['/send/pay','payment'],['/drop-batch/request','dropbatch']]) {
+  let base=false
+  css.walkRules(rule=>{if(rule.selector===`html[data-druppr-booking][data-booking-in="${route}"]::view-transition-group(druppr-booking-${name})`) {
+   assert.ok(rule.nodes.some(d=>d.prop==='z-index'&&d.value==='2'))
+   assert.ok(rule.nodes.some(d=>d.prop==='background'&&['#fff','#f6f4f8','#fbf9fc'].includes(d.value)));base=true
+  }})
+  assert.ok(base,route)
+ }
+ for(const name of names)for(const pseudo of ['group','image-pair']) {
+  let clipped=false
+  css.walkRules(rule=>{if(rule.selector.includes(`::view-transition-${pseudo}(${name})`)&&rule.nodes.some(d=>d.prop==='overflow'&&d.value==='clip'))clipped=true})
+  assert.ok(clipped,`${name} ${pseudo}`)
+ }
+ for(const file of ['src/components/booking-navigation.mjs','src/components/marketing-navigation.mjs','src/styles/booking-motion.css'])assert.doesNotMatch(read(file),/bookingSurfaceRect|positionBookingSnapshot|clearBookingSnapshot|--booking-old-|getBoundingClientRect/)
 })
 
-test('approved workflow amplitude, neutral settle, progress and final price feedback remain visible',()=>{
+test('old snapshots vanish; incoming snapshots stay solid; progress and price remain approved',()=>{
  const css=read('src/styles/booking-motion.css')
- assert.match(css,/booking-step-out 300ms cubic-bezier\(0\.4, 0, 0\.2, 1\) both/)
+ assert.match(css,/booking-step-out 280ms cubic-bezier\(0\.4, 0, 0\.2, 1\) both/)
  assert.match(css,/booking-step-in 420ms cubic-bezier\(0\.22, 1, 0\.36, 1\)/)
- assert.match(css,/65% \{ opacity: 0\.94; transform: translate\(calc\(var\(--booking-old-x, 0px\) - 10px/)
- assert.match(css,/100% \{ opacity: 0\.88; transform: translate\(calc\(var\(--booking-old-x, 0px\) - 18px/)
- assert.match(css,/0% \{ opacity: var\(--booking-enter-opacity, 0\.18\); transform: translate\(calc\(24px \* var\(--booking-direction, 1\)\), var\(--booking-enter-y, 0px\)\)/)
- assert.match(css,/35% \{ opacity: 0\.72; transform: translate\(calc\(10px \* var\(--booking-direction, 1\)\)/)
+ assert.match(css,/55% \{ opacity: 0\.7; transform: translateX\(calc\(-10px/)
+ assert.match(css,/100% \{ opacity: 0; transform: translateX\(calc\(-16px/)
+ assert.match(css,/0% \{ opacity: 0\.88; transform: translate\(calc\(24px/)
+ assert.match(css,/40% \{ opacity: 0\.97; transform: translate\(calc\(8px/)
  assert.match(css,/--booking-direction: -1/)
- assert.match(css,/--booking-direction: 0;\s*--booking-enter-y: 8px;\s*--booking-enter-mid-y: 3px;\s*--booking-enter-opacity: 0\.35;\s*animation-duration: 340ms/)
+ assert.match(css,/--booking-direction: 0; --booking-enter-y: 8px; --booking-enter-mid-y: 3px; animation-duration: 340ms/)
  assert.match(css,/transition: transform 380ms cubic-bezier\(0\.22, 1, 0\.36, 1\)/)
  assert.match(css,/opacity: 0\.8; transform: translateY\(4px\)/)
  assert.match(css,/booking-price-state 220ms ease-out/)

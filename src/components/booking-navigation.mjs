@@ -32,23 +32,3 @@ export function bookingSurfaceAvailable(doc, current) {
   if (current === '/send/pay' && doc.querySelector('[data-booking-route="/send/pay"] iframe')) return false
   return true
 }
-
-// Different steps intentionally name different safe panels. Retain the old
-// bitmap's original geometry instead of stretching it into the new panel.
-// These are one-time snapshot coordinates, never live layout or scrolling.
-export function bookingSurfaceRect(doc) {
-  return doc.querySelector('[data-booking-surface], [data-marketing-route]')?.getBoundingClientRect()
-}
-
-export function positionBookingSnapshot(doc, oldRect) {
-  const nextRect = bookingSurfaceRect(doc)
-  if (!oldRect || !nextRect) return false
-  doc.documentElement.style.setProperty('--booking-old-x', `${oldRect.left - nextRect.left}px`)
-  doc.documentElement.style.setProperty('--booking-old-y', `${oldRect.top - nextRect.top}px`)
-  doc.documentElement.style.setProperty('--booking-old-width', `${oldRect.width}px`)
-  return true
-}
-
-export function clearBookingSnapshot(doc) {
-  for (const property of ['--booking-old-x', '--booking-old-y', '--booking-old-width']) doc.documentElement.style.removeProperty(property)
-}

@@ -1,4 +1,4 @@
-import { bookingTransitionPlan, bookingSurfaceAvailable, bookingSurfaceRect, positionBookingSnapshot, clearBookingSnapshot } from './booking-navigation.mjs'
+import { bookingTransitionPlan, bookingSurfaceAvailable } from './booking-navigation.mjs'
 
 // Exact allowlist, shared by link eligibility and commit verification.
 export const MARKETING_ROUTES = ['/', '/medical', '/legal', '/drop-batch', '/contact-us']
@@ -25,7 +25,7 @@ export function createMarketingNavigation({ doc, push, observe, reduced }) {
     if (pending === job) {
       pending = null
       doc.documentElement.removeAttribute(job.booking ? 'data-druppr-booking' : 'data-druppr-vt')
-      if (job.booking) clearBookingSnapshot(doc)
+      if (job.booking) doc.documentElement.removeAttribute('data-booking-in')
     }
   }
   function cancel() {
@@ -39,11 +39,6 @@ export function createMarketingNavigation({ doc, push, observe, reduced }) {
     if (!job || !job.resolve || pathname !== job.href) return
     const surface = doc.querySelector(`[${job.booking ? 'data-booking-route' : 'data-marketing-route'}="${job.href}"]`)
     if (!surface) return
-    if (job.booking) {
-      try {
-        if (!positionBookingSnapshot(doc, job.bookingRect)) { cancel(); return }
-      } catch { cancel(); return }
-    }
     // Persist on this DOM instance after native completion, so removing the
     // active flag cannot restart Pass 4's fallback entrance a second time.
     if (!job.booking) surface.setAttribute('data-native-arrived', '')
@@ -62,22 +57,21 @@ export function createMarketingNavigation({ doc, push, observe, reduced }) {
       const booking = workflow ? bookingTransitionPlan(pathname, href, MARKETING_ROUTES) : null
       if (workflow ? !booking : (!MARKETING_ROUTES.includes(pathname) || !MARKETING_ROUTES.includes(href) || href === pathname)) return false
       if (reduced() || typeof doc.startViewTransition !== 'function') return false
-      let bookingRect
       try {
         if (booking) {
           if (!bookingSurfaceAvailable(doc, pathname)) return false
-          bookingRect = bookingSurfaceRect(doc)
-          if (!bookingRect) return false
+          if (!doc.querySelector('[data-booking-surface], [data-marketing-route]')) return false
         }
       } catch { return false }
       cancel()
-      const job = { href, from: pathname, started: false, booking, bookingRect }
+      const job = { href, from: pathname, started: false, booking }
       pending = job
       try {
         // Initialize observation before taking over a link; setup failure leaves
         // the original Next Link activation intact.
         job.disconnect = observe(checkCommit)
         doc.documentElement.setAttribute(booking ? 'data-druppr-booking' : 'data-druppr-vt', booking?.direction ?? '')
+        if (booking) doc.documentElement.setAttribute('data-booking-in', href)
         job.transition = doc.startViewTransition(() => {
           // A superseded/skipped callback must never push an obsolete route.
           if (pending !== job) return
