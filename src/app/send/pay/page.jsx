@@ -92,6 +92,7 @@ export default function SendPayPage() {
   const [clientSecret, setClientSecret] = useState(null)
   const [quote, setQuote] = useState(null)
   const [fee, setFee] = useState(null)
+  const [referralAdjustment, setReferralAdjustment] = useState(0)
   const [trackingCode, setTrackingCode] = useState(null)
   const [failureMessage, setFailureMessage] = useState(null)
   const [retrying, setRetrying] = useState(false)
@@ -344,6 +345,7 @@ export default function SendPayPage() {
           // second one.
           setClientSecret(stored.clientSecret)
           setFee(Number(stored.fee))
+          setReferralAdjustment(Number(stored.referralAdjustment) || 0)
           setPhase('ready')
           return
         }
@@ -460,11 +462,14 @@ export default function SendPayPage() {
       const feeBody = await feeResponse.json()
       const feeData = feeBody?.data ?? feeBody
       const feeAmount = Number(feeData?.fee)
+      const chargedAmount = Number(feeData?.amountMinor) / 100
+      const channelAdjustment = Number(feeData?.referralAdjustmentMinor ?? 0) / 100
       const intentId = feeData?.paymentIntentId
       const secret = feeData?.paymentIntentSecret
 
       if (
         !Number.isFinite(feeAmount) ||
+        !Number.isFinite(chargedAmount) ||
         typeof intentId !== 'string' ||
         typeof secret !== 'string'
       ) {
@@ -501,10 +506,12 @@ export default function SendPayPage() {
         inputsHash,
         paymentIntentId: intentId,
         clientSecret: secret,
-        fee: feeAmount,
+        fee: chargedAmount,
+        referralAdjustment: channelAdjustment,
       })
 
-      setFee(feeAmount)
+      setReferralAdjustment(channelAdjustment)
+      setFee(chargedAmount)
       // Last, and the point of no return for this button: the card form takes
       // its place from here on.
       setClientSecret(secret)
@@ -524,13 +531,14 @@ export default function SendPayPage() {
       paymentIntentId: paymentIntentIdRef.current,
       clientSecret,
       fee,
+      referralAdjustment,
       orderPayload: buildOrderPayload({
         flow,
         quote,
         paymentIntentId: paymentIntentIdRef.current,
       }),
     })
-  }, [inputsHash, clientSecret, fee, flow, quote])
+  }, [inputsHash, clientSecret, fee, referralAdjustment, flow, quote])
 
   const handlePaid = useCallback(async () => {
     setPhase('placing')
@@ -856,12 +864,20 @@ export default function SendPayPage() {
             </p>
           </div>
         ) : (
-          <PriceBreakdown
-            quote={quote}
-            vehicleName={vehicle.name}
-            packageCount={flow.packageCount}
-            weightLabel={weightLabel}
-          />
+          <>
+            <PriceBreakdown
+              quote={quote}
+              vehicleName={vehicle.name}
+              packageCount={flow.packageCount}
+              weightLabel={weightLabel}
+            />
+            {referralAdjustment > 0 ? (
+              <div className="mt-3 rounded-xl border border-brand-200 bg-white p-4 text-[14px]">
+                <div className="flex justify-between"><span>Referral channel adjustment (3%)</span><strong>{formatMoney(referralAdjustment)}</strong></div>
+                <div className="mt-2 flex justify-between text-[16px]"><span>Total charged</span><strong>{formatMoney(fee)}</strong></div>
+              </div>
+            ) : null}
+          </>
         )}
       </div>
     </div>
