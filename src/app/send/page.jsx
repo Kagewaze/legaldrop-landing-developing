@@ -7,6 +7,7 @@ import { guestFetch } from '@/lib/guest-session'
 import { hasBothAddresses, useSendFlow, weightKgFor } from '@/lib/send-flow'
 import { AddressAutocomplete } from '@/components/send/AddressAutocomplete'
 import { SendMap } from '@/components/send/SendMap'
+import { ReferralNotice } from '@/components/ReferralNotice'
 
 // Step 1 — addresses.
 //
@@ -201,6 +202,7 @@ export default function SendAddressesPage() {
         <h1 className="text-[26px] font-extrabold tracking-[-0.02em] text-[#17131c]">
           Send a package
         </h1>
+        <ReferralNotice />
         <p className="mt-2 text-[15px] text-[#5f5868]">Where is it going?</p>
 
         {/* ONE container holding both rows. The rows carry no border of their
