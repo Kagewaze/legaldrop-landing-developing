@@ -7,7 +7,7 @@ import { Elements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
 
 import { API_BASE_URL } from '@/lib/config'
-import { guestFetch } from '@/lib/guest-session'
+import { guestFetch, referralCheckoutFetch } from '@/lib/guest-session'
 import {
   WEIGHT_OPTIONS,
   clearPaymentSession,
@@ -408,9 +408,7 @@ export default function SendPayPage() {
     try {
       const { contact } = flow
 
-      const feeResponse = await guestFetch('/order/get-fee', {
-        method: 'POST',
-        body: {
+      const feeResponse = await referralCheckoutFetch({
           ...(flow.pricingMode === 'dropbatch'
             ? {
                 pricingMode: 'dropbatch',
@@ -453,7 +451,6 @@ export default function SendPayPage() {
               distance,
             },
           ],
-        },
       })
 
       if (!feeResponse.ok) {

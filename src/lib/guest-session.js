@@ -212,7 +212,10 @@ export function getGuestSession({ forceRefresh = false } = {}) {
 // plain object and is serialised here. Returns the raw Response so callers own
 // status handling — this helper deliberately does not decide what a non-200
 // means for a quote versus an order.
-export async function guestFetch(path, { method = 'GET', body, headers = {}, ...rest } = {}) {
+export async function guestFetch(
+  path,
+  { method = 'GET', body, headers = {}, ...rest } = {},
+) {
   const send = (session) =>
     fetch(`${API_BASE_URL}${path}`, {
       ...rest,
@@ -238,4 +241,22 @@ export async function guestFetch(path, { method = 'GET', body, headers = {}, ...
   const refreshed = await getGuestSession({ forceRefresh: true })
 
   return send(refreshed)
+}
+
+// Same-origin checkout proxy keeps the HttpOnly referral reference outside browser JavaScript.
+export async function referralCheckoutFetch(body) {
+  const send = async (forceRefresh = false) => {
+    const session = await getGuestSession({ forceRefresh })
+    return fetch('/api/referral/checkout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + session.token,
+      },
+      body: JSON.stringify(body),
+      cache: 'no-store',
+    })
+  }
+  const response = await send(false)
+  return response.status === 401 ? send(true) : response
 }

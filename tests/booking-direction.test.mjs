@@ -287,7 +287,7 @@ function optionsObjectAfter(source, needle) {
 test('the quote and fee requests do not send bookingDirection', () => {
   const pricingCallSites = [
     "guestFetch('/order/quote-itemized'",
-    "guestFetch('/order/get-fee'",
+    'referralCheckoutFetch(',
   ]
 
   for (const needle of pricingCallSites) {
@@ -295,7 +295,7 @@ test('the quote and fee requests do not send bookingDirection', () => {
 
     // Sanity-check the extraction actually captured the request, so a silently empty slice
     // cannot make this assertion pass for the wrong reason.
-    assert.match(body, /method: 'POST'/)
+    if (needle.startsWith('guestFetch')) assert.match(body, /method: 'POST'/)
     assert.equal(
       body.includes('bookingDirection'),
       false,

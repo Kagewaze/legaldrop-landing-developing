@@ -139,7 +139,7 @@ test('DropBatch persists and exposes a new intent only after fee equality succee
 
 test('DropBatch refresh and same-input price changes require a new get-fee intent', () => {
   const storedRead = payment.indexOf('const stored = readPaymentSession()')
-  const getFee = payment.indexOf("guestFetch('/order/get-fee'")
+  const getFee = payment.indexOf('referralCheckoutFetch(')
 
   assert.ok(storedRead >= 0)
   assert.ok(getFee > storedRead)
