@@ -3,7 +3,7 @@ import { API_BASE_URL } from '@/lib/config'
 import { publicCapture, REFERRAL_COOKIE } from '@/lib/referral-continuity.mjs'
 export const dynamic = 'force-dynamic'
 export async function GET(request, { params }) {
-  const destination = new URL('/send', request.url)
+  const destination = new URL('/send', 'https://druppr.ca')
   try {
     const response = await fetch(
       API_BASE_URL + '/public/referrals/' + encodeURIComponent(params.slug) + '/resolve',
