@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 
-import { guestFetch } from '@/lib/guest-session'
+import { referralQuoteFetch } from '@/lib/guest-session'
+import { normalizeCustomerQuote } from '@/lib/customer-quote.mjs'
 import { weightKgFor } from '@/lib/send-flow'
 import { VEHICLES, packageCapacityRefusal } from '@/components/send/vehicles'
 
@@ -17,44 +18,6 @@ import { VEHICLES, packageCapacityRefusal } from '@/components/send/vehicles'
 // has not agreed to pay from.
 
 const DEBOUNCE_MS = 400
-
-function toNumber(value) {
-  const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : 0
-}
-
-// The documented response is { lineItems: {...}, platformFee, total, distanceKm,
-// vehicle } — note lineItems is NESTED while platformFee/total/distanceKm are
-// top level. Other endpoints in this backend wrap in { success, data }, so
-// accept either envelope.
-function normalizeQuote(raw) {
-  if (!raw || typeof raw !== 'object') {
-    return null
-  }
-
-  const total = Number(raw.total)
-
-  if (!Number.isFinite(total)) {
-    return null
-  }
-
-  const lineItems = raw.lineItems ?? {}
-
-  return {
-    lineItems: {
-      base: toNumber(lineItems.base),
-      distance: toNumber(lineItems.distance),
-      extraPackage: toNumber(lineItems.extraPackage),
-      labour: toNumber(lineItems.labour),
-      heavyFee: toNumber(lineItems.heavyFee),
-    },
-    platformFee: toNumber(raw.platformFee),
-    total,
-    distanceKm: Number.isFinite(Number(raw.distanceKm))
-      ? Number(raw.distanceKm)
-      : null,
-  }
-}
 
 // The trip distance, taken from whichever vehicles DID price.
 //
@@ -104,6 +67,7 @@ export function useVehicleQuotes({ pickup, dropoff, packageCount, weight }) {
 
     let cancelled = false
     setStatus('loading')
+    setQuotes({})
     // Cleared immediately, unlike `quotes` — a lingering price is a harmless
     // stale number, but "not available over 10 km" carried onto a trip that is
     // now under 10 km is an untrue statement about the new route.
@@ -144,12 +108,10 @@ export function useVehicleQuotes({ pickup, dropoff, packageCount, weight }) {
             }
 
             try {
-              const response = await guestFetch('/order/quote-itemized', {
-                method: 'POST',
-                body: requestFor(vehicle),
-              })
+              const response = await referralQuoteFetch(requestFor(vehicle))
 
               if (!response.ok) {
+                if (response.status === 503) return [vehicle.id, null, false]
                 // The backend refused THIS vehicle for THIS trip. It answers
                 // with a bare 500 and no reason, so the reason is inferred
                 // from the distance in VehiclePicker rather than guessed here.
@@ -160,7 +122,7 @@ export function useVehicleQuotes({ pickup, dropoff, packageCount, weight }) {
 
               return [
                 vehicle.id,
-                normalizeQuote(payload?.data ?? payload),
+                normalizeCustomerQuote(payload?.data ?? payload),
                 false,
               ]
             } catch (error) {

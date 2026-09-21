@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { MarketingLink as Link } from '@/components/MarketingNavigation'
 
-import { guestFetch } from '@/lib/guest-session'
+import { referralQuoteFetch } from '@/lib/guest-session'
 import { hasBothAddresses, useSendFlow, weightKgFor } from '@/lib/send-flow'
 import { AddressAutocomplete } from '@/components/send/AddressAutocomplete'
 import { SendMap } from '@/components/send/SendMap'
@@ -72,22 +72,19 @@ function useBackendDistanceKm(pickup, dropoff) {
     async function probe() {
       try {
         // Uses the shared guest session — same token as step 2, minted once.
-        const response = await guestFetch('/order/quote-itemized', {
-          method: 'POST',
-          body: {
-            senderLocation: { latitude: pickup.lat, longitude: pickup.lng },
-            receivers: [
-              {
-                receiverLocation: {
-                  latitude: dropoff.lat,
-                  longitude: dropoff.lng,
-                },
-                weight: weightKgFor('light'),
+        const response = await referralQuoteFetch({
+          senderLocation: { latitude: pickup.lat, longitude: pickup.lng },
+          receivers: [
+            {
+              receiverLocation: {
+                latitude: dropoff.lat,
+                longitude: dropoff.lng,
               },
-            ],
-            vehicle: 'car',
-            packageCount: 1,
-          },
+              weight: weightKgFor('light'),
+            },
+          ],
+          vehicle: 'car',
+          packageCount: 1,
         })
 
         if (!response.ok) {

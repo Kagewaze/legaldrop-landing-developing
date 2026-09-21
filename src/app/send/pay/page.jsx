@@ -7,7 +7,7 @@ import { Elements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
 
 import { API_BASE_URL } from '@/lib/config'
-import { guestFetch, referralCheckoutFetch } from '@/lib/guest-session'
+import { guestFetch, referralCheckoutFetch, referralQuoteFetch } from '@/lib/guest-session'
 import {
   WEIGHT_OPTIONS,
   clearPaymentSession,
@@ -22,6 +22,7 @@ import {
 import { ContactFields } from '@/components/send/ContactFields'
 import { PaymentForm } from '@/components/send/PaymentForm'
 import { PriceBreakdown, formatMoney } from '@/components/send/PriceBreakdown'
+import { normalizeCustomerQuote } from '@/lib/customer-quote.mjs'
 import { buildOrderPayload } from '@/components/send/buildOrderPayload'
 import {
   DROPBATCH_EXPLANATION,
@@ -253,25 +254,22 @@ export default function SendPayPage() {
             distanceKm: routeDistanceKm,
           }
         } else {
-          const quoteResponse = await guestFetch('/order/quote-itemized', {
-            method: 'POST',
-            body: {
-              senderLocation: {
-                latitude: flow.pickup.lat,
-                longitude: flow.pickup.lng,
-              },
-              receivers: [
-                {
-                  receiverLocation: {
-                    latitude: flow.dropoff.lat,
-                    longitude: flow.dropoff.lng,
-                  },
-                  weight: weightKgFor(flow.weight),
-                },
-              ],
-              vehicle: apiKeyFor(flow.vehicle),
-              packageCount: flow.packageCount,
+          const quoteResponse = await referralQuoteFetch({
+            senderLocation: {
+              latitude: flow.pickup.lat,
+              longitude: flow.pickup.lng,
             },
+            receivers: [
+              {
+                receiverLocation: {
+                  latitude: flow.dropoff.lat,
+                  longitude: flow.dropoff.lng,
+                },
+                weight: weightKgFor(flow.weight),
+              },
+            ],
+            vehicle: apiKeyFor(flow.vehicle),
+            packageCount: flow.packageCount,
           })
 
           if (!quoteResponse.ok) {
@@ -280,20 +278,10 @@ export default function SendPayPage() {
 
           const quoteBody = await quoteResponse.json()
           const quoteData = quoteBody?.data ?? quoteBody
-          normalizedQuote = {
-            lineItems: {
-              base: Number(quoteData?.lineItems?.base) || 0,
-              distance: Number(quoteData?.lineItems?.distance) || 0,
-              extraPackage: Number(quoteData?.lineItems?.extraPackage) || 0,
-              labour: Number(quoteData?.lineItems?.labour) || 0,
-              heavyFee: Number(quoteData?.lineItems?.heavyFee) || 0,
-            },
-            total: Number(quoteData?.total),
-            distanceKm: Number(quoteData?.distanceKm),
-          }
+          normalizedQuote = normalizeCustomerQuote(quoteData)
         }
 
-        if (!Number.isFinite(normalizedQuote.total)) {
+        if (!normalizedQuote || !Number.isFinite(normalizedQuote.total)) {
           throw new Error('Could not price this delivery')
         }
 
@@ -343,6 +331,11 @@ export default function SendPayPage() {
 
           // Not paid yet — safe to reuse the same intent rather than minting a
           // second one.
+          if (Math.round(Number(stored.fee) * 100) !== normalizedQuote.finalCustomerTotalMinor) {
+            setFailureMessage('The price has changed. Please review your delivery quote.')
+            setPhase('priceMismatch')
+            return
+          }
           setClientSecret(stored.clientSecret)
           setFee(Number(stored.fee))
           setReferralAdjustment(Number(stored.referralAdjustment) || 0)
@@ -479,18 +472,16 @@ export default function SendPayPage() {
       // The price must not have moved between the quote on mount and here. If
       // it has, something is wrong and the customer must not pay a number they
       // were never shown. Nothing has been charged at this point.
-      if (Math.abs(feeAmount - quote.total) >= 0.01) {
+      const previewMinor = quote.finalCustomerTotalMinor ?? Math.round(quote.total * 100)
+      const paymentMinor = Number(feeData?.amountMinor)
+      if (!Number.isSafeInteger(paymentMinor) || paymentMinor !== previewMinor) {
         // The newly-created intent has not entered active UI or storage, and
         // any prior same-input DropBatch record must remain unusable. The
         // customer reviews/requotes rather than silently paying Standard.
         if (flow.pricingMode === 'dropbatch') {
           clearPaymentSession()
         }
-        setFailureMessage(
-          `The price changed from ${formatMoney(quote.total)} to ${formatMoney(
-            feeAmount,
-          )}.`,
-        )
+        setFailureMessage('The price has changed. Please review your delivery quote.')
         setPhase('priceMismatch')
         return
       }
@@ -871,12 +862,6 @@ export default function SendPayPage() {
               packageCount={flow.packageCount}
               weightLabel={weightLabel}
             />
-            {referralAdjustment > 0 ? (
-              <div className="mt-3 rounded-xl border border-brand-200 bg-white p-4 text-[14px]">
-                <div className="flex justify-between"><span>Referral channel adjustment (3%)</span><strong>{formatMoney(referralAdjustment)}</strong></div>
-                <div className="mt-2 flex justify-between text-[16px]"><span>Total charged</span><strong>{formatMoney(fee)}</strong></div>
-              </div>
-            ) : null}
           </>
         )}
       </div>

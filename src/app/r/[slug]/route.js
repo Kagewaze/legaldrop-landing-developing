@@ -34,6 +34,14 @@ export async function GET(request, { params }) {
   } catch {
     destination.searchParams.set('referral', 'unavailable')
     const result = NextResponse.redirect(destination, 303)
+    result.cookies.set(REFERRAL_COOKIE, '', {
+      httpOnly: true,
+      secure: request.nextUrl.protocol === 'https:',
+      sameSite: 'lax',
+      path: '/',
+      expires: new Date(0),
+      maxAge: 0,
+    })
     result.headers.set('Cache-Control', 'no-store')
     return result
   }

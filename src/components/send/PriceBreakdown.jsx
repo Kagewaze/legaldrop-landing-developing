@@ -44,6 +44,7 @@ export function PriceBreakdown({ quote, vehicleName, packageCount, weightLabel }
     },
     // The design omits these two entirely, which is why its numbers do not sum.
     { key: 'handling', label: 'Handling / labour', value: handling },
+    { key: 'serviceFee', label: 'Service fee', value: Number(lineItems.serviceFee) || 0 },
     // platformFee is deliberately NOT a row here, and this is SETTLED — do not
     // "fix" it by adding one.
     //

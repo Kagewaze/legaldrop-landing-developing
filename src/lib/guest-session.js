@@ -260,3 +260,21 @@ export async function referralCheckoutFetch(body) {
   const response = await send(false)
   return response.status === 401 ? send(true) : response
 }
+
+// Pure same-origin quote proxy; the referral capability remains in the HttpOnly cookie.
+export async function referralQuoteFetch(body) {
+  const send = async (forceRefresh = false) => {
+    const session = await getGuestSession({ forceRefresh })
+    return fetch('/api/referral/quote', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + session.token,
+      },
+      body: JSON.stringify(body),
+      cache: 'no-store',
+    })
+  }
+  const response = await send(false)
+  return response.status === 401 ? send(true) : response
+}

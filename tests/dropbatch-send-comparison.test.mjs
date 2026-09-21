@@ -93,7 +93,7 @@ test('checkout sends mode to both money authorities and never sends the displaye
   assert.match(payment, /pickUpTime: flow\.scheduledPickupAt/)
   assert.match(payload, /pricingMode:[\s\S]*flow\.pricingMode === 'dropbatch'/)
   assert.doesNotMatch(payload, /senderPays|dropBatch\.senderPays/)
-  assert.match(payment, /Math\.abs\(feeAmount - quote\.total\) >= 0\.01/)
+  assert.match(payment, /paymentMinor !== previewMinor/)
 })
 
 test('DropBatch failure never silently falls back to standard at payment', () => {
@@ -124,7 +124,7 @@ test('DropBatch never restores a stored PaymentIntent while Standard recovery re
 })
 
 test('DropBatch persists and exposes a new intent only after fee equality succeeds', () => {
-  const comparison = payment.indexOf('Math.abs(feeAmount - quote.total) >= 0.01')
+  const comparison = payment.indexOf('paymentMinor !== previewMinor')
   const persistence = payment.indexOf('writePaymentSession({', comparison)
   const exposure = payment.indexOf('setClientSecret(secret)', comparison)
 
