@@ -1,6 +1,6 @@
 'use client'
 
-import { MarketingLink as Link } from '@/components/MarketingNavigation'
+import { ViaLink as Link } from '@/components/send/ViaLink'
 import { useState } from 'react'
 
 import { AddressAutocomplete } from '@/components/send/AddressAutocomplete'
@@ -201,6 +201,11 @@ export function DropBatchRequestFlow() {
                 <div className="mt-5">
                   <p className="text-sm font-bold text-[#5f5868]">Your DropBatch price</p>
                   <p data-booking-price key={result.senderPays} className="mt-1 text-4xl font-extrabold">{formatMoney(result.senderPays)}</p>
+                  {quote?.lineItems?.serviceFee > 0 && (
+                    <p className="mt-2 text-sm text-[#5f5868]">
+                      Delivery fare {formatMoney(quote.lineItems.deliveryFare)} ? Service fee {formatMoney(quote.lineItems.serviceFee)}
+                    </p>
+                  )}
                   {Number.isFinite(Number(quote?.routeDistanceKm)) && <p className="mt-3 text-sm text-[#5f5868]">Route distance: {Number(quote.routeDistanceKm).toFixed(1)} km</p>}
                   <p className="mt-2 text-sm text-[#5f5868]">This is authoritative long-distance pricing. Your price does not depend on a driver already being assigned.</p>
                   <p className="mt-2 text-sm leading-6 text-[#5f5868]">{quoteInput.pickupTiming === 'scheduled' ? 'Eligible drivers can accept ahead of your preferred pickup time when the route fits.' : 'The delivery is posted immediately after booking; a suitable driver may accept quickly or acceptance may take longer.'}</p>

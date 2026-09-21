@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { ViaLink as Link } from '@/components/send/ViaLink'
 
 import { formatMoney } from '@/components/send/PriceBreakdown'
 import {
@@ -35,6 +35,7 @@ const UNAVAILABLE_COPY = {
 
 export function DropBatchQuoteCard({
   senderPays,
+  lineItems,
   selected,
   onSelect,
   status,
@@ -84,6 +85,11 @@ export function DropBatchQuoteCard({
 
             {eligible ? (
               <>
+                {lineItems?.serviceFee > 0 && (
+                  <p className="mt-2 text-[13px] text-[#5f5868]">
+                    Delivery fare {formatMoney(lineItems.deliveryFare)} ? Service fee {formatMoney(lineItems.serviceFee)}
+                  </p>
+                )}
                 <p className="mt-2 max-w-[52ch] text-[15px] font-semibold text-[#3d3646]">
                   {DROPBATCH_HEADLINE}
                 </p>

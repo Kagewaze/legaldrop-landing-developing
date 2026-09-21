@@ -20,6 +20,10 @@ export async function GET(request, { params }) {
     )
     if (!response.ok) throw new Error('Unavailable')
     const capture = publicCapture((await response.json()).data)
+    // This is display/navigation metadata only. The HttpOnly cookie remains the
+    // sole pricing and attribution authority.
+    if (/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(params.slug))
+      destination.searchParams.set('via', params.slug)
     const result = NextResponse.redirect(destination, 303)
     result.cookies.set(REFERRAL_COOKIE, capture.reference, {
       httpOnly: true,

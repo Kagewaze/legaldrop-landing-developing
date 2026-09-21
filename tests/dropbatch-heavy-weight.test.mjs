@@ -113,5 +113,6 @@ test('the quote hook re-derives no distance eligibility rule', () => {
 
   assert.doesNotMatch(code, />=\s*80|<\s*80|below_minimum_distance|minimumKm/)
   // The hook still asks the backend, which is the only authority on eligibility.
-  assert.match(code, /drop-batch\/public\/quote/)
+  assert.match(code, /referralDropBatchQuoteFetch\(request/)
+  assert.doesNotMatch(code, /fetch\([^)]*drop-batch\/public\/quote/)
 })

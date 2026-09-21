@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-import { API_BASE_URL, DROPBATCH_SEND_COMPARISON_ENABLED } from '@/lib/config'
+import { DROPBATCH_SEND_COMPARISON_ENABLED } from '@/lib/config'
+import { referralDropBatchQuoteFetch } from '@/lib/guest-session'
 import {
   apiKeyFor,
   isDropBatchSupportedVehicle,
@@ -64,12 +65,7 @@ export function dropBatchQuoteSignature(request) {
 }
 
 export async function fetchDropBatchQuote(request, { signal } = {}) {
-  const response = await fetch(`${API_BASE_URL}/drop-batch/public/quote`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(request),
-    signal,
-  })
+  const response = await referralDropBatchQuoteFetch(request, { signal })
 
   if (!response.ok) {
     throw new Error(`DropBatch quote failed (${response.status})`)

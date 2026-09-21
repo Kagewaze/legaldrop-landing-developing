@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { MarketingLink as Link } from '@/components/MarketingNavigation'
+import { ViaLink as Link } from '@/components/send/ViaLink'
+import { bookingHrefWithVia } from '@/lib/via-navigation.mjs'
 import { useRouter } from 'next/navigation'
 import { Elements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
@@ -173,7 +174,7 @@ export default function SendPayPage() {
     }
 
     if (!hasBothAddresses(flow)) {
-      router.replace('/send')
+      router.replace(bookingHrefWithVia('/send', window.location.search))
       return
     }
 
@@ -192,7 +193,7 @@ export default function SendPayPage() {
       !flow.vehicle ||
       packageCapacityRefusal(flow.vehicle, flow.packageCount)
     ) {
-      router.replace('/send/details')
+      router.replace(bookingHrefWithVia('/send/details', window.location.search))
       return
     }
 
@@ -249,8 +250,14 @@ export default function SendPayPage() {
             )
           }
           normalizedQuote = {
-            lineItems: null,
+            lineItems: quoteData.lineItems
+              ? {
+                  base: quoteData.lineItems.deliveryFare,
+                  serviceFee: quoteData.lineItems.serviceFee,
+                }
+              : { base: senderPays },
             total: senderPays,
+            finalCustomerTotalMinor: quoteData.finalCustomerTotalMinor,
             distanceKm: routeDistanceKm,
           }
         } else {
@@ -840,6 +847,12 @@ export default function SendPayPage() {
             <div className="mt-2 text-[30px] font-extrabold text-[#17131c]">
               {formatMoney(quote.total)}
             </div>
+            {quote.lineItems?.serviceFee > 0 && (
+              <div className="mt-3 space-y-1 text-[14px] text-[#5f5868]">
+                <div className="flex justify-between gap-4"><span>Delivery fare</span><span>{formatMoney(quote.lineItems.base)}</span></div>
+                <div className="flex justify-between gap-4"><span>Service fee</span><span>{formatMoney(quote.lineItems.serviceFee)}</span></div>
+              </div>
+            )}
             <p className="mt-2 text-[14px] leading-[1.6] text-[#5f5868]">
               Backend-confirmed DropBatch price for{' '}
               {quote.distanceKm.toFixed(1)} km.

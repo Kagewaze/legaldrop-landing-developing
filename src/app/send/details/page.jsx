@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
-import { MarketingLink as Link } from '@/components/MarketingNavigation'
+import { ViaLink as Link } from '@/components/send/ViaLink'
+import { bookingHrefWithVia } from '@/lib/via-navigation.mjs'
 import { useRouter } from 'next/navigation'
 
 import {
@@ -76,7 +77,7 @@ export default function SendDetailsPage() {
   // again, trapping them.
   useEffect(() => {
     if (flow.hydrated && !complete) {
-      router.replace('/send')
+      router.replace(bookingHrefWithVia('/send', window.location.search))
     }
   }, [flow.hydrated, complete, router])
 
@@ -271,6 +272,7 @@ export default function SendDetailsPage() {
 
               <DropBatchQuoteCard
                 senderPays={dropBatch.senderPays}
+                lineItems={dropBatch.quote?.lineItems}
                 selected={dropBatchSelectionValid}
                 onSelect={() =>
                   setPricingMode('dropbatch', dropBatch.requestKey)
@@ -287,7 +289,16 @@ export default function SendDetailsPage() {
       <div className="flex flex-col border-t border-[#f0eef2] bg-[#faf7fd] px-6 py-8 sm:px-8 lg:border-l lg:border-t-0">
         {quote && vehicle ? (
           <PriceBreakdown
-            quote={quote}
+            quote={pricingMode === 'dropbatch' && dropBatchSelectionValid
+              ? {
+                  total: dropBatch.senderPays,
+                  distanceKm: dropBatch.quote.routeDistanceKm,
+                  lineItems: {
+                    base: dropBatch.quote.lineItems?.deliveryFare ?? dropBatch.senderPays,
+                    serviceFee: dropBatch.quote.lineItems?.serviceFee ?? 0,
+                  },
+                }
+              : quote}
             vehicleName={vehicle.name}
             packageCount={flow.packageCount}
             weightLabel={weightLabel}

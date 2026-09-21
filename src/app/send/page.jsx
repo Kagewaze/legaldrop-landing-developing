@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { MarketingLink as Link } from '@/components/MarketingNavigation'
+import { ViaLink as Link } from '@/components/send/ViaLink'
 
 import { referralQuoteFetch } from '@/lib/guest-session'
 import { hasBothAddresses, useSendFlow, weightKgFor } from '@/lib/send-flow'

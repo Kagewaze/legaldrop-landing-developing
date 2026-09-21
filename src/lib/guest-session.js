@@ -261,6 +261,25 @@ export async function referralCheckoutFetch(body) {
   return response.status === 401 ? send(true) : response
 }
 
+// DropBatch uses the same guest identity and a separate, pure server-side proxy.
+export async function referralDropBatchQuoteFetch(body, { signal } = {}) {
+  const send = async (forceRefresh = false) => {
+    const session = await getGuestSession({ forceRefresh })
+    return fetch('/api/referral/dropbatch-quote', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + session.token,
+      },
+      body: JSON.stringify(body),
+      signal,
+      cache: 'no-store',
+    })
+  }
+  const response = await send(false)
+  return response.status === 401 ? send(true) : response
+}
+
 // Pure same-origin quote proxy; the referral capability remains in the HttpOnly cookie.
 export async function referralQuoteFetch(body) {
   const send = async (forceRefresh = false) => {
