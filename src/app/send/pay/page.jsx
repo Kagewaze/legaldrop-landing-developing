@@ -20,7 +20,8 @@ import {
   weightKgFor,
   writePaymentSession,
 } from '@/lib/send-flow'
-import { ContactFields } from '@/components/send/ContactFields'
+import { ContactFields, ContactSummary } from '@/components/send/ContactFields'
+import { dropoffIdentity, pickupIdentity } from '@/lib/endpoint-contacts.mjs'
 import { PaymentForm } from '@/components/send/PaymentForm'
 import { PriceBreakdown, formatMoney } from '@/components/send/PriceBreakdown'
 import { normalizeCustomerQuote } from '@/lib/customer-quote.mjs'
@@ -423,8 +424,9 @@ export default function SendPayPage() {
                   : {}),
               }
             : {}),
-          senderName: contact.senderName.trim(),
-          senderPhone: contact.senderPhone.trim(),
+          // Same identity helpers as buildOrderPayload, so the priced body and the
+          // created order describe the same pickup and drop-off contacts.
+          ...pickupIdentity(contact),
           senderAddress: flow.pickup.address,
           senderLocation: {
             latitude: flow.pickup.lat,
@@ -439,11 +441,7 @@ export default function SendPayPage() {
           packageCount: flow.packageCount,
           receivers: [
             {
-              receiverName: contact.receiverName.trim(),
-              receiverPhone: contact.receiverPhone.trim(),
-              // Only sent when actually provided — an empty string can read as
-              // "supplied but blank" to a validator.
-              receiverEmail: contact.receiverEmail.trim() || undefined,
+              ...dropoffIdentity(contact, { section: flow.section }),
               receiverAddress: flow.dropoff.address,
               receiverLocation: {
                 latitude: flow.dropoff.lat,
@@ -746,14 +744,11 @@ export default function SendPayPage() {
   const contactReady = contactIsComplete(flow.contact)
 
   // Stricter than contactIsComplete, which accepts a recipient email in place
-  // of a phone. get-fee requires receiverPhone outright, so an email-only
-  // contact would pass that check and still 400.
+  // of a phone: this page has always required a recipient phone before minting an
+  // intent, and Wave 2B.2 keeps that gate rather than loosening a money path.
+  // (The backend DTO itself accepts phone OR email — reported, not changed here.)
   const filled = (value) => typeof value === 'string' && value.trim().length > 0
-  const canConfirm =
-    filled(flow.contact.senderName) &&
-    filled(flow.contact.senderPhone) &&
-    filled(flow.contact.receiverName) &&
-    filled(flow.contact.receiverPhone)
+  const canConfirm = contactReady && filled(flow.contact.receiverPhone)
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px]">
@@ -769,6 +764,7 @@ export default function SendPayPage() {
           <ContactFields
             contact={flow.contact}
             onChange={flow.setContactField}
+            section={flow.section}
           />
         </div>
 
@@ -837,6 +833,7 @@ export default function SendPayPage() {
           <div className="mt-1 text-[#5f5868]">
             {flow.pickup.address} → {flow.dropoff.address}
           </div>
+          <ContactSummary contact={flow.contact} section={flow.section} />
         </div>
 
         {flow.pricingMode === 'dropbatch' ? (

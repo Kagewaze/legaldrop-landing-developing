@@ -1,5 +1,10 @@
 import { apiKeyFor } from '@/components/send/vehicles'
 import { weightKgFor } from '@/lib/send-flow'
+import {
+  dropoffIdentity,
+  pickupIdentity,
+  resolveBookingDirection,
+} from '@/lib/endpoint-contacts.mjs'
 
 // The one and only place the POST /order body is constructed.
 //
@@ -21,8 +26,12 @@ import { weightKgFor } from '@/lib/send-flow'
 export function buildOrderPayload({ flow, quote, paymentIntentId }) {
   const { pickup, dropoff, contact } = flow
 
+  // WHO receives: the drop-off contact (receiver*) plus the Wave 2B.1 metadata
+  // describing it — built by the same helper get-fee uses, so the priced body and
+  // the created order name the same contact. Phone / email / note are omitted
+  // when blank; see dropoffIdentity.
   const receiver = {
-    receiverName: contact.receiverName.trim(),
+    ...dropoffIdentity(contact, { section: flow.section }),
     receiverAddress: dropoff.address,
     receiverLocation: { latitude: dropoff.lat, longitude: dropoff.lng },
     // Required by the request validator even though the server recomputes it.
@@ -35,26 +44,10 @@ export function buildOrderPayload({ flow, quote, paymentIntentId }) {
     weight: weightKgFor(flow.weight),
   }
 
-  // At least one of phone/email is required. Only send what was actually
-  // provided rather than empty strings, which can read as "supplied but blank".
-  if (contact.receiverPhone.trim()) {
-    receiver.receiverPhone = contact.receiverPhone.trim()
-  }
-
-  if (contact.receiverEmail.trim()) {
-    receiver.receiverEmail = contact.receiverEmail.trim()
-  }
-
-  // Optional delivery note, omitted entirely when blank for the same reason as
-  // phone/email above: an empty string reads as "supplied but blank" to anyone
-  // reading the order, and the column is nullable.
-  //
-  // Same property name the mobile app sends and the driver app renders — this is
-  // parity on an existing contract, not a new field. See EMPTY_STATE.contact in
-  // src/lib/send-flow.js for the full trace.
-  if (contact.receiverNote?.trim()) {
-    receiver.receiverNote = contact.receiverNote.trim()
-  }
+  // At least one of phone/email is required, and receiverNote is the existing
+  // delivery-point note the mobile app sends and the driver app renders (see
+  // EMPTY_STATE.contact in src/lib/send-flow.js). dropoffIdentity sends each only
+  // when actually provided: an empty string reads as "supplied but blank".
 
   // ⚠️ TWO SIMILAR NAMES, TWO DIFFERENT CONTRACTS. DO NOT MIX THEM.
   //
@@ -79,28 +72,21 @@ export function buildOrderPayload({ flow, quote, paymentIntentId }) {
       flow.pricingMode === 'dropbatch' ? 'dropbatch' : 'standard',
     senderLocation: { latitude: pickup.lat, longitude: pickup.lng },
     senderAddress: pickup.address,
-    senderName: contact.senderName.trim(),
-    senderPhone: contact.senderPhone.trim(),
-    // A1 — THE BOOKING DIRECTION THIS FLOW STATES, AND IT IS ALWAYS 'send'.
+    // WHO hands the package over: the pickup contact (sender*) plus the Wave 2B.1
+    // metadata describing it. Same helper as the get-fee body.
+    ...pickupIdentity(contact),
+    // A1 — THE BOOKING DIRECTION, NOW STATED BY THE CUSTOMER'S OWN CONTACT CHOICES.
     //
-    // /send is the "I am shipping something" form: the person filling it in controls the
-    // ORIGIN and the counterparty is at the destination. That is the definition of 'send',
-    // so this flow STATES it as a fact rather than deriving it.
+    // It used to be the literal 'send' because this form assumed the booker was the pickup
+    // contact. Wave 2B.2 makes the booker say who is at each end, so the direction is what
+    // those STATED choices mean under the backend's definitions: 'send' when the booker is
+    // the pickup contact, 'receive' when they are the drop-off contact, 'third_party' when
+    // both contacts are other people. Not an inference from names or phone numbers — only
+    // from the two explicit choices. See resolveBookingDirection.
     //
-    // A LITERAL, DELIBERATELY. It is not read from the route, form state, the contact fields
-    // or the guest session, because none of those is the reason the value is 'send' — the
-    // identity of THIS FORM is. Anything computed here would be an inference dressed as a
-    // fact, and would start returning the wrong answer the moment a second flow reused this
-    // builder.
-    //
-    // Server contract: optional, @IsIn(['send','receive','third_party']), NO default. An
-    // omitted field persists NULL, meaning "the client did not state a direction" — which is
-    // what every landing order created before this line meant, and still means. Do NOT send
-    // an explicit null instead: the DTO rejects it (@ValidateIf keys on undefined alone), so
-    // omission is the only spelling of "not stated" on the wire.
-    //
-    // Case matters: @IsIn is case-sensitive and the server applies no normalising transform.
-    bookingDirection: 'send',
+    // Server contract: optional, @IsIn(['send','receive','third_party']), case-sensitive, NO
+    // default. Never an explicit null: the DTO rejects it (@ValidateIf keys on undefined).
+    bookingDirection: resolveBookingDirection(contact),
     ...scheduling,
     // Normalised key ('cargovan', never the local 'cargo' id).
     vehicle: apiKeyFor(flow.vehicle),

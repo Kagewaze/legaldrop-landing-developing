@@ -18,6 +18,11 @@ import {
   packageCapacityRefusal,
   vehicleAfterPackageChange,
 } from '@/components/send/vehicles'
+import {
+  isComplete,
+  validateDropoff,
+  validatePickup,
+} from '@/lib/endpoint-contacts.mjs'
 
 // Send-flow state, shared across /send and /send/details.
 //
@@ -72,8 +77,21 @@ const EMPTY_STATE = {
   // The backend requires all of these on POST /order. The design collects none
   // of them, so they are gathered on the payment step.
   contact: {
+    // ── WHO IS AT EACH END (Wave 2B.2) ─────────────────────────────────────
+    // Stated explicitly; NOTHING is preselected. null = not chosen yet, and the
+    // flow cannot continue until both are chosen. See lib/endpoint-contacts.mjs.
+    // The contact itself stays in sender* / receiver* below.
+    pickupContactType: null,
+    pickupOrganization: '',
+    dropoffContactType: null,
+    receiverOrganization: '',
+    // A delivery METHOD, separate from who receives. Only sent where safe drop is
+    // offered (general consumer section); a request, never an authorisation.
+    deliveryPreference: 'recipient_handoff',
     senderName: '',
     senderPhone: '',
+    senderEmail: '',
+    senderNote: '',
     receiverName: '',
     receiverPhone: '',
     receiverEmail: '',
@@ -93,21 +111,17 @@ const EMPTY_STATE = {
   },
 }
 
-// POST /order needs a name and phone for both ends, and at least one of
-// receiverPhone / receiverEmail. Phone is collected for the recipient, so the
-// email is genuinely optional.
+// Both endpoint contacts stated explicitly and valid for their type. POST /order
+// still needs a pickup name (or, for a business, the business name) and phone,
+// a receiver name (or receiving business), and a phone or email for the stop —
+// the per-type rules live in lib/endpoint-contacts.mjs.
 export function contactIsComplete(contact) {
   if (!contact) {
     return false
   }
 
-  const filled = (value) => typeof value === 'string' && value.trim().length > 0
-
   return (
-    filled(contact.senderName) &&
-    filled(contact.senderPhone) &&
-    filled(contact.receiverName) &&
-    (filled(contact.receiverPhone) || filled(contact.receiverEmail))
+    isComplete(validatePickup(contact)) && isComplete(validateDropoff(contact))
   )
 }
 

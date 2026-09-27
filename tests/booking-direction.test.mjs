@@ -203,27 +203,43 @@ test('the receiver contract gained no key', () => {
   )
 })
 
-// --- 3. containment: no inference, no other direction ----------------------
+// --- 3. containment: the direction comes ONLY from the two explicit contact choices ---
 
-// A1 is a stated fact, not a derivation. Either of these appearing would mean an inference rule
-// was introduced, which the accepted architecture forbids.
-test('the landing app never emits receive or third_party', () => {
+// Wave 2B.2 DELIBERATELY REPLACES the A1 rule "the direction is the literal 'send'". That literal
+// encoded the assumption that the person filling /send is the pickup contact — the exact hidden
+// assumption this wave removes. The backend has always defined 'receive' and 'third_party'. What
+// stays forbidden is INFERENCE: nothing but the stated pickupContactType / dropoffContactType may
+// move the direction, and no literal other than the builder's own resolver may appear.
+test('no landing code hard-codes receive or third_party', () => {
   for (const source of [BUILDER_SOURCE, PAY_PAGE]) {
     assert.equal(/bookingDirection\s*:\s*'receive'/.test(source), false)
     assert.equal(/bookingDirection\s*:\s*'third_party'/.test(source), false)
   }
 })
 
-test('the direction is written as a literal, not computed', () => {
-  assert.match(BUILDER_SOURCE, /^\s*bookingDirection: 'send',$/m)
+test('the direction is resolved from the stated contacts, in one place', () => {
+  assert.match(BUILDER_SOURCE, /^\s*bookingDirection: resolveBookingDirection\(contact\),$/m)
 })
 
-// Changing the flow's identity-ish fields must not change the direction — proof there is no
-// inference from contact details, vehicle, section or guest identity.
+test('the stated contacts decide the direction', () => {
+  const at = (pickupContactType, dropoffContactType) =>
+    build({ contact: { pickupContactType, dropoffContactType, pickupOrganization: 'Store A', receiverOrganization: 'Office B' } })
+      .bookingDirection
+  assert.equal(at('requester', 'person'), 'send')
+  assert.equal(at('requester', 'requester'), 'send')
+  assert.equal(at('person', 'requester'), 'receive')
+  assert.equal(at('business', 'requester'), 'receive')
+  assert.equal(at('person', 'person'), 'third_party')
+  assert.equal(at('business', 'anyone'), 'third_party')
+})
+
+// Changing identity-ish fields must not change the direction — proof there is no inference from
+// names, emails, vehicle, section or guest identity. Unstated contacts keep the form's 'send'.
 test('unrelated flow state cannot change the direction', () => {
   const variants = [
     build({ contact: { senderName: 'Someone Else' } }),
     build({ contact: { receiverEmail: 'guest+landing@example.test' } }),
+    build({ contact: { pickupContactType: 'person', senderName: 'Riley Receiver' } }),
     build({ vehicle: 'van' }),
     build({ section: 'medical' }),
     build({ packageCount: 1 }),
