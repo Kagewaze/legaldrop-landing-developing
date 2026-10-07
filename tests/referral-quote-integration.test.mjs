@@ -5,6 +5,9 @@ import { normalizeCustomerQuote } from '../src/lib/customer-quote.mjs'
 
 const source = path => readFileSync(path, 'utf8')
 const proxy = source('src/app/api/referral/quote/route.js')
+// The proxy's reconciliation now lives in a pure module (so it can be exercised directly — see
+// minimum-fare-adjustment.test.mjs); the pins on it below follow it there.
+const reconciler = source('src/lib/referral-quote.mjs')
 const capture = source('src/app/r/[slug]/route.js')
 const cards = source('src/components/send/useVehicleQuotes.js')
 const details = source('src/app/send/details/page.jsx')
@@ -26,8 +29,9 @@ test('10220 ordinary and 10527 referral minor units render as backend returned',
 test('same-origin proxy alone reads HttpOnly referral and fails closed on an old quote contract', () => {
   assert.match(proxy, /cookies\(\)\.get\(REFERRAL_COOKIE\)/)
   assert.match(proxy, /referralSessionReference: reference/)
-  assert.match(proxy, /finalCustomerTotalMinor/)
-  assert.match(proxy, /sumMinor !== minor/)
+  assert.match(proxy, /customerReferralQuote\(payload\?\.data \?\? payload\)/)
+  assert.match(reconciler, /finalCustomerTotalMinor/)
+  assert.match(reconciler, /sumMinor !== minor/)
   assert.match(proxy, /status: 503/)
   assert.doesNotMatch(cards + details + pay + first, /druppr_referral|referralSessionReference/)
 })

@@ -42,6 +42,17 @@ export function PriceBreakdown({ quote, vehicleName, packageCount, weightLabel }
           : 'Extra packages',
       value: lineItems.extraPackage,
     },
+    // The delivery minimum fare. What it added is the BACKEND's figure, shown as its own row
+    // and never derived here: this site holds no minimum and computes no adjustment. When the
+    // backend sends none — a fare already above its minimum, or the rule switched off — the
+    // value is zero and the row is filtered out below, like any other empty row. It sits after
+    // the delivery charges it tops up and before handling and the service fee, which the
+    // backend charges on top of the minimum.
+    {
+      key: 'minimumAdjustment',
+      label: 'Minimum fare adjustment',
+      value: Number(lineItems.minimumAdjustment) || 0,
+    },
     // The design omits these two entirely, which is why its numbers do not sum.
     { key: 'handling', label: 'Handling / labour', value: handling },
     { key: 'serviceFee', label: 'Service fee', value: Number(lineItems.serviceFee) || 0 },

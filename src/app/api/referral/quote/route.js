@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { API_BASE_URL } from '@/lib/config'
 import { REFERRAL_COOKIE } from '@/lib/referral-continuity.mjs'
+import { customerReferralQuote } from '@/lib/referral-quote.mjs'
 
 export async function POST(request) {
   const authorization = request.headers.get('authorization')
@@ -42,22 +43,11 @@ export async function POST(request) {
   } catch {
     return Response.json({ message: 'Quote temporarily unavailable' }, { status: 503 })
   }
-  const quote = payload?.data ?? payload
-  const minor = quote?.finalCustomerTotalMinor
-  const lines = quote?.lineItems
-  const keys = ['base', 'distance', 'extraPackage', 'labour', 'heavyFee', 'serviceFee']
-  const validLines = lines && keys.every(key =>
-    lines[key] === undefined || (Number.isFinite(lines[key]) && lines[key] >= 0))
-  const sumMinor = validLines
-    ? keys.reduce((sum, key) => sum + Math.round((lines[key] ?? 0) * 100), 0)
-    : NaN
-  if (!Number.isSafeInteger(minor) || minor < 0 || quote?.currency !== 'CAD' ||
-      sumMinor !== minor || !Number.isFinite(quote?.distanceKm)) {
+  // Reconciled against the backend's own total, line by line — including the minimum fare
+  // adjustment when the backend applied one. Anything that does not add up is refused.
+  const data = customerReferralQuote(payload?.data ?? payload)
+  if (!data) {
     return Response.json({ message: 'Quote temporarily unavailable' }, { status: 503 })
   }
-  const lineItems = Object.fromEntries(keys.map(key => [key, lines[key] ?? 0]))
-  return Response.json({ data: {
-    lineItems, total: minor / 100, finalCustomerTotalMinor: minor,
-    currency: 'CAD', distanceKm: quote.distanceKm, vehicle: quote.vehicle,
-  } }, { headers: { 'Cache-Control': 'no-store' } })
+  return Response.json({ data }, { headers: { 'Cache-Control': 'no-store' } })
 }

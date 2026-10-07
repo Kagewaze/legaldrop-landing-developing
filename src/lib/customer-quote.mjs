@@ -8,6 +8,9 @@ export function normalizeCustomerQuote(raw) {
   if (!Number.isFinite(total)) return null
   const lineItems = raw.lineItems ?? {}
   const number = value => Number.isFinite(Number(value)) ? Number(value) : 0
+  // The backend's minimum fare adjustment. Kept only when it is positive, so a quote without
+  // one is the very object it always was. Never computed here.
+  const minimumAdjustment = number(lineItems.minimumAdjustment)
   return {
     lineItems: {
       base: number(lineItems.base),
@@ -16,6 +19,7 @@ export function normalizeCustomerQuote(raw) {
       labour: number(lineItems.labour),
       heavyFee: number(lineItems.heavyFee),
       serviceFee: number(lineItems.serviceFee),
+      ...(minimumAdjustment > 0 && { minimumAdjustment }),
     },
     total,
     finalCustomerTotalMinor: hasMinor ? minor : Math.round(total * 100),
