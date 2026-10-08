@@ -254,6 +254,37 @@ test('the proxy answers an old referral quote exactly as it did, and still 503s 
   assert.equal(down.response.status, 503)
 })
 
+test('a negative amount is refused even when the lines add up to the backend total', async () => {
+  // Every quote here reconciles to the cent IF a negative line is allowed to count, so the sum
+  // check alone would forward it. Only the "amounts must not be negative" rule refuses them:
+  // take that rule away and this test, and no other, goes red.
+  const quote = (lineItems, minor) => ({
+    ...referred,
+    lineItems,
+    total: minor / 100,
+    finalCustomerTotalMinor: minor,
+  })
+  const reconciling = {
+    'a negative fare line': quote(lines({ distance: -1.7, serviceFee: 0.29 }), 659),
+    'a negative service fee': quote(lines({ serviceFee: -0.29 }), 941),
+    'a negative minimum adjustment': quote(lines({ minimumAdjustment: -10.3, serviceFee: 0.6 }), 0),
+  }
+  for (const [label, candidate] of Object.entries(reconciling)) {
+    // The premise, checked: in minor units these lines DO sum to the total the backend sent.
+    const sumMinor = Object.values(candidate.lineItems).reduce(
+      (sum, value) => sum + Math.round(value * 100),
+      0,
+    )
+    assert.equal(sumMinor, candidate.finalCustomerTotalMinor, `${label}: the fixture reconciles`)
+
+    assert.equal(customerReferralQuote(candidate), null, label)
+
+    const { response } = await callProxy(envelope(candidate))
+    assert.equal(response.status, 503, label)
+    assert.deepEqual(await response.json(), { message: 'Quote temporarily unavailable' }, label)
+  }
+})
+
 test('without a referral cookie the backend answer is passed through untouched', async () => {
   const { response, sent } = await callProxy(envelope(floored), { cookie: null })
   assert.equal(response.status, 200)
