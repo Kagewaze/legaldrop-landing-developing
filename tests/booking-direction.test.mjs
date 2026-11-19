@@ -241,6 +241,8 @@ test('unrelated flow state cannot change the direction', () => {
 test('no order request is built from an inline object literal', () => {
   assert.equal(/createOrder\(\s*\{/.test(PAY_PAGE), false)
   assert.equal(/guestFetch\('\/order',[\s\S]{0,160}body:\s*\{/.test(PAY_PAGE), false)
+  // D7: POST /order is sent through submitPaidOrder; the same guard applies to it.
+  assert.equal(/submitPaidOrder\(\s*\{/.test(PAY_PAGE), false)
 })
 
 test('the persisted recovery payload is built by buildOrderPayload', () => {
@@ -249,12 +251,17 @@ test('the persisted recovery payload is built by buildOrderPayload', () => {
   assert.match(PAY_PAGE, /orderPayload:\s*buildOrderPayload\(/)
 })
 
-test('both recovery paths fall back to buildOrderPayload', () => {
-  // `stored.orderPayload ?? buildOrderPayload({...})` appears twice: the boot "already paid"
-  // recovery and retryOrder. Either branch yields a payload carrying the direction.
-  const fallbacks = PAY_PAGE.match(/stored\.orderPayload\s*\?\?/g) ?? []
-
-  assert.equal(fallbacks.length, 2)
+test('both recovery paths submit only the stored payload that buildOrderPayload built', () => {
+  // D7 changed HOW recovery obtains its body, not what it carries. Before D7 both recovery
+  // paths (the boot "already paid" recovery and retryOrder) fell back to rebuilding the body
+  // from the current form and a fresh quote (`stored.orderPayload ?? buildOrderPayload(...)`);
+  // that rebuild is exactly what D7 forbids — a paid booking is recovered from its original
+  // checkout, never from a new price. Both paths now submit the stored body only, and the test
+  // above proves that body is built by buildOrderPayload before the card is confirmed, so every
+  // recovered order still carries bookingDirection: 'send'.
+  assert.equal(/stored\.orderPayload\s*\?\?/.test(PAY_PAGE), false)
+  assert.match(PAY_PAGE, /finishOrder\(decision\.body\)/)
+  assert.match(PAY_PAGE, /const body = recoveryOrderBody\(stored\)[\s\S]{0,400}finishOrder\(body\)/)
 })
 
 // --- 5. quote / fee requests must NOT gain the field ----------------------
