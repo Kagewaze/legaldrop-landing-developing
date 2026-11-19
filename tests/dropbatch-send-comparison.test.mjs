@@ -102,25 +102,44 @@ test('DropBatch failure never silently falls back to standard at payment', () =>
   assert.doesNotMatch(payment, /catch[\s\S]{0,300}pricingMode:\s*'standard'/)
 })
 
-test('DropBatch never restores a stored PaymentIntent while Standard recovery remains', () => {
-  assert.match(
-    payment,
-    /if \(flow\.pricingMode === 'dropbatch'\) \{[\s\S]*?clearPaymentSession\(\)[\s\S]*?\} else if \(stored && stored\.inputsHash === inputsHash\)/,
+test('DropBatch never restores a stored PaymentIntent while Standard recovery remains', async () => {
+  // D7 restructured boot: every stored record is first classified from Stripe's state
+  // (src/lib/paid-booking-recovery.mjs), and only an UNPAID one reaches the old rules. The
+  // invariant is unchanged: an unpaid stored DropBatch intent is discarded and never becomes
+  // payment authority (no restored client secret or fee), while an unpaid Standard intent for
+  // the same inputs may still be reused after the fresh quote confirms its amount.
+  //
+  // Deliberate D7 change, stated here so it is not mistaken for a regression: a PAID DropBatch
+  // record is no longer discarded. It is recovered — its stored original order body is submitted
+  // to POST /order, which verifies it — instead of being thrown away with the customer charged.
+  const { STORED_PAYMENT, classifyStoredPayment } = await import(
+    '../src/lib/paid-booking-recovery.mjs'
   )
+  const stored = { paymentIntentId: 'pi_x', clientSecret: 's', inputsHash: 'h' }
+  for (const status of ['requires_payment_method', 'requires_confirmation', 'requires_action']) {
+    const intent = { id: 'pi_x', status }
+    assert.equal(
+      classifyStoredPayment({ stored, intent, pricingMode: 'dropbatch', inputsHash: 'h' }).action,
+      STORED_PAYMENT.DISCARD,
+    )
+    assert.equal(
+      classifyStoredPayment({ stored, intent, pricingMode: 'standard', inputsHash: 'h' }).action,
+      STORED_PAYMENT.REUSE_UNPAID,
+    )
+  }
+
+  const boot = payment.slice(payment.indexOf('async function boot()'), payment.indexOf('// 3. NEW-BOOKING GUARDS'))
+  assert.match(boot, /decision\.action === STORED_PAYMENT\.DISCARD\)\s*\{\s*clearPaymentSession\(\)/)
+  assert.match(boot, /reuseUnpaid = decision\.action === STORED_PAYMENT\.REUSE_UNPAID/)
+  assert.doesNotMatch(boot, /setClientSecret|setFee/)
 
   const standardRecovery = payment.slice(
-    payment.indexOf("} else if (stored && stored.inputsHash === inputsHash)"),
-    payment.indexOf('// 4. No usable intent'),
+    payment.indexOf('if (reuseUnpaid) {'),
+    payment.indexOf('// 6. No usable intent'),
   )
-  assert.match(standardRecovery, /stripe\.retrievePaymentIntent\(/)
   assert.match(standardRecovery, /setClientSecret\(stored\.clientSecret\)/)
   assert.match(standardRecovery, /setFee\(Number\(stored\.fee\)\)/)
-
-  const dropBatchBoot = payment.slice(
-    payment.indexOf("if (flow.pricingMode === 'dropbatch') {", payment.indexOf('const stored = readPaymentSession()')),
-    payment.indexOf("} else if (stored && stored.inputsHash === inputsHash)"),
-  )
-  assert.doesNotMatch(dropBatchBoot, /retrievePaymentIntent|setClientSecret|setFee/)
+  assert.match(boot, /stripe\.retrievePaymentIntent\(/)
 })
 
 test('DropBatch persists and exposes a new intent only after fee equality succeeds', () => {

@@ -8,7 +8,21 @@ import { Elements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
 
 import { API_BASE_URL } from '@/lib/config'
-import { guestFetch, referralCheckoutFetch, referralQuoteFetch } from '@/lib/guest-session'
+import {
+  OrderIdentityUnavailableError,
+  currentGuestUserId,
+  referralCheckoutFetch,
+  referralQuoteFetch,
+  submitPaidOrder,
+} from '@/lib/guest-session'
+import {
+  ORDER_SUBMISSION,
+  OrderRefusedError,
+  STORED_PAYMENT,
+  bookingSummary,
+  inspectStoredPayment,
+  recoveryOrderBody,
+} from '@/lib/paid-booking-recovery.mjs'
 import {
   WEIGHT_OPTIONS,
   clearPaymentSession,
@@ -84,6 +98,48 @@ const ELEMENTS_APPEARANCE = {
   },
 }
 
+// R-M1: names a booking by its addresses (and schedule), from a bookingSummary.
+function BookingLine({ summary, centered = false }) {
+  if (!summary) {
+    return null
+  }
+
+  return (
+    <div className={`mt-2 text-[15px] text-[#17131c] ${centered ? 'text-center' : ''}`}>
+      {summary.pickupAddress} → {summary.dropoffAddress}
+      {summary.scheduledPickupAt && (
+        <span className="block text-[13px] text-[#5f5868]">
+          Scheduled pickup: {new Date(summary.scheduledPickupAt).toLocaleString()}
+        </span>
+      )}
+    </div>
+  )
+}
+
+// R-M1: on any unresolved-payment screen, say when it concerns an EARLIER
+// booking than the one the customer is entering now.
+function EarlierBookingNote({ booking }) {
+  if (!booking?.earlier) {
+    return null
+  }
+
+  return (
+    <div className="mt-4 rounded-2xl bg-[#fff8e6] p-4 text-[14px] text-[#5f5868]">
+      <div className="font-bold text-[#17131c]">
+        This is about an earlier booking from this tab
+      </div>
+      {booking.summary ? (
+        <BookingLine summary={booking.summary} />
+      ) : (
+        <p className="mt-1">Its details aren&rsquo;t shown on this device.</p>
+      )}
+      <p className="mt-1">
+        The booking you&rsquo;re entering now is kept and isn&rsquo;t affected.
+      </p>
+    </div>
+  )
+}
+
 export default function SendPayPage() {
   const router = useRouter()
   const flow = useSendFlow()
@@ -98,6 +154,16 @@ export default function SendPayPage() {
   const [trackingCode, setTrackingCode] = useState(null)
   const [failureMessage, setFailureMessage] = useState(null)
   const [retrying, setRetrying] = useState(false)
+
+  // R-M1. The booking a paid-but-unfinished record describes, and whether it
+  // is an EARLIER booking than the one now in the form (different inputs).
+  // `summary` is addresses, pricing mode and schedule only (bookingSummary),
+  // and is null when the stored guest is not the record's owner.
+  const [pendingBooking, setPendingBooking] = useState(null)
+  // The booking an order was just created for — what the success screens name.
+  const [completedBooking, setCompletedBooking] = useState(null)
+  // Same-tick guard for "Finish my earlier booking" (no second submission).
+  const finishingEarlierRef = useRef(false)
 
   // get-fee is in flight. Disables the confirm button so it cannot double-fire
   // and mint two PaymentIntents for one delivery.
@@ -123,15 +189,19 @@ export default function SendPayPage() {
   // Called only ever AFTER the card has been charged. Its failure mode is the
   // worst one in the flow (paid, no order), so it is isolated and retryable
   // with the SAME intent — never by paying again.
+  //
+  // Sent as the guest that created the checkout (submitPaidOrder): never a
+  // newly minted one, which the backend would refuse as a stranger to this
+  // payment. The owner recorded with the payment is passed so a different
+  // stored guest is never used; the backend still decides ownership itself.
   const createOrder = useCallback(
     async (payload) => {
-      const response = await guestFetch('/order', {
-        method: 'POST',
-        body: payload,
+      const response = await submitPaidOrder(payload, {
+        ownerUserId: readPaymentSession()?.ownerUserId ?? null,
       })
 
       if (!response.ok) {
-        throw new Error(`Order creation failed (${response.status})`)
+        throw new OrderRefusedError(response.status)
       }
 
       const body = await response.json()
@@ -149,6 +219,11 @@ export default function SendPayPage() {
 
   const finishOrder = useCallback(
     async (payload) => {
+      // An EARLIER booking (its record was made for other inputs than the form
+      // now holds) is completed without touching the customer's new details.
+      const stored = readPaymentSession()
+      const earlier = Boolean(stored) && stored.inputsHash !== inputsHash
+
       try {
         const code = await createOrder(payload)
 
@@ -156,15 +231,37 @@ export default function SendPayPage() {
         // stored record means "paid, order still owed".
         clearPaymentSession()
         setTrackingCode(code)
+        setCompletedBooking(bookingSummary(payload))
+
+        if (earlier) {
+          setPhase('earlierBookingDone')
+          return
+        }
+
         setPhase('done')
         flow.resetFlow()
       } catch (error) {
-        // PAID BUT NO ORDER. Never offer to pay again from here.
+        // PAID BUT NO ORDER. Never offer to pay again from here. Only a payment
+        // Stripe confirmed reaches this point (onPaid on 'succeeded', or the
+        // recovery of a retrieved 'succeeded' intent).
+        //
+        // When sending the same stored body again cannot help — the checkout's
+        // own guest is unavailable, or the backend refused it for identity,
+        // validation or checkout reasons — go to support with the reference
+        // instead of a retry loop.
+        if (
+          error instanceof OrderIdentityUnavailableError ||
+          error?.outcome === ORDER_SUBMISSION.NEEDS_SUPPORT
+        ) {
+          setPhase('paidNeedsSupport')
+          return
+        }
+
         setFailureMessage(error?.message ?? 'Order creation failed')
         setPhase('orderFailed')
       }
     },
-    [createOrder, flow],
+    [createOrder, flow, inputsHash],
   )
 
   // ── Boot ──────────────────────────────────────────────────────────────────
@@ -173,35 +270,21 @@ export default function SendPayPage() {
       return
     }
 
-    if (!hasBothAddresses(flow)) {
-      router.replace(bookingHrefWithVia('/send', window.location.search))
-      return
-    }
-
-    // THE LAST GATE BEFORE ANY STRIPE OBJECT EXISTS.
-    //
-    // Every line below builds toward a real charge, and each one names the
-    // vehicle: quote-itemized, get-fee (which mints the PaymentIntent), and the
-    // order payload. A missing vehicle would be silently resolved to the car by
-    // apiKeyFor's fallback, and an over-capacity car would be refused by the
-    // backend only AFTER the card was charged — the paid-but-no-order failure.
-    //
-    // Both are recoverable by going back one step, so this sends them there
-    // rather than showing an error. Reached by a deep link, a restored session
-    // predating the capacity rule, or a back-navigation that changed the count.
-    if (
-      !flow.vehicle ||
-      packageCapacityRefusal(flow.vehicle, flow.packageCount)
-    ) {
-      router.replace(bookingHrefWithVia('/send/details', window.location.search))
-      return
-    }
-
     bootedRef.current = true
 
     let cancelled = false
 
     async function boot() {
+      // D7: a stored payment record is resolved FIRST, before any new-booking
+      // guard, routing or price. A paid booking is completed from its ORIGINAL
+      // checkout, whatever today's price, the Partner's standing or the form
+      // now says; only a booking that is not already paid continues below.
+      // Until the record is resolved, a failure must never be reported as
+      // "you have not been charged".
+      const stored = readPaymentSession()
+      let storedPaymentResolved = !stored
+      let reuseUnpaid = false
+
       try {
         // 1. Publishable key (public endpoint, no auth).
         const configResponse = await fetch(`${API_BASE_URL}/base/config`, {
@@ -222,9 +305,119 @@ export default function SendPayPage() {
         if (cancelled) return
         setPublishableKey(key)
 
-        // 2. Re-quote the selected mode from its backend authority. DropBatch
+        // 2. Ask Stripe what happened to a stored intent, for EVERY pricing
+        //    mode and whatever the current inputs. The only capability passed
+        //    in is reading that one intent.
+        if (stored) {
+          paymentIntentIdRef.current = stored.paymentIntentId
+
+          const decision = await inspectStoredPayment({
+            stored,
+            pricingMode: flow.pricingMode,
+            inputsHash,
+            retrieveIntent: async (clientSecret) => {
+              const stripe = await getStripePromise(key)
+              const { paymentIntent, error } =
+                await stripe.retrievePaymentIntent(clientSecret)
+              if (error) throw error
+              return paymentIntent
+            },
+          })
+
+          if (cancelled) return
+
+          // R-M1: which booking this record is, and whether it is an earlier
+          // one than the form now holds. Its details are shown only to the
+          // guest that owns it (the backend still decides ownership).
+          const earlier = stored.inputsHash !== inputsHash
+          const owner = currentGuestUserId()
+          const strangerToRecord =
+            typeof stored.ownerUserId === 'string' &&
+            typeof owner === 'string' &&
+            stored.ownerUserId !== owner
+          setPendingBooking({
+            earlier,
+            summary: strangerToRecord
+              ? null
+              : bookingSummary(decision.body ?? recoveryOrderBody(stored)),
+            body: decision.action === STORED_PAYMENT.RECOVER ? decision.body : null,
+          })
+
+          if (decision.action === STORED_PAYMENT.RECOVER && !earlier) {
+            // PAID ALREADY, for this same booking. Submit the body stored just
+            // before the card was confirmed, unchanged, to the backend's
+            // idempotent, verified order creation. Never a payment form,
+            // never a new price.
+            setPhase('recovering')
+            await finishOrder(decision.body)
+            return
+          }
+
+          if (decision.action === STORED_PAYMENT.RECOVER) {
+            // PAID ALREADY, for an EARLIER booking than the one in the form.
+            // Never completed silently: the customer sees which booking it is
+            // and finishes it explicitly; the new details are left untouched
+            // and no payment is offered until this one is resolved.
+            setPhase('earlierBooking')
+            return
+          }
+
+          if (decision.action === STORED_PAYMENT.PENDING) {
+            setPhase('paymentPending')
+            return
+          }
+
+          if (decision.action === STORED_PAYMENT.UNVERIFIABLE) {
+            setPhase('paymentUnconfirmed')
+            return
+          }
+
+          if (decision.action === STORED_PAYMENT.PAID_NEEDS_SUPPORT) {
+            setPhase('paidNeedsSupport')
+            return
+          }
+
+          // Not paid: the existing new-booking rules apply from here.
+          if (decision.action === STORED_PAYMENT.DISCARD) {
+            clearPaymentSession()
+          }
+          reuseUnpaid = decision.action === STORED_PAYMENT.REUSE_UNPAID
+          if (!reuseUnpaid) {
+            paymentIntentIdRef.current = null
+          }
+          storedPaymentResolved = true
+        }
+
+        // 3. NEW-BOOKING GUARDS — THE LAST GATE BEFORE ANY NEW STRIPE OBJECT.
+        //
+        // Every line below builds toward a real charge, and each one names the
+        // vehicle: quote-itemized, get-fee (which mints the PaymentIntent), and
+        // the order payload. A missing vehicle would be silently resolved to
+        // the car by apiKeyFor's fallback, and an over-capacity car would be
+        // refused by the backend only AFTER the card was charged — the
+        // paid-but-no-order failure.
+        //
+        // Both are recoverable by going back one step, so this sends them there
+        // rather than showing an error. Reached by a deep link, a restored
+        // session predating the capacity rule, or a back-navigation that
+        // changed the count.
+        if (!hasBothAddresses(flow)) {
+          router.replace(bookingHrefWithVia('/send', window.location.search))
+          return
+        }
+
+        if (
+          !flow.vehicle ||
+          packageCapacityRefusal(flow.vehicle, flow.packageCount)
+        ) {
+          router.replace(bookingHrefWithVia('/send/details', window.location.search))
+          return
+        }
+
+        // 4. Re-quote the selected mode from its backend authority. DropBatch
         // never trusts the amount shown on details; standard keeps its existing
-        // quote-itemized path byte-for-byte.
+        // quote-itemized path byte-for-byte. A NEW booking for a Partner that is
+        // no longer eligible is refused here (the backend fails closed).
         let normalizedQuote
         if (flow.pricingMode === 'dropbatch') {
           const request = buildDropBatchQuoteRequest(flow, true)
@@ -295,49 +488,14 @@ export default function SendPayPage() {
         if (cancelled) return
         setQuote(normalizedQuote)
 
-        // 3. Recover a STANDARD intent only. A stored DropBatch intent is
-        // deliberately never payment authority for a later page load: the
-        // same shipment inputs can receive a different authoritative
-        // DropBatch price. The fresh quote above is shown now; get-fee remains
-        // behind the customer's explicit continue action below.
-        const stored = readPaymentSession()
-
-        if (flow.pricingMode === 'dropbatch') {
-          if (stored && stored.inputsHash === inputsHash) {
-            clearPaymentSession()
-          }
-        } else if (stored && stored.inputsHash === inputsHash) {
-          // An intent already exists for exactly these inputs. Before showing
-          // any form, ask Stripe what actually happened to it — the customer
-          // may already have paid and simply not have an order yet.
-          const stripe = await getStripePromise(key)
-          const { paymentIntent } = await stripe.retrievePaymentIntent(
-            stored.clientSecret,
-          )
-
-          if (cancelled) return
-
-          paymentIntentIdRef.current = stored.paymentIntentId
-
-          if (paymentIntent?.status === 'succeeded') {
-            // PAID ALREADY. Never render a fresh PaymentElement here — that is
-            // exactly the path that charges someone twice.
-            setPhase('recovering')
-
-            const payload =
-              stored.orderPayload ??
-              buildOrderPayload({
-                flow,
-                quote: normalizedQuote,
-                paymentIntentId: stored.paymentIntentId,
-              })
-
-            await finishOrder(payload)
-            return
-          }
-
-          // Not paid yet — safe to reuse the same intent rather than minting a
-          // second one.
+        // 5. Reuse a STANDARD intent that Stripe confirmed above is UNPAID and
+        // was minted for exactly these inputs, rather than minting a second
+        // one. A stored DropBatch intent is never payment authority for a later
+        // page load (step 2 discarded it): the same shipment inputs can receive
+        // a different authoritative DropBatch price. The fresh quote above is
+        // shown now; get-fee remains behind the customer's explicit continue
+        // action below.
+        if (reuseUnpaid) {
           if (Math.round(Number(stored.fee) * 100) !== normalizedQuote.finalCustomerTotalMinor) {
             setFailureMessage('The price has changed. Please review your delivery quote.')
             setPhase('priceMismatch')
@@ -350,7 +508,7 @@ export default function SendPayPage() {
           return
         }
 
-        // 4. No usable intent, and boot does NOT create one. get-fee mints a
+        // 6. No usable intent, and boot does NOT create one. get-fee mints a
         //    real PaymentIntent, so it cannot run before the contact details
         //    it requires have been typed — it fires from the confirm button
         //    below. The page is usable now: contact fields plus a breakdown
@@ -359,7 +517,9 @@ export default function SendPayPage() {
       } catch (error) {
         if (!cancelled) {
           setFailureMessage(error?.message ?? 'Something went wrong')
-          setPhase('error')
+          // "You have not been charged" is only true once any stored payment
+          // has been confirmed unpaid (or there was none).
+          setPhase(storedPaymentResolved ? 'error' : 'paymentUnconfirmed')
         }
       }
     }
@@ -506,6 +666,10 @@ export default function SendPayPage() {
         clientSecret: secret,
         fee: chargedAmount,
         referralAdjustment: channelAdjustment,
+        // The guest that just created this checkout. While this record exists
+        // that guest is never replaced, and an order for this payment is never
+        // sent as anyone else (a client-side guard; the backend decides).
+        ownerUserId: currentGuestUserId(),
       })
 
       setReferralAdjustment(channelAdjustment)
@@ -535,6 +699,8 @@ export default function SendPayPage() {
         quote,
         paymentIntentId: paymentIntentIdRef.current,
       }),
+      // Keep the owner recorded when the checkout was created.
+      ownerUserId: readPaymentSession()?.ownerUserId ?? currentGuestUserId(),
     })
   }, [inputsHash, clientSecret, fee, referralAdjustment, flow, quote])
 
@@ -549,36 +715,56 @@ export default function SendPayPage() {
     )
   }, [finishOrder, flow, quote])
 
-  // Payment outcome unknown. Do not show a pay button again; a reload runs the
-  // recovery path above, which asks Stripe for the truth.
+  // Payment outcome unknown. Do not show a pay button again, and make no claim
+  // either way — the card may or may not have been charged. "Check again"
+  // reloads, and boot asks Stripe for the truth before anything else.
   const handleIndeterminate = useCallback(() => {
-    setFailureMessage(
-      'We could not confirm the result of your payment. Do not try again — reload this page and we will check with our payment provider.',
-    )
-    setPhase('orderFailed')
+    setPhase('paymentIndeterminate')
   }, [])
 
+  // Retries ORDER CREATION with the body stored before the card was confirmed —
+  // the original checkout, never one rebuilt from the current form or price.
   const retryOrder = useCallback(async () => {
     const stored = readPaymentSession()
+    const body = recoveryOrderBody(stored)
 
-    if (!stored) {
+    if (!body) {
+      setPhase('paidNeedsSupport')
       return
     }
 
     setRetrying(true)
     setPhase('recovering')
 
-    await finishOrder(
-      stored.orderPayload ??
-        buildOrderPayload({
-          flow,
-          quote,
-          paymentIntentId: stored.paymentIntentId,
-        }),
-    )
+    await finishOrder(body)
 
     setRetrying(false)
-  }, [finishOrder, flow, quote])
+  }, [finishOrder])
+
+  // R-M1: the customer's explicit "Finish my earlier booking". Submits that
+  // booking's stored original body (never the form), exactly once even if the
+  // button is pressed twice in the same tick, and keeps the new booking intact.
+  const finishEarlierBooking = useCallback(async () => {
+    if (finishingEarlierRef.current) {
+      return
+    }
+
+    const body = pendingBooking?.body
+
+    if (!body) {
+      setPhase('paidNeedsSupport')
+      return
+    }
+
+    finishingEarlierRef.current = true
+    setPhase('recovering')
+
+    try {
+      await finishOrder(body)
+    } finally {
+      finishingEarlierRef.current = false
+    }
+  }, [finishOrder, pendingBooking])
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -593,7 +779,10 @@ export default function SendPayPage() {
         <h1 className="mt-6 text-[26px] font-extrabold tracking-[-0.02em] text-[#17131c]">
           Your delivery is booked
         </h1>
-        {flow.pricingMode === 'dropbatch' ? (
+        {/* Names the booking the order was actually created for, and takes its
+            copy from that order (the form has just been reset). */}
+        <BookingLine summary={completedBooking} centered />
+        {completedBooking?.pricingMode === 'dropbatch' ? (
           <div className="mt-3 text-[15px] text-[#5f5868]">
             {/* A just-paid DropBatch order is always in `waiting`, so this states that meaning and
                 nothing further. It used to close by pointing the customer at Standard Delivery,
@@ -636,15 +825,16 @@ export default function SendPayPage() {
           <h1 className="text-[24px] font-extrabold tracking-[-0.02em] text-[#17131c]">
             Your payment went through — we&rsquo;re finishing your order
           </h1>
+          {/* Reached only after Stripe confirmed the payment (see finishOrder),
+              so "confirmed" is a verified statement here. Nothing here may claim
+              what this page cannot see (other tabs, devices or lost records). */}
           <p className="mt-3 text-[15px] leading-[1.6] text-[#5f5868]">
-            Your card has been charged and we could not create the delivery.
-            Nothing further is needed from you and{' '}
-            <strong className="font-bold text-[#17131c]">
-              you have not been charged twice
-            </strong>
-            . Retry below, or contact us with the reference and we will complete
-            it for you.
+            Your payment was confirmed, but we couldn&rsquo;t create the
+            delivery yet. We&rsquo;re recovering your original booking: retrying
+            finishes it and doesn&rsquo;t start another payment. If it keeps
+            failing, contact us with the reference below.
           </p>
+          <EarlierBookingNote booking={pendingBooking} />
 
           <div className="mt-5 rounded-2xl bg-[#faf7fd] p-4">
             <div className="text-[12px] font-extrabold tracking-[0.1em] text-[#8d8695]">
@@ -674,6 +864,256 @@ export default function SendPayPage() {
             <Link
               href="/contact-us"
               className="rounded-xl border-[1.5px] border-[#e3dfe8] px-6 py-3.5 text-[15px] font-bold text-[#17131c] transition-colors hover:bg-[#faf7fd]"
+            >
+              Contact us
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // R-M1: a paid record for an EARLIER booking than the one in the form. Shown
+  // instead of completing it silently. No payment is offered here; the new
+  // booking's details stay as they are.
+  if (phase === 'earlierBooking') {
+    return (
+      <div className="px-6 py-14 sm:px-8">
+        <div className="mx-auto max-w-[560px]">
+          <h1 className="text-[24px] font-extrabold tracking-[-0.02em] text-[#17131c]">
+            Your earlier booking needs to be finished first
+          </h1>
+          <p className="mt-3 text-[15px] leading-[1.6] text-[#5f5868]">
+            You paid for an earlier booking in this tab, but it hasn&rsquo;t been
+            created yet. Finish it first — this doesn&rsquo;t start another
+            payment. The booking you&rsquo;re entering now is kept and isn&rsquo;t
+            affected.
+          </p>
+          <div className="mt-5 rounded-2xl bg-[#faf7fd] p-4">
+            <div className="text-[12px] font-extrabold tracking-[0.1em] text-[#8d8695]">
+              EARLIER BOOKING
+            </div>
+            {pendingBooking?.summary ? (
+              <BookingLine summary={pendingBooking.summary} />
+            ) : (
+              <p className="mt-1 text-[14px] text-[#5f5868]">
+                Its details aren&rsquo;t shown on this device.
+              </p>
+            )}
+            <div className="mt-3 text-[12px] font-extrabold tracking-[0.1em] text-[#8d8695]">
+              PAYMENT REFERENCE
+            </div>
+            <div className="mt-1 break-all font-mono text-[14px] text-[#17131c]">
+              {paymentIntentIdRef.current ?? '—'}
+            </div>
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={finishEarlierBooking}
+              className="rounded-xl bg-brand-600 px-6 py-3.5 text-[15px] font-bold text-white transition-colors hover:bg-brand-700"
+            >
+              Finish my earlier booking
+            </button>
+            <Link
+              href="/contact-us"
+              className="rounded-xl border-[1.5px] border-[#e3dfe8] px-6 py-3.5 text-[15px] font-bold text-[#17131c] transition-colors hover:bg-[#faf7fd]"
+            >
+              Contact us
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (phase === 'earlierBookingDone') {
+    return (
+      <div className="px-6 py-14 text-center sm:px-8">
+        <h1 className="text-[26px] font-extrabold tracking-[-0.02em] text-[#17131c]">
+          Your earlier booking is booked
+        </h1>
+        <BookingLine summary={completedBooking} centered />
+        <div className="mx-auto mt-6 max-w-[320px] rounded-2xl bg-[#faf7fd] p-5">
+          <div className="text-[12px] font-extrabold tracking-[0.1em] text-[#8d8695]">
+            TRACKING CODE
+          </div>
+          <div className="mt-1.5 text-[22px] font-extrabold text-[#17131c]">
+            {trackingCode}
+          </div>
+        </div>
+        <Link
+          href={`/track/${trackingCode}`}
+          className="mx-auto mt-6 block max-w-[320px] rounded-xl border-[1.5px] border-[#e3dfe8] px-5 py-4 text-[16px] font-bold text-[#17131c] transition-colors hover:bg-[#faf7fd]"
+        >
+          Track this delivery
+        </Link>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="mx-auto mt-3 block w-full max-w-[320px] rounded-xl bg-brand-600 px-5 py-4 text-[16px] font-bold text-white transition-colors hover:bg-brand-700"
+        >
+          Continue with your new booking
+        </button>
+      </div>
+    )
+  }
+
+  // D7 recovery states. None of them offers a way to pay, and none claims the
+  // customer was not charged: each describes what is actually known.
+  if (phase === 'paymentIndeterminate') {
+    return (
+      <div className="px-6 py-14 sm:px-8">
+        <div className="mx-auto max-w-[560px]">
+          <h1 className="text-[24px] font-extrabold tracking-[-0.02em] text-[#17131c]">
+            We couldn&rsquo;t confirm the result of your payment
+          </h1>
+          <p className="mt-3 text-[15px] leading-[1.6] text-[#5f5868]">
+            Your payment provider didn&rsquo;t give us a clear answer, so we
+            don&rsquo;t know yet whether this payment went through. Please
+            don&rsquo;t pay again until it is verified. Check again and we will
+            ask the payment provider, or contact us with the reference below.
+          </p>
+          <div className="mt-5 rounded-2xl bg-[#faf7fd] p-4">
+            <div className="text-[12px] font-extrabold tracking-[0.1em] text-[#8d8695]">
+              PAYMENT REFERENCE
+            </div>
+            <div className="mt-1 break-all font-mono text-[14px] text-[#17131c]">
+              {paymentIntentIdRef.current ?? '—'}
+            </div>
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="rounded-xl bg-brand-600 px-6 py-3.5 text-[15px] font-bold text-white transition-colors hover:bg-brand-700"
+            >
+              Check again
+            </button>
+            <Link
+              href="/contact-us"
+              className="rounded-xl border-[1.5px] border-[#e3dfe8] px-6 py-3.5 text-[15px] font-bold text-[#17131c] transition-colors hover:bg-[#faf7fd]"
+            >
+              Contact us
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (phase === 'paymentPending') {
+    return (
+      <div className="px-6 py-14 sm:px-8">
+        <div className="mx-auto max-w-[560px]">
+          <h1 className="text-[24px] font-extrabold tracking-[-0.02em] text-[#17131c]">
+            Your payment is still processing
+          </h1>
+          <p className="mt-3 text-[15px] leading-[1.6] text-[#5f5868]">
+            Your payment provider has not finished confirming this payment, so
+            your delivery is not booked yet. Please don&rsquo;t pay again. Check
+            again in a minute, or contact us with the reference below.
+          </p>
+          <EarlierBookingNote booking={pendingBooking} />
+          <div className="mt-5 rounded-2xl bg-[#faf7fd] p-4">
+            <div className="text-[12px] font-extrabold tracking-[0.1em] text-[#8d8695]">
+              PAYMENT REFERENCE
+            </div>
+            <div className="mt-1 break-all font-mono text-[14px] text-[#17131c]">
+              {paymentIntentIdRef.current ?? '—'}
+            </div>
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="rounded-xl bg-brand-600 px-6 py-3.5 text-[15px] font-bold text-white transition-colors hover:bg-brand-700"
+            >
+              Check again
+            </button>
+            <Link
+              href="/contact-us"
+              className="rounded-xl border-[1.5px] border-[#e3dfe8] px-6 py-3.5 text-[15px] font-bold text-[#17131c] transition-colors hover:bg-[#faf7fd]"
+            >
+              Contact us
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (phase === 'paymentUnconfirmed') {
+    return (
+      <div className="px-6 py-14 sm:px-8">
+        <div className="mx-auto max-w-[560px]">
+          <h1 className="text-[24px] font-extrabold tracking-[-0.02em] text-[#17131c]">
+            We couldn&rsquo;t confirm your earlier payment
+          </h1>
+          <p className="mt-3 text-[15px] leading-[1.6] text-[#5f5868]">
+            This page holds a payment from your earlier visit that we could not
+            check just now. Please don&rsquo;t pay again until it is confirmed.
+            Check again, or contact us with the reference below.
+          </p>
+          <EarlierBookingNote booking={pendingBooking} />
+          <div className="mt-5 rounded-2xl bg-[#faf7fd] p-4">
+            <div className="text-[12px] font-extrabold tracking-[0.1em] text-[#8d8695]">
+              PAYMENT REFERENCE
+            </div>
+            <div className="mt-1 break-all font-mono text-[14px] text-[#17131c]">
+              {paymentIntentIdRef.current ?? '—'}
+            </div>
+            {failureMessage && (
+              <p className="mt-3 text-[13px] text-[#5f5868]">
+                {failureMessage}
+              </p>
+            )}
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="rounded-xl bg-brand-600 px-6 py-3.5 text-[15px] font-bold text-white transition-colors hover:bg-brand-700"
+            >
+              Check again
+            </button>
+            <Link
+              href="/contact-us"
+              className="rounded-xl border-[1.5px] border-[#e3dfe8] px-6 py-3.5 text-[15px] font-bold text-[#17131c] transition-colors hover:bg-[#faf7fd]"
+            >
+              Contact us
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (phase === 'paidNeedsSupport') {
+    return (
+      <div className="px-6 py-14 sm:px-8">
+        <div className="mx-auto max-w-[560px]">
+          <h1 className="text-[24px] font-extrabold tracking-[-0.02em] text-[#17131c]">
+            Your payment went through — we need to finish your order
+          </h1>
+          <p className="mt-3 text-[15px] leading-[1.6] text-[#5f5868]">
+            We couldn&rsquo;t complete your delivery automatically from this
+            device. Please don&rsquo;t pay again: contact us with the reference
+            below and we&rsquo;ll resolve it with you.
+          </p>
+          <EarlierBookingNote booking={pendingBooking} />
+          <div className="mt-5 rounded-2xl bg-[#faf7fd] p-4">
+            <div className="text-[12px] font-extrabold tracking-[0.1em] text-[#8d8695]">
+              PAYMENT REFERENCE
+            </div>
+            <div className="mt-1 break-all font-mono text-[14px] text-[#17131c]">
+              {paymentIntentIdRef.current ?? '—'}
+            </div>
+          </div>
+          <div className="mt-6">
+            <Link
+              href="/contact-us"
+              className="inline-block rounded-xl bg-brand-600 px-6 py-3.5 text-[15px] font-bold text-white transition-colors hover:bg-brand-700"
             >
               Contact us
             </Link>

@@ -48,6 +48,25 @@ function isBrowser() {
   return typeof window !== 'undefined' && typeof sessionStorage !== 'undefined'
 }
 
+// The send flow's payment record (send-flow.js PAYMENT_STORAGE_KEY; a test keeps the two equal).
+// While it exists, "a PaymentIntent exists and no order has been created for it yet" — and the
+// backend will create that order only for the guest that owns its checkout. So, while it exists,
+// the stored guest is kept whatever its age and is never replaced by a re-mint, on every page of
+// the flow. Read raw: a corrupt record still counts, so the owner is kept (fail closed).
+const PAYMENT_RECORD_KEY = 'legaldrop.send-payment.v1'
+
+function paymentRecordPresent() {
+  if (!isBrowser()) {
+    return false
+  }
+
+  try {
+    return sessionStorage.getItem(PAYMENT_RECORD_KEY) !== null
+  } catch (error) {
+    return false
+  }
+}
+
 // Never log or serialise the token beyond this module. It is a bearer
 // credential: anything holding it can act as this guest.
 function readStoredSession() {
@@ -72,7 +91,8 @@ function readStoredSession() {
       return null
     }
 
-    if (Date.now() - parsed.createdAt > SESSION_TTL_MS) {
+    // The TTL never retires the owner of an unresolved checkout (see PAYMENT_RECORD_KEY).
+    if (Date.now() - parsed.createdAt > SESSION_TTL_MS && !paymentRecordPresent()) {
       clearGuestSession()
       return null
     }
@@ -181,6 +201,15 @@ export function getGuestSession({ forceRefresh = false } = {}) {
   }
 
   if (forceRefresh) {
+    // Never replace the owner of an unresolved checkout: keep it and mint nothing. A caller's
+    // retry then meets the same answer from the backend and reports it. Only when no guest is
+    // stored at all may a new one be minted below — there is nothing to lose.
+    const owner = paymentRecordPresent() ? readStoredSession() : null
+
+    if (owner) {
+      return Promise.resolve(owner)
+    }
+
     clearGuestSession()
   } else {
     const stored = readStoredSession()
@@ -241,6 +270,77 @@ export async function guestFetch(
   const refreshed = await getGuestSession({ forceRefresh: true })
 
   return send(refreshed)
+}
+
+// The stored guest could not be used to submit an order for a paid intent: there is none, it is
+// unreadable, or it is not the guest that owns the checkout.
+export class OrderIdentityUnavailableError extends Error {
+  constructor() {
+    super(
+      'Your original booking session is no longer available on this device. Contact us with the payment reference and we will complete your order.',
+    )
+    this.name = 'OrderIdentityUnavailableError'
+  }
+}
+
+function readStoredSessionAnyAge() {
+  if (!isBrowser()) {
+    return null
+  }
+
+  try {
+    const parsed = JSON.parse(sessionStorage.getItem(STORAGE_KEY) ?? 'null')
+    return typeof parsed?.token === 'string' && parsed.token.length > 0 ? parsed : null
+  } catch (error) {
+    return null
+  }
+}
+
+// The stored guest's user id, read without clearing, minting or sending — recorded in the
+// payment record as the checkout's owner. A label for a fail-closed client-side check only: the
+// backend alone decides who owns a checkout.
+export function currentGuestUserId() {
+  const userId = readStoredSessionAnyAge()?.userId
+  return typeof userId === 'string' && userId.length > 0 ? userId : null
+}
+
+// POST /order for an ALREADY-PAID intent, as the guest that created its checkout.
+//
+// The backend accepts it only from the user that owns the checkout (and returns an existing order
+// idempotently, to that user only). Backend guest tokens carry no expiry, so the stored token is
+// used whatever its age — the 12-hour TTL above is a convenience for NEW bookings and must not
+// replace the owner of a paid one. It sends ONCE: no mint when nothing is stored, no re-mint on
+// 401. A new guest could never recover this payment, and minting one would overwrite the only
+// credential that can.
+//
+// `ownerUserId` is the owner recorded with the payment. When both it and the stored guest's id are
+// known and differ, nothing is sent: that guest is a stranger to this checkout. When either is
+// unknown (a record written before owners were recorded), the request is sent and the backend's
+// ownership check decides — the client never treats its own record as authorization.
+export async function submitPaidOrder(body, { ownerUserId = null } = {}) {
+  const session = readStoredSessionAnyAge()
+
+  if (!session) {
+    throw new OrderIdentityUnavailableError()
+  }
+
+  if (
+    typeof ownerUserId === 'string' &&
+    typeof session.userId === 'string' &&
+    session.userId !== ownerUserId
+  ) {
+    throw new OrderIdentityUnavailableError()
+  }
+
+  return fetch(`${API_BASE_URL}/order`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.token}`,
+    },
+    body: JSON.stringify(body),
+    cache: 'no-store',
+  })
 }
 
 // Same-origin checkout proxy keeps the HttpOnly referral reference outside browser JavaScript.
